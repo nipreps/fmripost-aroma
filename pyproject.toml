@@ -1,0 +1,114 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fmripost-aroma"
+description = 'Run ICA-AROMA on fMRIPrep derivatives'
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+keywords = []
+authors = [{name = "The NiPreps Developers", email = "nipreps@gmail.com"}]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+  "nipype >= 1.8.5",
+  "pybids >= 0.15.6",
+  "typer",
+]
+dynamic = ["version"]
+
+[project.urls]
+Documentation = "https://github.com/nipreps/fmripost-aroma#readme"
+Issues = "https://github.com/nipreps/fmripost-aroma/issues"
+Source = "https://github.com/nipreps/fmripost-aroma"
+
+[project.scripts]
+fmripost-aroma = "fmripost_aroma.cli:aroma"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/fmripost_aroma/_version.py"
+
+[tool.hatch.build.targets.sdist]
+exclude = [".git_archival.txt"]  # No longer needed in sdist
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fmripost_aroma"]
+
+[tool.hatch.envs.default]
+dependencies = [
+  "pytest",
+  "pytest-cov",
+]
+[tool.hatch.envs.default.scripts]
+cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src/fmripost_aroma --cov=tests {args}"
+no-cov = "cov --no-cov {args}"
+
+[tool.hatch.envs.type]
+detached = true
+dependencies = [
+  "mypy",
+  "nibabel",
+  "typer",
+  "pytest",
+]
+
+[tool.hatch.envs.type.scripts]
+check = "mypy . {args}"
+
+[tool.hatch.envs.style]
+detached = true
+dependencies = [
+  "black",
+  "isort",
+  "ruff",
+]
+
+[tool.hatch.envs.style.scripts]
+fix = [
+  "black src/ tests/",
+  "isort src/ tests/",
+  "ruff check --fix src/ tests/",
+]
+check = [
+  "black --check --diff src/ tests/",
+  "isort --check --diff src/ tests/",
+  "ruff check --diff src/ tests/",
+]
+
+[[tool.hatch.envs.test.matrix]]
+python = ["38", "39", "310", "311"]
+
+[tool.coverage.run]
+branch = true
+parallel = true
+omit = [
+  "src/fmripost_aroma/__about__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+[tool.black]
+line-length = 99
+target-version = ['py39']
+
+[tool.isort]
+profile = 'black'
+
+[tool.ruff]
+line-length = 99
