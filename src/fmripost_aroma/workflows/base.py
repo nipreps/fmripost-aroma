@@ -35,7 +35,6 @@ from copy import deepcopy
 
 from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
-from niworkflows.utils.connections import listify
 from packaging.version import Version
 
 from fmripost_aroma import config
@@ -154,9 +153,9 @@ def init_single_subject_wf(subject_id: str):
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
     from niworkflows.interfaces.bids import BIDSDataGrabber, BIDSInfo
     from niworkflows.interfaces.nilearn import NILEARN_VERSION
-    from niworkflows.utils.bids import collect_data
     from niworkflows.utils.misc import fix_multi_T1w_source_name
 
+    from fmripost_aroma.utils.bids import collect_data
     from fmripost_aroma.workflows.aroma import init_ica_aroma_wf
 
     workflow = Workflow(name=f"sub_{subject_id}_wf")
@@ -195,9 +194,8 @@ It is released under the [CC0]\
         config.execution.layout,
         subject_id,
         task=config.execution.task_id,
-        echo=config.execution.echo_idx,
         bids_filters=config.execution.bids_filters,
-    )[0]
+    )
 
     if "flair" in config.workflow.ignore:
         subject_data["flair"] = []
@@ -297,15 +295,12 @@ Functional data preprocessing
 (across all tasks and sessions), the following preprocessing was performed.
 """
 
-    for bold_series in subject_data["bold"]:
-        bold_series = sorted(listify(bold_series))
-        bold_file = bold_series[0]
-
+    for bold_file in subject_data["bold"]:
         functional_cache = {}
         if config.execution.derivatives:
             from fmripost_aroma.utils.bids import collect_derivatives, extract_entities
 
-            entities = extract_entities(bold_series)
+            entities = extract_entities(bold_file)
 
             for deriv_dir in config.execution.derivatives:
                 functional_cache.update(

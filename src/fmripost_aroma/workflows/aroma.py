@@ -126,7 +126,7 @@ def init_ica_aroma_wf(
     """
     from nipype.interfaces import fsl
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-    from niworkflows.interfaces.utility import TSV2JSON, KeySelect
+    from niworkflows.interfaces.utility import TSV2JSON
 
     from fmripost_aroma.interfaces.confounds import ICAConfounds
     from fmripost_aroma.interfaces.reportlets import ICAAROMARPT
@@ -148,7 +148,7 @@ in the corresponding confounds file.
             fields=[
                 "bold_std",
                 "bold_mask_std",
-                "movpar_file",
+                "confounds",
                 "name_source",
                 "skip_vols",
                 "spatial_reference",
@@ -170,24 +170,30 @@ in the corresponding confounds file.
         name="outputnode",
     )
 
-    # extract out to BOLD base
-    select_std = pe.Node(
-        KeySelect(fields=["bold_mask_std", "bold_std"]),
-        name="select_std",
-        run_without_submitting=True,
-    )
-    select_std.inputs.key = "MNI152NLin6Asym_res-2"
+    # Convert confounds to FSL motpars file.
+    ...
 
     rm_non_steady_state = pe.Node(
         niu.Function(function=_remove_volumes, output_names=["bold_cut"]),
         name="rm_nonsteady",
     )
+    # fmt:off
+    workflow.connect([
+        (inputnode, rm_non_steady_state, [
+            ("skip_vols", "skip_vols"),
+            ("bold_std", "bold_file"),
+        ]),
+    ])
+    # fmt:on
 
-    calc_median_val = pe.Node(fsl.ImageStats(op_string="-k %s -p 50"), name="calc_median_val")
-    calc_bold_mean = pe.Node(fsl.MeanImage(), name="calc_bold_mean")
-
-    def _getusans_func(image, thresh):
-        return [tuple([image, thresh])]
+    calc_median_val = pe.Node(
+        fsl.ImageStats(op_string="-k %s -p 50"),
+        name="calc_median_val",
+    )
+    calc_bold_mean = pe.Node(
+        fsl.MeanImage(),
+        name="calc_bold_mean",
+    )
 
     getusans = pe.Node(
         niu.Function(function=_getusans_func, output_names=["usans"]),
@@ -261,15 +267,8 @@ in the corresponding confounds file.
 
     # fmt:off
     workflow.connect([
-        (inputnode, select_std, [
-            ("spatial_reference", "keys"),
-            ("bold_std", "bold_std"),
-            ("bold_mask_std", "bold_mask_std"),
-        ]),
         (inputnode, ica_aroma, [("movpar_file", "motion_parameters")]),
-        (inputnode, rm_non_steady_state, [("skip_vols", "skip_vols")]),
-        (select_std, rm_non_steady_state, [("bold_std", "bold_file")]),
-        (select_std, calc_median_val, [("bold_mask_std", "mask_file")]),
+        (inputnode, calc_median_val, [("bold_mask_std", "mask_file")]),
         (rm_non_steady_state, calc_median_val, [("bold_cut", "in_file")]),
         (rm_non_steady_state, calc_bold_mean, [("bold_cut", "in_file")]),
         (calc_bold_mean, getusans, [("out_file", "image")]),
@@ -280,10 +279,10 @@ in the corresponding confounds file.
         (calc_median_val, smooth, [(("out_stat", _getbtthresh), "brightness_threshold")]),
         # connect smooth to melodic
         (smooth, melodic, [("smoothed_file", "in_files")]),
-        (select_std, melodic, [("bold_mask_std", "mask")]),
+        (inputnode, melodic, [("bold_mask_std", "mask")]),
         # connect nodes to ICA-AROMA
         (smooth, ica_aroma, [("smoothed_file", "in_file")]),
-        (select_std, ica_aroma, [
+        (inputnode, ica_aroma, [
             ("bold_mask_std", "report_mask"),
             ("bold_mask_std", "mask")]),
         (melodic, ica_aroma, [("out_dir", "melodic_dir")]),
@@ -299,8 +298,10 @@ in the corresponding confounds file.
         ]),
         (ica_aroma_metadata_fmt, outputnode, [("output", "aroma_metadata")]),
         (ica_aroma, add_non_steady_state, [("nonaggr_denoised_file", "bold_cut_file")]),
-        (select_std, add_non_steady_state, [("bold_std", "bold_file")]),
-        (inputnode, add_non_steady_state, [("skip_vols", "skip_vols")]),
+        (inputnode, add_non_steady_state, [
+            ("bold_std", "bold_file"),
+            ("skip_vols", "skip_vols"),
+        ]),
         (add_non_steady_state, outputnode, [("bold_add", "nonaggr_denoised_file")]),
         (ica_aroma, ds_report_ica_aroma, [("out_report", "in_file")]),
     ])
@@ -310,6 +311,10 @@ in the corresponding confounds file.
 
 def _getbtthresh(medianval):
     return 0.75 * medianval
+
+
+def _getusans_func(image, thresh):
+    return [tuple([image, thresh])]
 
 
 def _remove_volumes(bold_file, skip_vols):
