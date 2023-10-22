@@ -1,0 +1,14 @@
+# python cache
+__pycache__/**/*
+__pycache__
+*.pyc
+
+# python distribution
+build/**/*
+build
+dist/**/*
+dist
+fmriprep.egg-info/**/*
+fmriprep.egg-info
+.eggs/**/*
+.eggs

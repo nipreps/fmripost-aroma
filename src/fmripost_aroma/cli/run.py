@@ -22,7 +22,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """fMRI preprocessing workflow."""
-from .. import config
+from fmripost_aroma import config
 
 EXITCODE: int = -1
 
@@ -35,9 +35,9 @@ def main():
     from os import EX_SOFTWARE
     from pathlib import Path
 
-    from ..utils.bids import write_bidsignore, write_derivative_description
-    from .parser import parse_args
-    from .workflow import build_workflow
+    from fmripost_aroma.cli.parser import parse_args
+    from fmripost_aroma.cli.workflow import build_workflow
+    from fmripost_aroma.utils.bids import write_bidsignore, write_derivative_description
 
     parse_args()
 
@@ -80,7 +80,7 @@ def main():
 
         import sentry_sdk
 
-        from ..utils.telemetry import sentry_setup, setup_migas
+        from fmripost_aroma.utils.telemetry import sentry_setup, setup_migas
 
         sentry_setup()
         setup_migas(init_ping=True)
@@ -131,7 +131,7 @@ def main():
 
     # Generate boilerplate
     with Manager() as mgr:
-        from .workflow import build_boilerplate
+        from fmripost_aroma.cli.workflow import build_boilerplate
 
         p = Process(target=build_boilerplate, args=(str(config_file), fmriprep_wf))
         p.start()
@@ -161,7 +161,7 @@ def main():
         fmriprep_wf.run(**config.nipype.get_plugin())
     except Exception as e:
         if not config.execution.notrack:
-            from ..utils.telemetry import process_crashfile
+            from fmripost_aroma.utils.telemetry import process_crashfile
 
             crashfolders = [
                 config.execution.fmriprep_dir / f"sub-{s}" / "log" / config.execution.run_uuid
@@ -173,8 +173,10 @@ def main():
 
             if sentry_sdk is not None and "Workflow did not execute cleanly" not in str(e):
                 sentry_sdk.capture_exception(e)
+
         config.loggers.workflow.critical("fMRIPrep failed: %s", e)
         raise
+
     else:
         config.loggers.workflow.log(25, "fMRIPrep finished successfully!")
         if sentry_sdk is not None:
@@ -193,6 +195,7 @@ def main():
                 boiler_file = Path("<OUTPUT_PATH>") / boiler_file.relative_to(
                     config.execution.output_dir
                 )
+
             config.loggers.workflow.log(
                 25,
                 "Works derived from this fMRIPrep execution should include the "
@@ -217,7 +220,7 @@ def main():
             config.loggers.workflow.log(25, f"Saving logs at: {config.execution.log_dir}")
             config.loggers.workflow.log(25, f"Carbon emissions: {emissions} kg")
 
-        from fmriprep.reports.core import generate_reports
+        from fmripost_aroma.reports.core import generate_reports
 
         # Generate reports phase
         failed_reports = generate_reports(
@@ -245,27 +248,28 @@ def migas_exit() -> None:
     """
     import sys
 
-    from ..utils.telemetry import send_breadcrumb
+    from fmripost_aroma.utils.telemetry import send_breadcrumb
 
     global EXITCODE
-    migas_kwargs = {'status': 'C'}
+    migas_kwargs = {"status": "C"}
     # `sys` will not have these attributes unless an error has been handled
-    if hasattr(sys, 'last_type'):
+    if hasattr(sys, "last_type"):
         migas_kwargs = {
-            'status': 'F',
-            'status_desc': 'Finished with error(s)',
-            'error_type': sys.last_type,
-            'error_desc': sys.last_value,
+            "status": "F",
+            "status_desc": "Finished with error(s)",
+            "error_type": sys.last_type,
+            "error_desc": sys.last_value,
         }
     elif EXITCODE != 0:
         migas_kwargs.update(
             {
-                'status': 'F',
-                'status_desc': f'Completed with exitcode {EXITCODE}',
+                "status": "F",
+                "status_desc": f"Completed with exitcode {EXITCODE}",
             }
         )
     else:
-        migas_kwargs['status_desc'] = 'Success'
+        migas_kwargs["status_desc"] = "Success"
+
     send_breadcrumb(**migas_kwargs)
 
 

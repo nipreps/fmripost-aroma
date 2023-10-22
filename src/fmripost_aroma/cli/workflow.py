@@ -40,12 +40,11 @@ def build_workflow(config_file, retval):
     from niworkflows.utils.misc import check_valid_fs_license
     from pkg_resources import resource_filename as pkgrf
 
-    from fmriprep.reports.core import generate_reports
-    from fmriprep.utils.bids import check_pipeline_version
-
-    from .. import config
-    from ..utils.misc import check_deps
-    from ..workflows.base import init_fmriprep_wf
+    from fmripost_aroma import config
+    from fmripost_aroma.reports.core import generate_reports
+    from fmripost_aroma.utils.bids import check_pipeline_version
+    from fmripost_aroma.utils.misc import check_deps
+    from fmripost_aroma.workflows.base import init_fmriprep_wf
 
     config.load(config_file)
     build_log = config.loggers.workflow
@@ -117,7 +116,7 @@ def build_workflow(config_file, retval):
 
     # Check for FS license after building the workflow
     if not check_valid_fs_license():
-        from ..utils.misc import fips_enabled
+        from fmripost_aroma.utils.misc import fips_enabled
 
         if fips_enabled():
             build_log.critical(
@@ -158,7 +157,7 @@ license file at several paths, in this order: 1) command line argument ``--fs-li
 
 def build_boilerplate(config_file, workflow):
     """Write boilerplate in an isolated process."""
-    from .. import config
+    from fmripost_aroma import config
 
     config.load(config_file)
     logs_path = config.execution.fmriprep_dir / "logs"

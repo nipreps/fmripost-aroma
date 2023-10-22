@@ -27,7 +27,7 @@ from pathlib import Path
 
 import requests
 
-from .. import __version__
+from fmripost_aroma import __version__
 
 RELEASE_EXPIRY_DAYS = 14
 DATE_FMT = "%Y%m%d"

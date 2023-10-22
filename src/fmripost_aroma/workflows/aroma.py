@@ -71,14 +71,15 @@ def init_ica_aroma_wf(
             :simple_form: yes
 
             from fmriprep.workflows.bold.confounds import init_ica_aroma_wf
+
             wf = init_ica_aroma_wf(
-                mem_gb=3,
+                bold_file="fake.nii.gz",
                 metadata={"RepetitionTime": 1.0},
-                omp_nthreads=1,
             )
 
     Parameters
     ----------
+    bold_file
     metadata : :obj:`dict`
         BIDS metadata for BOLD file
     susan_fwhm : :obj:`float`
@@ -91,8 +92,6 @@ def init_ica_aroma_wf(
         Negative numbers set a maximum on automatic dimensionality estimation.
         Positive numbers set an exact number of components to extract.
         (default: -200, i.e., estimate <=200 components)
-    name : :obj:`str`
-        Name of workflow (default: ``bold_tpl_trans_wf``)
 
     Inputs
     ------
@@ -130,7 +129,7 @@ def init_ica_aroma_wf(
     from niworkflows.interfaces.utility import TSV2JSON, KeySelect
 
     from fmripost_aroma.interfaces.confounds import ICAConfounds
-    from fmripost_aroma.interfaces.reportlets import ICA_AROMARPT
+    from fmripost_aroma.interfaces.reportlets import ICAAROMARPT
 
     workflow = Workflow(name=_get_wf_name(bold_file, "aroma"))
     workflow.__postdesc__ = """\
@@ -180,7 +179,8 @@ in the corresponding confounds file.
     select_std.inputs.key = "MNI152NLin6Asym_res-2"
 
     rm_non_steady_state = pe.Node(
-        niu.Function(function=_remove_volumes, output_names=["bold_cut"]), name="rm_nonsteady"
+        niu.Function(function=_remove_volumes, output_names=["bold_cut"]),
+        name="rm_nonsteady",
     )
 
     calc_median_val = pe.Node(fsl.ImageStats(op_string="-k %s -p 50"), name="calc_median_val")
@@ -190,12 +190,15 @@ in the corresponding confounds file.
         return [tuple([image, thresh])]
 
     getusans = pe.Node(
-        niu.Function(function=_getusans_func, output_names=["usans"]), name="getusans", mem_gb=0.01
+        niu.Function(function=_getusans_func, output_names=["usans"]),
+        name="getusans",
+        mem_gb=0.01,
     )
 
     smooth = pe.Node(
         fsl.SUSAN(
-            fwhm=susan_fwhm, output_type="NIFTI" if config.execution.low_mem else "NIFTI_GZ"
+            fwhm=susan_fwhm,
+            output_type="NIFTI" if config.execution.low_mem else "NIFTI_GZ",
         ),
         name="smooth",
     )
@@ -214,7 +217,7 @@ in the corresponding confounds file.
 
     # ica_aroma node
     ica_aroma = pe.Node(
-        ICA_AROMARPT(
+        ICAAROMARPT(
             denoise_type="nonaggr",
             generate_report=True,
             TR=metadata["RepetitionTime"],
@@ -240,7 +243,10 @@ in the corresponding confounds file.
             output=None,
             enforce_case=True,
             additional_metadata={
-                "Method": {"Name": "ICA-AROMA", "Version": os.getenv("AROMA_VERSION", "n/a")}
+                "Method": {
+                    "Name": "ICA-AROMA",
+                    "Version": os.getenv("AROMA_VERSION", "n/a"),
+                },
             },
         ),
         name="ica_aroma_metadata_fmt",
@@ -252,9 +258,6 @@ in the corresponding confounds file.
         run_without_submitting=True,
         mem_gb=config.DEFAULT_MEMORY_MIN_GB,
     )
-
-    def _getbtthresh(medianval):
-        return 0.75 * medianval
 
     # fmt:off
     workflow.connect([
@@ -303,6 +306,10 @@ in the corresponding confounds file.
     ])
     # fmt:on
     return workflow
+
+
+def _getbtthresh(medianval):
+    return 0.75 * medianval
 
 
 def _remove_volumes(bold_file, skip_vols):

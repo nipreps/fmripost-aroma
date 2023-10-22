@@ -28,13 +28,11 @@ fMRIPost AROMA workflows
 .. autofunction:: init_single_subject_wf
 
 """
-
 import os
 import sys
 import warnings
 from copy import deepcopy
 
-import bids
 from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
 from niworkflows.utils.connections import listify
@@ -43,7 +41,6 @@ from packaging.version import Version
 from fmripost_aroma import config
 from fmripost_aroma.interfaces.bids import DerivativesDataSink
 from fmripost_aroma.interfaces.reports import AboutSummary, SubjectSummary
-from fmripost_aroma.workflows.aroma import init_ica_aroma_wf
 
 
 def init_fmripost_aroma_wf():
@@ -71,15 +68,15 @@ def init_fmripost_aroma_wf():
 
     ver = Version(config.environment.version)
 
-    fmriprep_wf = Workflow(name=f'fmriprep_{ver.major}_{ver.minor}_wf')
-    fmriprep_wf.base_dir = config.execution.work_dir
+    fmripost_aroma_wf = Workflow(name=f"fmripost_aroma_{ver.major}_{ver.minor}_wf")
+    fmripost_aroma_wf.base_dir = config.execution.work_dir
 
     freesurfer = config.workflow.run_reconall
     if freesurfer:
         fsdir = pe.Node(
             BIDSFreeSurferDir(
                 derivatives=config.execution.output_dir,
-                freesurfer_home=os.getenv('FREESURFER_HOME'),
+                freesurfer_home=os.getenv("FREESURFER_HOME"),
                 spaces=config.workflow.spaces.get_fs_spaces(),
                 minimum_fs_version="7.0.0",
             ),
@@ -92,24 +89,35 @@ def init_fmripost_aroma_wf():
     for subject_id in config.execution.participant_label:
         single_subject_wf = init_single_subject_wf(subject_id)
 
-        single_subject_wf.config['execution']['crashdump_dir'] = str(
-            config.execution.fmriprep_dir / f"sub-{subject_id}" / "log" / config.execution.run_uuid
+        single_subject_wf.config["execution"]["crashdump_dir"] = str(
+            config.execution.fmripost_aroma_dir
+            / f"sub-{subject_id}"
+            / "log"
+            / config.execution.run_uuid
         )
         for node in single_subject_wf._get_all_nodes():
             node.config = deepcopy(single_subject_wf.config)
         if freesurfer:
-            fmriprep_wf.connect(fsdir, 'subjects_dir', single_subject_wf, 'inputnode.subjects_dir')
+            fmripost_aroma_wf.connect(
+                fsdir,
+                "subjects_dir",
+                single_subject_wf,
+                "inputnode.subjects_dir",
+            )
         else:
-            fmriprep_wf.add_nodes([single_subject_wf])
+            fmripost_aroma_wf.add_nodes([single_subject_wf])
 
         # Dump a copy of the config file into the log directory
         log_dir = (
-            config.execution.fmriprep_dir / f"sub-{subject_id}" / 'log' / config.execution.run_uuid
+            config.execution.fmripost_aroma_dir
+            / f"sub-{subject_id}"
+            / "log"
+            / config.execution.run_uuid
         )
         log_dir.mkdir(exist_ok=True, parents=True)
-        config.to_filename(log_dir / 'fmripost_aroma.toml')
+        config.to_filename(log_dir / "fmripost_aroma.toml")
 
-    return fmriprep_wf
+    return fmripost_aroma_wf
 
 
 def init_single_subject_wf(subject_id: str):
@@ -148,25 +156,22 @@ def init_single_subject_wf(subject_id: str):
     from niworkflows.interfaces.nilearn import NILEARN_VERSION
     from niworkflows.utils.bids import collect_data
     from niworkflows.utils.misc import fix_multi_T1w_source_name
-    from niworkflows.utils.spaces import Reference
 
-    from fmripost_aroma.workflows.bold.base import init_bold_wf
+    from fmripost_aroma.workflows.aroma import init_ica_aroma_wf
 
-    workflow = Workflow(name=f'sub_{subject_id}_wf')
-    workflow.__desc__ = """
+    workflow = Workflow(name=f"sub_{subject_id}_wf")
+    workflow.__desc__ = f"""
 Results included in this manuscript come from preprocessing
-performed using *fMRIPrep* {fmriprep_ver}
+performed using *fMRIPrep* {config.environment.version}
 (@fmriprep1; @fmriprep2; RRID:SCR_016216),
-which is based on *Nipype* {nipype_ver}
+which is based on *Nipype* {config.environment.nipype_version}
 (@nipype1; @nipype2; RRID:SCR_002502).
 
-""".format(
-        fmriprep_ver=config.environment.version, nipype_ver=config.environment.nipype_version
-    )
-    workflow.__postdesc__ = """
+"""
+    workflow.__postdesc__ = f"""
 
 Many internal operations of *fMRIPrep* use
-*Nilearn* {nilearn_ver} [@nilearn, RRID:SCR_001362],
+*Nilearn* {NILEARN_VERSION} [@nilearn, RRID:SCR_001362],
 mostly within the functional processing workflow.
 For more details of the pipeline, see [the section corresponding
 to workflows in *fMRIPrep*'s documentation]\
@@ -184,9 +189,7 @@ It is released under the [CC0]\
 
 ### References
 
-""".format(
-        nilearn_ver=NILEARN_VERSION
-    )
+"""
 
     subject_data = collect_data(
         config.execution.layout,
@@ -196,23 +199,22 @@ It is released under the [CC0]\
         bids_filters=config.execution.bids_filters,
     )[0]
 
-    if 'flair' in config.workflow.ignore:
-        subject_data['flair'] = []
-    if 't2w' in config.workflow.ignore:
-        subject_data['t2w'] = []
+    if "flair" in config.workflow.ignore:
+        subject_data["flair"] = []
+    if "t2w" in config.workflow.ignore:
+        subject_data["t2w"] = []
 
     anat_only = config.workflow.anat_only
     # Make sure we always go through these two checks
-    if not anat_only and not subject_data['bold']:
+    if not anat_only and not subject_data["bold"]:
         task_id = config.execution.task_id
         raise RuntimeError(
-            "No BOLD images found for participant {} and task {}. "
-            "All workflows require BOLD images.".format(
-                subject_id, task_id if task_id else '<all>'
-            )
+            f"No BOLD images found for participant {subject_id} and "
+            f"task {task_id if task_id else '<all>'}. "
+            "All workflows require BOLD images."
         )
 
-    if subject_data['roi']:
+    if subject_data["roi"]:
         warnings.warn(
             f"Lesion mask {subject_data['roi']} found. "
             "Future versions of fMRIPrep will use alternative conventions. "
@@ -220,7 +222,7 @@ It is released under the [CC0]\
             FutureWarning,
         )
 
-    inputnode = pe.Node(niu.IdentityInterface(fields=['subjects_dir']), name='inputnode')
+    inputnode = pe.Node(niu.IdentityInterface(fields=["subjects_dir"]), name="inputnode")
 
     bidssrc = pe.Node(
         BIDSDataGrabber(
@@ -228,47 +230,47 @@ It is released under the [CC0]\
             anat_only=config.workflow.anat_only,
             subject_id=subject_id,
         ),
-        name='bidssrc',
+        name="bidssrc",
     )
 
     bids_info = pe.Node(
-        BIDSInfo(bids_dir=config.execution.bids_dir, bids_validate=False), name='bids_info'
+        BIDSInfo(bids_dir=config.execution.bids_dir, bids_validate=False), name="bids_info"
     )
 
     summary = pe.Node(
         SubjectSummary(
-            std_spaces=spaces.get_spaces(nonstandard=False),
-            nstd_spaces=spaces.get_spaces(standard=False),
+            std_spaces=["MNI152NLin6Asym"],
+            nstd_spaces=None,
         ),
-        name='summary',
+        name="summary",
         run_without_submitting=True,
     )
 
     about = pe.Node(
-        AboutSummary(version=config.environment.version, command=' '.join(sys.argv)),
-        name='about',
+        AboutSummary(version=config.environment.version, command=" ".join(sys.argv)),
+        name="about",
         run_without_submitting=True,
     )
 
     ds_report_summary = pe.Node(
         DerivativesDataSink(
-            base_directory=config.execution.fmriprep_dir,
-            desc='summary',
+            base_directory=config.execution.fmripost_aroma_dir,
+            desc="summary",
             datatype="figures",
             dismiss_entities=("echo",),
         ),
-        name='ds_report_summary',
+        name="ds_report_summary",
         run_without_submitting=True,
     )
 
     ds_report_about = pe.Node(
         DerivativesDataSink(
-            base_directory=config.execution.fmriprep_dir,
-            desc='about',
+            base_directory=config.execution.fmripost_aroma_dir,
+            desc="about",
             datatype="figures",
             dismiss_entities=("echo",),
         ),
-        name='ds_report_about',
+        name="ds_report_about",
         run_without_submitting=True,
     )
 
@@ -288,16 +290,14 @@ It is released under the [CC0]\
 
     # Append the functional section to the existing anatomical excerpt
     # That way we do not need to stream down the number of bold datasets
-    func_pre_desc = """
+    func_pre_desc = f"""
 Functional data preprocessing
 
-: For each of the {num_bold} BOLD runs found per subject (across all
-tasks and sessions), the following preprocessing was performed.
-""".format(
-        num_bold=len(subject_data['bold'])
-    )
+: For each of the {len(subject_data['bold'])} BOLD runs found per subject
+(across all tasks and sessions), the following preprocessing was performed.
+"""
 
-    for bold_series in subject_data['bold']:
+    for bold_series in subject_data["bold"]:
         bold_series = sorted(listify(bold_series))
         bold_file = bold_series[0]
 
@@ -338,12 +338,12 @@ tasks and sessions), the following preprocessing was performed.
 
 
 def _prefix(subid):
-    return subid if subid.startswith('sub-') else f'sub-{subid}'
+    return subid if subid.startswith("sub-") else f"sub-{subid}"
 
 
 def clean_datasinks(workflow: pe.Workflow) -> pe.Workflow:
-    # Overwrite ``out_path_base`` of smriprep's DataSinks
+    """Overwrite ``out_path_base`` of smriprep's DataSinks."""
     for node in workflow.list_node_names():
-        if node.split('.')[-1].startswith('ds_'):
+        if node.split(".")[-1].startswith("ds_"):
             workflow.get_node(node).interface.out_path_base = ""
     return workflow
