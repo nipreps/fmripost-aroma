@@ -41,19 +41,6 @@ def main():
 
     parse_args()
 
-    # Deprecated flags
-    if any(
-        (
-            config.workflow.use_aroma,
-            config.workflow.aroma_err_on_warn,
-            config.workflow.aroma_melodic_dim,
-        )
-    ):
-        config.loggers.cli.warning(
-            "ICA-AROMA was removed in fMRIPrep 23.1.0. The --use-aroma, --aroma-err-on-warn, "
-            "and --aroma-melodic-dim flags will error in fMRIPrep 24.0.0."
-        )
-
     # Code Carbon
     if config.execution.track_carbon:
         from codecarbon import OfflineEmissionsTracker
@@ -69,7 +56,7 @@ def main():
         tracker.start()
 
     if "pdb" in config.execution.debug:
-        from fmriprep.utils.debug import setup_exceptionhook
+        from fmripost_aroma.utils.debug import setup_exceptionhook
 
         setup_exceptionhook()
         config.nipype.plugin = "Linear"
@@ -112,20 +99,20 @@ def main():
 
     global EXITCODE
     EXITCODE = retval.get("return_code", 0)
-    fmriprep_wf = retval.get("workflow", None)
+    fmripost_aroma_wf = retval.get("workflow", None)
 
     # CRITICAL Load the config from the file. This is necessary because the ``build_workflow``
     # function executed constrained in a process may change the config (and thus the global
-    # state of fMRIPrep).
+    # state of fMRIPost-AROMA).
     config.load(config_file)
 
     if config.execution.reports_only:
         sys.exit(int(EXITCODE > 0))
 
-    if fmriprep_wf and config.execution.write_graph:
-        fmriprep_wf.write_graph(graph2use="colored", format="svg", simple_form=True)
+    if fmripost_aroma_wf and config.execution.write_graph:
+        fmripost_aroma_wf.write_graph(graph2use="colored", format="svg", simple_form=True)
 
-    EXITCODE = EXITCODE or (fmriprep_wf is None) * EX_SOFTWARE
+    EXITCODE = EXITCODE or (fmripost_aroma_wf is None) * EX_SOFTWARE
     if EXITCODE != 0:
         sys.exit(EXITCODE)
 
@@ -133,7 +120,7 @@ def main():
     with Manager() as mgr:
         from fmripost_aroma.cli.workflow import build_boilerplate
 
-        p = Process(target=build_boilerplate, args=(str(config_file), fmriprep_wf))
+        p = Process(target=build_boilerplate, args=(str(config_file), fmripost_aroma_wf))
         p.start()
         p.join()
 
@@ -148,23 +135,23 @@ def main():
         with sentry_sdk.configure_scope() as scope:
             scope.set_tag("run_uuid", config.execution.run_uuid)
             scope.set_tag("npart", len(config.execution.participant_label))
-        sentry_sdk.add_breadcrumb(message="fMRIPrep started", level="info")
-        sentry_sdk.capture_message("fMRIPrep started", level="info")
+        sentry_sdk.add_breadcrumb(message="fMRIPost-AROMA started", level="info")
+        sentry_sdk.capture_message("fMRIPost-AROMA started", level="info")
 
     config.loggers.workflow.log(
         15,
-        "\n".join(["fMRIPrep config:"] + ["\t\t%s" % s for s in config.dumps().splitlines()]),
+        "\n".join(["fMRIPost-AROMA config:"] + ["\t\t%s" % s for s in config.dumps().splitlines()]),
     )
-    config.loggers.workflow.log(25, "fMRIPrep started!")
+    config.loggers.workflow.log(25, "fMRIPost-AROMA started!")
     errno = 1  # Default is error exit unless otherwise set
     try:
-        fmriprep_wf.run(**config.nipype.get_plugin())
+        fmripost_aroma_wf.run(**config.nipype.get_plugin())
     except Exception as e:
         if not config.execution.notrack:
             from fmripost_aroma.utils.telemetry import process_crashfile
 
             crashfolders = [
-                config.execution.fmriprep_dir / f"sub-{s}" / "log" / config.execution.run_uuid
+                config.execution.fmripost_aroma_dir / f"sub-{s}" / "log" / config.execution.run_uuid
                 for s in config.execution.participant_label
             ]
             for crashfolder in crashfolders:
@@ -174,23 +161,23 @@ def main():
             if sentry_sdk is not None and "Workflow did not execute cleanly" not in str(e):
                 sentry_sdk.capture_exception(e)
 
-        config.loggers.workflow.critical("fMRIPrep failed: %s", e)
+        config.loggers.workflow.critical("fMRIPost-AROMA failed: %s", e)
         raise
 
     else:
-        config.loggers.workflow.log(25, "fMRIPrep finished successfully!")
+        config.loggers.workflow.log(25, "fMRIPost-AROMA finished successfully!")
         if sentry_sdk is not None:
-            success_message = "fMRIPrep finished without errors"
+            success_message = "fMRIPost-AROMA finished without errors"
             sentry_sdk.add_breadcrumb(message=success_message, level="info")
             sentry_sdk.capture_message(success_message, level="info")
 
         # Bother users with the boilerplate only iff the workflow went okay.
-        boiler_file = config.execution.fmriprep_dir / "logs" / "CITATION.md"
+        boiler_file = config.execution.fmripost_aroma_dir / "logs" / "CITATION.md"
         if boiler_file.exists():
             if config.environment.exec_env in (
                 "singularity",
                 "docker",
-                "fmriprep-docker",
+                "fmripost_aroma-docker",
             ):
                 boiler_file = Path("<OUTPUT_PATH>") / boiler_file.relative_to(
                     config.execution.output_dir
@@ -198,7 +185,7 @@ def main():
 
             config.loggers.workflow.log(
                 25,
-                "Works derived from this fMRIPrep execution should include the "
+                "Works derived from this fMRIPost-AROMA execution should include the "
                 f"boilerplate text found in {boiler_file}.",
             )
 
@@ -207,8 +194,8 @@ def main():
             from templateflow import api
 
             dseg_tsv = str(api.get("fsaverage", suffix="dseg", extension=[".tsv"]))
-            _copy_any(dseg_tsv, str(config.execution.fmriprep_dir / "desc-aseg_dseg.tsv"))
-            _copy_any(dseg_tsv, str(config.execution.fmriprep_dir / "desc-aparcaseg_dseg.tsv"))
+            _copy_any(dseg_tsv, str(config.execution.fmripost_aroma_dir / "desc-aseg_dseg.tsv"))
+            _copy_any(dseg_tsv, str(config.execution.fmripost_aroma_dir / "desc-aparcaseg_dseg.tsv"))
         errno = 0
     finally:
         from pkg_resources import resource_filename as pkgrf
@@ -225,13 +212,13 @@ def main():
         # Generate reports phase
         failed_reports = generate_reports(
             config.execution.participant_label,
-            config.execution.fmriprep_dir,
+            config.execution.fmripost_aroma_dir,
             config.execution.run_uuid,
-            config=pkgrf("fmriprep", "data/reports-spec.yml"),
-            packagename="fmriprep",
+            config=pkgrf("fmripost_aroma", "data/reports-spec.yml"),
+            packagename="fmripost_aroma",
         )
-        write_derivative_description(config.execution.bids_dir, config.execution.fmriprep_dir)
-        write_bidsignore(config.execution.fmriprep_dir)
+        write_derivative_description(config.execution.bids_dir, config.execution.fmripost_aroma_dir)
+        write_bidsignore(config.execution.fmripost_aroma_dir)
 
         if sentry_sdk is not None and failed_reports:
             sentry_sdk.capture_message(
@@ -242,7 +229,8 @@ def main():
 
 
 def migas_exit() -> None:
-    """
+    """Exit migas.
+
     Send a final crumb to the migas server signaling if the run successfully completed
     This function should be registered with `atexit` to run at termination.
     """
@@ -275,6 +263,6 @@ def migas_exit() -> None:
 
 if __name__ == "__main__":
     raise RuntimeError(
-        "fmriprep/cli/run.py should not be run directly;\n"
-        "Please `pip install` fmriprep and use the `fmriprep` command"
+        "fmripost_aroma/cli/run.py should not be run directly;\n"
+        "Please `pip install` fmripost_aroma and use the `fmripost_aroma` command"
     )
