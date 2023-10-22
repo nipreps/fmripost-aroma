@@ -8,7 +8,7 @@ build/**/*
 build
 dist/**/*
 dist
-fmriprep.egg-info/**/*
-fmriprep.egg-info
+fmripost_aroma.egg-info/**/*
+fmripost_aroma.egg-info
 .eggs/**/*
 .eggs

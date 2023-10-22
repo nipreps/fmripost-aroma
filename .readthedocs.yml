@@ -8,9 +8,12 @@ build:
     post_checkout:
       - git fetch --unshallow
 
+sphinx:
+  configuration: docs/conf.py
+
 python:
   install:
-    - requirements: docs/requirements.txt
-    - path: .
+    - method: pip
+      path: .
       extra_requirements:
         - doc
