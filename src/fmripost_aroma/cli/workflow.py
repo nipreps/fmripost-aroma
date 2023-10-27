@@ -84,7 +84,8 @@ def build_workflow(config_file, retval):
 
     # First check that bids_dir looks like a BIDS folder
     subject_list = collect_participants(
-        config.execution.layout, participant_label=config.execution.participant_label
+        config.execution.layout,
+        participant_label=config.execution.participant_label,
     )
 
     # Called with reports only

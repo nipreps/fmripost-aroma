@@ -153,11 +153,16 @@ def _build_parser(**kwargs):
         action="store",
         nargs="+",
         type=_drop_sub,
-        help="A space delimited list of participant identifiers or a single "
-        "identifier (the sub- prefix can be removed)",
+        help=(
+            "A space delimited list of participant identifiers or a single "
+            "identifier (the sub- prefix can be removed)"
+        ),
     )
     g_bids.add_argument(
-        "-t", "--task-id", action="store", help="Select a specific task to be processed"
+        "-t",
+        "--task-id",
+        action="store",
+        help="Select a specific task to be processed",
     )
     g_bids.add_argument(
         "--bids-filter-file",

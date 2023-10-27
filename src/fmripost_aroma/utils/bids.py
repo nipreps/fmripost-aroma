@@ -17,7 +17,7 @@ def collect_data(
             "extension": [".nii", ".nii.gz"],
         }
     }
-    subj_data = layout.get(**query)
+    subj_data = layout.get(subject=subject_id, **query)
     return subj_data
 
 
