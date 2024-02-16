@@ -1,4 +1,5 @@
 """Utilities to handle BIDS inputs."""
+
 from __future__ import annotations
 
 import json

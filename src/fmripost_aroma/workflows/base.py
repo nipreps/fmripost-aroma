@@ -39,7 +39,7 @@ from packaging.version import Version
 
 from fmripost_aroma import config
 from fmripost_aroma.interfaces.bids import DerivativesDataSink
-from fmripost_aroma.interfaces.reports import AboutSummary, SubjectSummary
+from fmripost_aroma.interfaces.reportlets import AboutSummary, SubjectSummary
 
 
 def init_fmripost_aroma_wf():
