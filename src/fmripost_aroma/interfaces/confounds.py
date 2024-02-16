@@ -58,6 +58,7 @@ class ICAConfounds(SimpleInterface):
 
 
 def _get_ica_confounds(ica_out_dir, skip_vols, newpath=None):
+    """Extract confounds from ICA-AROMA result directory."""
     if newpath is None:
         newpath = os.getcwd()
 

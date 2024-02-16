@@ -152,16 +152,18 @@ def init_single_subject_wf(subject_id: str):
 
     Notes
     -----
-    1. Load fMRIPost-AROMA config file.
-    2. Collect fMRIPrep derivatives. Should only require minimal derivatives.
-        - BOLD file
-    3. Loop over runs.
-    4. Collect each run's associated files.
-        - Transform(s) to MNI152NLin6Asym
-        - Confounds file
-    5. Use ``resampler`` to warp BOLD to MNI152NLin6Asym-2mm.
-    6. Convert motion parameters from confounds file to FSL format.
-    7. Run ICA-AROMA.
+    1.  Load fMRIPost-AROMA config file.
+    2.  Collect fMRIPrep derivatives. Should only require minimal derivatives.
+        -   BOLD file
+    3.  Loop over runs.
+    4.  Collect each run's associated files.
+        -   Transform(s) to MNI152NLin6Asym
+        -   Confounds file
+        -   ICA-AROMA uses its own standard-space edge, CSF, and brain masks,
+            so we don't need to worry about those.
+    5.  Use ``resampler`` to warp BOLD to MNI152NLin6Asym-2mm.
+    6.  Convert motion parameters from confounds file to FSL format.
+    7.  Run ICA-AROMA.
 
     """
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
@@ -303,10 +305,10 @@ It is released under the [CC0]\
     # Append the functional section to the existing anatomical excerpt
     # That way we do not need to stream down the number of bold datasets
     func_pre_desc = f"""
-Functional data preprocessing
+Functional data postprocessing
 
 : For each of the {len(subject_data['bold'])} BOLD runs found per subject
-(across all tasks and sessions), the following preprocessing was performed.
+(across all tasks and sessions), the following postprocessing was performed.
 """
 
     for bold_file in subject_data["bold"]:
