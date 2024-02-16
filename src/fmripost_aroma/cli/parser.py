@@ -112,8 +112,8 @@ def _build_parser(**kwargs):
         action="store",
         type=PathExists,
         help=(
-            "The root folder of a BIDS valid dataset (sub-XXXXX folders should "
-            "be found at the top level in this folder)."
+            "The root folder of a BIDS-valid raw dataset "
+            "(sub-XXXXX folders should be found at the top level in this folder)."
         ),
     )
     parser.add_argument(
@@ -127,16 +127,8 @@ def _build_parser(**kwargs):
         choices=["participant"],
         help=(
             "Processing stage to be run, only 'participant' in the case of "
-            "fMRIPrep (see BIDS-Apps specification)."
+            "fMRIPost-AROMA (see BIDS-Apps specification)."
         ),
-    )
-    parser.add_argument(
-        "-d",
-        action="store",
-        type=PathExists,
-        target="preprocessing_dir",
-        help="Path to preprocessing derivatives.",
-        required=True,
     )
 
     g_bids = parser.add_argument_group("Options for filtering BIDS queries")
@@ -185,7 +177,11 @@ def _build_parser(**kwargs):
         metavar="PATH",
         type=Path,
         nargs="*",
-        help="Search PATH(s) for pre-computed derivatives.",
+        help=(
+            "Search PATH(s) for pre-computed derivatives. "
+            "This must include the preprocessing derivatives."
+        ),
+        required=True,
     )
     g_bids.add_argument(
         "--bids-database-dir",
@@ -304,12 +300,25 @@ def _build_parser(**kwargs):
 
     g_aroma = parser.add_argument_group("Options for running ICA_AROMA")
     g_aroma.add_argument(
-        "--aroma-melodic-dimensionality",
-        dest="aroma_melodic_dim",
+        "--melodic-dimensionality",
+        dest="melodic_dim",
         action="store",
         default=0,
         type=int,
-        help="Deprecated. Will raise an error in 24.0.",
+        help=(
+            "Exact or maximum number of MELODIC components to estimate "
+            "(positive = exact, negative = maximum)"
+        ),
+    )
+    g_aroma.add_argument(
+        "--error-on-warnings",
+        dest="error_on_aroma_warnings",
+        action="store_true",
+        default=False,
+        help=(
+            "Raise an error if ICA_AROMA does not produce sensible output "
+            "(e.g., if all the components are classified as signal or noise)"
+        ),
     )
 
     g_carbon = parser.add_argument_group("Options for carbon usage tracking")

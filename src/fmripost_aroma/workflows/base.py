@@ -164,6 +164,7 @@ def init_single_subject_wf(subject_id: str):
     5.  Use ``resampler`` to warp BOLD to MNI152NLin6Asym-2mm.
     6.  Convert motion parameters from confounds file to FSL format.
     7.  Run ICA-AROMA.
+    8.  Warp BOLD to requested output spaces and denoise with ICA-AROMA.
 
     """
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
