@@ -136,6 +136,7 @@ def init_single_subject_wf(subject_id: str):
 
             from fmripost_aroma.workflows.tests import mock_config
             from fmripost_aroma.workflows.base import init_single_subject_wf
+
             with mock_config():
                 wf = init_single_subject_wf('01')
 
@@ -148,6 +149,19 @@ def init_single_subject_wf(subject_id: str):
     ------
     subjects_dir : :obj:`str`
         FreeSurfer's ``$SUBJECTS_DIR``.
+
+    Notes
+    -----
+    1. Load fMRIPost-AROMA config file.
+    2. Collect fMRIPrep derivatives. Should only require minimal derivatives.
+        - BOLD file
+    3. Loop over runs.
+    4. Collect each run's associated files.
+        - Transform(s) to MNI152NLin6Asym
+        - Confounds file
+    5. Use ``resampler`` to warp BOLD to MNI152NLin6Asym-2mm.
+    6. Convert motion parameters from confounds file to FSL format.
+    7. Run ICA-AROMA.
 
     """
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
