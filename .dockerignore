@@ -1,0 +1,14 @@
+# python cache
+__pycache__/**/*
+__pycache__
+*.pyc
+
+# python distribution
+build/**/*
+build
+dist/**/*
+dist
+fmripost_aroma.egg-info/**/*
+fmripost_aroma.egg-info
+.eggs/**/*
+.eggs
