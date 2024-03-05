@@ -88,7 +88,6 @@ Visual Reports
 --------------
 *fMRIPrep* outputs summary reports, written to ``<output dir>/fmriprep/sub-<subject_label>.html``.
 These reports provide a quick way to make visual inspection of the results easy.
-`View a sample report. <_static/SampleReport/sample_report.html>`_
 
 Derivatives of *fMRIPrep* (preprocessed data)
 ---------------------------------------------
@@ -626,19 +625,6 @@ Some of the estimated confounds are plotted with a "carpet" visualization of the
 :abbr:`BOLD (blood-oxygen level-dependent)` time series [Power2016]_.
 An example of these plots follows:
 
-.. figure:: _static/sub-405_ses-01_task-rest_run-01_desc-carpetplot_bold.svg
-
-    The figure shows on top several confounds estimated for the BOLD series:
-    global signals ('GS', 'CSF', 'WM'), DVARS,
-    and framewise-displacement ('FD').
-    At the bottom, a 'carpetplot' summarizing the BOLD series [Power2016]_.
-    The carpet plot rows correspond to voxelwise time series,
-    and are separated into regions: cortical gray matter, deep
-    gray matter, white matter and cerebrospinal fluid, cerebellum
-    and the brain-edge or “crown” [Provins2022]_.
-    The crown corresponds to the voxels located on a
-    closed band around the brain [Patriat2015]_.
-
 Noise components computed during each CompCor decomposition are evaluated according
 to the fraction of variance that they explain across the nuisance ROI.
 This is used by *fMRIPrep* to determine whether each component should be saved for
@@ -649,32 +635,9 @@ option ``--return-all-components``.
 *fMRIPrep* reports include a plot of the cumulative variance explained by each
 component, ordered by descending singular value.
 
-.. figure:: _static/sub-01_task-rest_compcor.svg
-
-    The figure displays the cumulative variance explained by components for each
-    of four CompCor decompositions (left to right: anatomical CSF mask, anatomical
-    white matter mask, anatomical combined mask, temporal).
-    The number of components is plotted on the abscissa and
-    the cumulative variance explained on the ordinate.
-    Dotted lines indicate the minimum number of components necessary
-    to explain 50%, 70%, and 90% of the variance in the nuisance mask.
-    By default, only the components that explain the top 50% of the variance
-    are saved.
-
 Also included is a plot of correlations among confound regressors.
 This can be used to guide selection of a confound model or to assess the extent
 to which tissue-specific regressors correlate with global signal.
-
-.. figure:: _static/sub-01_task-mixedgamblestask_run-01_confounds_correlation.svg
-
-    The left-hand panel shows the matrix of correlations among selected confound
-    time series as a heat-map.
-    Note the zero-correlation blocks near the diagonal; these correspond to each
-    CompCor decomposition.
-    The right-hand panel displays the correlation of selected confound time series
-    with the mean global signal computed across the whole brain; the regressors shown
-    are those with greatest correlation with the global signal.
-    This information can be used to diagnose partial volume effects.
 
 See implementation on :mod:`~fmriprep.workflows.bold.confounds.init_bold_confs_wf`.
 

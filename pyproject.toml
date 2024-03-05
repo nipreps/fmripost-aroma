@@ -19,8 +19,12 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
 ]
 dependencies = [
+  "fmriprep",
   "nipype >= 1.8.5",
+  "nireports",
+  "niworkflows",
   "pybids >= 0.15.6",
+  "smriprep",
   "typer",
 ]
 dynamic = ["version"]
