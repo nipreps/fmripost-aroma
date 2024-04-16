@@ -96,6 +96,7 @@ def init_fmripost_aroma_wf():
         )
         for node in single_subject_wf._get_all_nodes():
             node.config = deepcopy(single_subject_wf.config)
+
         if freesurfer:
             fmripost_aroma_wf.connect(
                 fsdir,
@@ -153,8 +154,14 @@ def init_single_subject_wf(subject_id: str):
     Notes
     -----
     1.  Load fMRIPost-AROMA config file.
-    2.  Collect fMRIPrep derivatives. Should only require minimal derivatives.
-        -   BOLD file
+    2.  Collect fMRIPrep derivatives.
+        -   BOLD file in native space.
+        -   Two main possibilities:
+            1.  bids_dir is a raw BIDS dataset and preprocessing derivatives
+                are provided through ``--derivatives``.
+                In this scenario, we only need minimal derivatives.
+            2.  bids_dir is a derivatives dataset and we need to collect compliant
+                derivatives to get the data into the right space.
     3.  Loop over runs.
     4.  Collect each run's associated files.
         -   Transform(s) to MNI152NLin6Asym
@@ -172,7 +179,7 @@ def init_single_subject_wf(subject_id: str):
     from niworkflows.interfaces.nilearn import NILEARN_VERSION
     from niworkflows.utils.misc import fix_multi_T1w_source_name
 
-    from fmripost_aroma.utils.bids import collect_data
+    from fmripost_aroma.utils.bids import collect_derivatives
     from fmripost_aroma.workflows.aroma import init_ica_aroma_wf
 
     workflow = Workflow(name=f"sub_{subject_id}_wf")
@@ -207,7 +214,7 @@ It is released under the [CC0]\
 
 """
 
-    subject_data = collect_data(
+    subject_data = collect_derivatives(
         config.execution.layout,
         subject_id,
         task=config.execution.task_id,

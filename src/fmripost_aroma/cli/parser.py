@@ -31,13 +31,30 @@ def _build_parser(**kwargs):
 
     ``kwargs`` are passed to ``argparse.ArgumentParser`` (mainly useful for debugging).
     """
-    from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
+    from argparse import Action, ArgumentDefaultsHelpFormatter, ArgumentParser
     from functools import partial
     from pathlib import Path
 
     from packaging.version import Version
 
     from fmripost_aroma.cli.version import check_latest, is_flagged
+
+    class ToDict(Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            d = {}
+            for spec in values:
+                try:
+                    name, loc = spec.split('=')
+                    loc = Path(loc)
+                except ValueError:
+                    loc = Path(spec)
+                    name = loc.name
+
+                if name in d:
+                    raise ValueError(f'Received duplicate derivative name: {name}')
+
+                d[name] = loc
+            setattr(namespace, self.dest, d)
 
     def _path_exists(path, parser):
         """Ensure a given path exists."""
@@ -171,17 +188,17 @@ def _build_parser(**kwargs):
         ),
     )
     g_bids.add_argument(
-        "-d",
-        "--derivatives",
-        action="store",
-        metavar="PATH",
-        type=Path,
-        nargs="*",
+        '-d',
+        '--derivatives',
+        action=ToDict,
+        metavar='PACKAGE=PATH',
+        type=str,
+        nargs='+',
         help=(
-            "Search PATH(s) for pre-computed derivatives. "
-            "This must include the preprocessing derivatives."
+            'Search PATH(s) for pre-computed derivatives. '
+            'These may be provided as named folders '
+            '(e.g., `--derivatives smriprep=/path/to/smriprep`).'
         ),
-        required=True,
     )
     g_bids.add_argument(
         "--bids-database-dir",
