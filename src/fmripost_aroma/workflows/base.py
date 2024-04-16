@@ -296,7 +296,6 @@ It is released under the [CC0]\
         run_without_submitting=True,
     )
 
-    # fmt:off
     workflow.connect([
         (bidssrc, bids_info, [(('t1w', fix_multi_T1w_source_name), 'in_file')]),
         # Reporting connections
@@ -307,8 +306,7 @@ It is released under the [CC0]\
         (bidssrc, ds_report_about, [(('t1w', fix_multi_T1w_source_name), 'source_file')]),
         (summary, ds_report_summary, [('out_report', 'in_file')]),
         (about, ds_report_about, [('out_report', 'in_file')]),
-    ])
-    # fmt:on
+    ])  # fmt:skip
 
     # Append the functional section to the existing anatomical excerpt
     # That way we do not need to stream down the number of bold datasets
@@ -322,6 +320,7 @@ Functional data postprocessing
     for bold_file in subject_data["bold"]:
         functional_cache = {}
         if config.execution.derivatives:
+            # Collect native-space derivatives and warp them to MNI152NLin6Asym
             from fmripost_aroma.utils.bids import collect_derivatives, extract_entities
 
             entities = extract_entities(bold_file)
@@ -333,6 +332,11 @@ Functional data postprocessing
                         entities=entities,
                     )
                 )
+        else:
+            # Collect standard-space derivatives
+            from fmripost_aroma.utils.bids import collect_derivatives
+
+            ...
 
         ica_aroma_wf = init_ica_aroma_wf(
             bold_file=bold_file,
