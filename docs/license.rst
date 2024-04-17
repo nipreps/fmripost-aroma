@@ -1,14 +1,14 @@
 About the *NiPreps* framework licensing
 ---------------------------------------
 Please check https://www.nipreps.org/community/licensing/ for detailed
-information on the criteria we use to license *fMRIPrep* and other
+information on the criteria we use to license *fMRIPost-AROMA* and other
 projects of the framework.
 
 License information
 -------------------
 Copyright (c) the *NiPreps* Developers.
 
-As of the 21.0.x pre-release and release series, *fMRIPrep* is
+As of the 21.0.x pre-release and release series, *fMRIPost-AROMA* is
 licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -20,10 +20,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-Copyright (c) 2015-2023, the *fMRIPrep* developers and the CRN.
+Copyright (c), the *fMRIPost-AROMA* developers and the CRN.
 All rights reserved.
 
-*fMRIPrep* 20.2 series and earlier are
+*fMRIPost-AROMA* 20.2 series and earlier are
 licensed under the BSD 3-clause license.
 You may obtain a copy of the License at
 https://opensource.org/licenses/BSD-3-Clause

@@ -226,7 +226,7 @@ def test_init_fmriprep_wf(
         config.workflow.cifti_output = cifti_output
         config.workflow.run_reconall = freesurfer
         config.workflow.ignore = ignore
-        with patch.dict('fmriprep.config.execution.bids_filters', bids_filters):
+        with patch.dict('fmripost_aroma.config.execution.bids_filters', bids_filters):
             wf = init_fmriprep_wf()
 
     generate_expanded_graph(wf._create_flat_graph())

@@ -7,12 +7,12 @@ RUN apt-get update &&\
         net-tools \
         wget
 
-# necessary to find fmriprep in /src/fmriprep
+# necessary to find fmripost_aroma in /src/fmripost_aroma
 ENV PYTHONNOUSERSITE=0
 
-RUN cd /src/fmriprep &&\
+RUN cd /src/fmripost_aroma &&\
     pip install --no-use-pep517 -e .[all] &&\
-    cp -R /src/fmriprep/fmriprep.egg-info /src/
+    cp -R /src/fmripost_aroma/fmripost_aroma.egg-info /src/
 
 # create freesurfer license
 RUN cd /tmp &&\
@@ -20,7 +20,7 @@ RUN cd /tmp &&\
 
 ENV FS_LICENSE=/tmp/license.txt
 
-# set the fmriprep development variables
+# set the fmripost_aroma development variables
 ENV FMRIPREP_REGRESSION_SOURCE=/tmp/data/fmriprep_bold_truncated \
     FMRIPREP_REGRESSION_TARGETS=/tmp/data/fmriprep_bold_mask \
     FMRIPREP_REGRESSION_REPORTS=/tmp/data/reports \
@@ -78,13 +78,13 @@ RUN /src/codeserver/code-server --install-extension eamodio.gitlens &&\
     /src/codeserver/code-server --install-extension ms-python.python
 
 
-ENTRYPOINT ["/src/codeserver/code-server", "--auth", "none", "/src/fmriprep"]
+ENTRYPOINT ["/src/codeserver/code-server", "--auth", "none", "/src/fmripost_aroma"]
 
-# usage example (assuming in local fmriprep directory):
+# usage example (assuming in local fmripost_aroma directory):
 #
 # docker run -it \
 # -p 127.0.0.1:8445:8080 \
-# -v ${PWD}:/src/fmriprep \
+# -v ${PWD}:/src/fmripost_aroma \
 # fmriprep_devel:latest
 #
 # then type 127.0.0.1:8445 in your browser address bar

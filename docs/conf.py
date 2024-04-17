@@ -1,4 +1,4 @@
-# fmriprep documentation build configuration file, created by
+# fmripost_aroma documentation build configuration file, created by
 # sphinx-quickstart on Mon May  9 09:04:25 2016.
 #
 # This file is execfile()d with the current directory set to its
@@ -84,7 +84,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'fMRIPost-AROMA'
-author = 'The fMRIPrep developers'
+author = 'The fMRIPost-AROMA developers'
 copyright = f'2016-, {author}'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -158,7 +158,7 @@ html_theme = 'sphinx_rtd_theme'
 
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
-# html_title = u'fmriprep vversion'
+# html_title = u'fmripost_aroma vversion'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 # html_short_title = None

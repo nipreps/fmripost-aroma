@@ -74,8 +74,8 @@ FUNCTIONAL_TEMPLATE = """\
 """
 
 ABOUT_TEMPLATE = """\t<ul>
-\t\t<li>fMRIPrep version: {version}</li>
-\t\t<li>fMRIPrep command: <code>{command}</code></li>
+\t\t<li>fMRIPost-AROMA version: {version}</li>
+\t\t<li>fMRIPost-AROMA command: <code>{command}</code></li>
 \t\t<li>Date preprocessed: {date}</li>
 \t</ul>
 </div>
@@ -287,7 +287,7 @@ class SubjectSummary(SummaryInterface):
             if recon.cmdline.startswith("echo"):
                 freesurfer_status = "Pre-existing directory"
             else:
-                freesurfer_status = "Run by fMRIPrep"
+                freesurfer_status = "Run by fMRIPost-AROMA"
 
         t2w_seg = ""
         if self.inputs.t2w:

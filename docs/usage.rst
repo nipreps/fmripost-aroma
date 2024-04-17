@@ -5,14 +5,14 @@
 Usage Notes
 ===========
 .. warning::
-   As of *fMRIPrep* 1.0.12, the software includes a tracking system
+   As of *fMRIPost-AROMA* 1.0.12, the software includes a tracking system
    to report usage statistics and errors. Users can opt-out using
    the ``--notrack`` command line argument.
 
 
 Execution and the BIDS format
 -----------------------------
-The *fMRIPrep* workflow takes as principal input the path of the dataset
+The *fMRIPost-AROMA* workflow takes as principal input the path of the dataset
 that is to be processed.
 The input dataset is required to be in valid :abbr:`BIDS (Brain Imaging Data
 Structure)` format, and it must include at least one T1w structural image and
@@ -25,7 +25,7 @@ The common parts of the command follow the `BIDS-Apps
 <https://github.com/BIDS-Apps>`_ definition.
 Example: ::
 
-    fmriprep data/bids_root/ out/ participant -w work/
+    fmripost_aroma data/bids_root/ out/ participant -w work/
 
 Further information about BIDS and BIDS-Apps can be found at the
 `NiPreps portal <https://www.nipreps.org/apps/framework/>`__.
@@ -35,7 +35,7 @@ Command-Line Arguments
 ----------------------
 .. argparse::
    :ref: fmripost_aroma.cli.parser._build_parser
-   :prog: fmriprep
+   :prog: fmripost_aroma
    :nodefault:
    :nodefaultconst:
 
@@ -64,7 +64,7 @@ file on the host system: ::
         -v $HOME/fullds005:/data:ro \
         -v $HOME/dockerout:/out \
         -v $HOME/.licenses/freesurfer/license.txt:/opt/freesurfer/license.txt \
-        nipreps/fmriprep:latest \
+        nipreps/fmripost_aroma:latest \
         /data /out/out \
         participant \
         --ignore fieldmaps
@@ -74,16 +74,16 @@ file on the host system: ::
 Reusing precomputed derivatives
 -------------------------------
 
-Reusing a previous, partial execution of *fMRIPrep*
+Reusing a previous, partial execution of *fMRIPost-AROMA*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*fMRIPrep* will pick up where it left off a previous execution, so long as the work directory
+*fMRIPost-AROMA* will pick up where it left off a previous execution, so long as the work directory
 points to the same location, and this directory has not been changed/manipulated.
 Some workflow nodes will rerun unconditionally, so there will always be some amount of
 reprocessing.
 
 Using a previous run of *FreeSurfer*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*fMRIPrep* will automatically reuse previous runs of *FreeSurfer* if a subject directory
+*fMRIPost-AROMA* will automatically reuse previous runs of *FreeSurfer* if a subject directory
 named ``freesurfer/`` is found in the output directory (``<output_dir>/freesurfer``).
 Reconstructions for each participant will be checked for completeness, and any missing
 components will be recomputed.
@@ -93,8 +93,8 @@ If precomputed results are found, they will be reused.
 
 BIDS Derivatives reuse
 ~~~~~~~~~~~~~~~~~~~~~~
-As of version 23.2.0, *fMRIPrep* can reuse precomputed derivatives that follow BIDS Derivatives
-conventions. To provide derivatives to *fMRIPrep*, use the ``--derivatives`` (``-d``) flag one
+As of version 23.2.0, *fMRIPost-AROMA* can reuse precomputed derivatives that follow BIDS Derivatives
+conventions. To provide derivatives to *fMRIPost-AROMA*, use the ``--derivatives`` (``-d``) flag one
 or more times.
 
 This mechanism replaces the earlier, more limited ``--anat-derivatives`` flag.
@@ -104,18 +104,18 @@ This mechanism replaces the earlier, more limited ``--anat-derivatives`` flag.
 
 This feature has several intended use-cases:
 
-  * To enable fMRIPrep to be run in a "minimal" mode, where only the most essential
+  * To enable fMRIPost-AROMA to be run in a "minimal" mode, where only the most essential
     derivatives are generated. This can be useful for large datasets where disk space
     is a concern, or for users who only need a subset of the derivatives. Further
     derivatives may be generated later, or by a different tool.
-  * To enable fMRIPrep to be integrated into a larger processing pipeline, where
-    other tools may generate derivatives that fMRIPrep can use in place of its own
+  * To enable fMRIPost-AROMA to be integrated into a larger processing pipeline, where
+    other tools may generate derivatives that fMRIPost-AROMA can use in place of its own
     steps.
   * To enable users to substitute their own custom derivatives for those generated
-    by fMRIPrep. For example, a user may wish to use a different brain extraction
-    tool, or a different registration tool, and then use fMRIPrep to generate the
+    by fMRIPost-AROMA. For example, a user may wish to use a different brain extraction
+    tool, or a different registration tool, and then use fMRIPost-AROMA to generate the
     remaining derivatives.
-  * To enable complicated meta-workflows, where fMRIPrep is run multiple times
+  * To enable complicated meta-workflows, where fMRIPost-AROMA is run multiple times
     with different options, and the results are combined. For example, the
     `My Connectome <https://openneuro.org/datasets/ds000031/>`__ dataset contains
     107 sessions for a single-subject. Processing of all sessions simultaneously
@@ -128,27 +128,27 @@ generated.
 Troubleshooting
 ---------------
 Logs and crashfiles are output into the
-``<output dir>/fmriprep/sub-<participant_label>/log`` directory.
+``<output dir>/fmripost_aroma/sub-<participant_label>/log`` directory.
 Information on how to customize and understand these files can be found on the
 `Debugging Nipype Workflows <https://miykael.github.io/nipype_tutorial/notebooks/basic_debug.html>`_
 page.
 
 **Support and communication**.
-The documentation of this project is found here: https://fmriprep.org/en/latest/.
+The documentation of this project is found here: https://fmripost_aroma.org/en/latest/.
 
 All bugs, concerns and enhancement requests for this software can be submitted here:
-https://github.com/nipreps/fmriprep/issues.
+https://github.com/nipreps/fmripost_aroma/issues.
 
 If you have a problem or would like to ask a question about how to use *fMRIPRep*,
-please submit a question to `NeuroStars.org <https://neurostars.org/tag/fmriprep>`_ with an ``fmriprep`` tag.
+please submit a question to `NeuroStars.org <https://neurostars.org/tag/fmripost_aroma>`_ with an ``fmripost_aroma`` tag.
 NeuroStars.org is a platform similar to StackOverflow but dedicated to neuroinformatics.
 
 Previous questions about *fMRIPRep* are available here:
-https://neurostars.org/tag/fmriprep/
+https://neurostars.org/tag/fmripost_aroma/
 
 To participate in the *fMRIPRep* development-related discussions please use the
 following mailing list: https://mail.python.org/mailman/listinfo/neuroimaging
-Please add *[fmriprep]* to the subject line when posting on the mailing list.
+Please add *[fmripost_aroma]* to the subject line when posting on the mailing list.
 
 
 .. include:: license.rst

@@ -3,7 +3,7 @@
 ===========================
 Processing pipeline details
 ===========================
-*fMRIPrep* adapts its pipeline depending on what data and metadata are
+*fMRIPost-AROMA* adapts its pipeline depending on what data and metadata are
 available and are used as the input.
 For example, slice timing correction will be
 performed only if the ``SliceTiming`` metadata field is found for the input

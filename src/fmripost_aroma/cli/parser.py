@@ -237,7 +237,7 @@ def _build_parser(**kwargs):
         action="store",
         type=_to_gb,
         metavar="MEMORY_MB",
-        help="Upper bound memory limit for fMRIPrep processes",
+        help="Upper bound memory limit for fMRIPost-AROMA processes",
     )
     g_perfm.add_argument(
         "--low-mem",
@@ -391,7 +391,7 @@ https://fmriprep.readthedocs.io/en/%s/spaces.html"""
         action="store_true",
         default=False,
         help="Clears working directory of contents. Use of this flag is not "
-        "recommended when running concurrent processes of fMRIPrep.",
+        "recommended when running concurrent processes of fMRIPost-AROMA.",
     )
     g_other.add_argument(
         "--resource-monitor",
@@ -439,7 +439,7 @@ https://fmriprep.readthedocs.io/en/%s/spaces.html"""
     if latest is not None and currentv < latest:
         print(
             """\
-You are using fMRIPrep-%s, and a newer version of fMRIPrep is available: %s.
+You are using fMRIPost-AROMA-%s, and a newer version of fMRIPost-AROMA is available: %s.
 Please check out our documentation about how and when to upgrade:
 https://fmriprep.readthedocs.io/en/latest/faq.html#upgrading"""
             % (currentv, latest),
@@ -451,7 +451,7 @@ https://fmriprep.readthedocs.io/en/latest/faq.html#upgrading"""
         _reason = _blist[1] or "unknown"
         print(
             """\
-WARNING: Version %s of fMRIPrep (current) has been FLAGGED
+WARNING: Version %s of fMRIPost-AROMA (current) has been FLAGGED
 (reason: %s).
 That means some severe flaw was found in it and we strongly
 discourage its usage."""
@@ -524,7 +524,7 @@ def parse_args(args=None, namespace=None):
     if opts.clean_workdir and work_dir.exists():
         from niworkflows.utils.misc import clean_directory
 
-        build_log.info(f"Clearing previous fMRIPrep working directory: {work_dir}")
+        build_log.info(f"Clearing previous fMRIPost-AROMA working directory: {work_dir}")
         if not clean_directory(work_dir):
             build_log.warning(f"Could not clear all contents of working directory: {work_dir}")
 
@@ -539,7 +539,7 @@ def parse_args(args=None, namespace=None):
         parser.error(
             "The selected output folder is the same as the input BIDS folder. "
             "Please modify the output path "
-            f"(suggestion: {bids_dir / 'derivatives' / 'fmriprep-' + version.split('+')[0]}."
+            f"(suggestion: {bids_dir / 'derivatives' / 'fmripost_aroma-' + version.split('+')[0]}."
         )
 
     if bids_dir in work_dir.parents:

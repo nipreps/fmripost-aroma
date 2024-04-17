@@ -117,7 +117,7 @@ def fetch_all():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Helper script for pre-caching required templates to run fMRIPrep',
+        description='Helper script for pre-caching required templates to run fMRIPost-AROMA',
     )
     parser.add_argument(
         '--tf-dir',

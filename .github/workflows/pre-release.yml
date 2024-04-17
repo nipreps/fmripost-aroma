@@ -56,7 +56,7 @@ jobs:
         run: |
           source .maint/ci/build_archive.sh
           echo "ARCHIVE=$ARCHIVE" >> $GITHUB_ENV
-      - name: Install fMRIPrep
+      - name: Install fMRIPost-AROMA
         run: .maint/ci/install.sh
       - name: Install extras
         run: .maint/ci/install_extras.sh

@@ -21,23 +21,23 @@
 #     https://www.nipreps.org/community/licensing/
 #
 r"""
-A Python module to maintain unique, run-wide *fMRIPrep* settings.
+A Python module to maintain unique, run-wide *fMRIPost-AROMA* settings.
 
 This module implements the memory structures to keep a consistent, singleton config.
 Settings are passed across processes via filesystem, and a copy of the settings for
 each run and subject is left under
-``<fmriprep_dir>/sub-<participant_id>/log/<run_unique_id>/fmriprep.toml``.
+``<fmriprep_dir>/sub-<participant_id>/log/<run_unique_id>/fmripost_aroma.toml``.
 Settings are stored using :abbr:`ToML (Tom's Markup Language)`.
-The module has a :py:func:`~fmriprep.config.to_filename` function to allow writing out
+The module has a :py:func:`~fmripost_aroma.config.to_filename` function to allow writing out
 the settings to hard disk in *ToML* format, which looks like:
 
-.. literalinclude:: ../fmriprep/data/tests/config.toml
+.. literalinclude:: ../fmripost_aroma/data/tests/config.toml
    :language: toml
-   :name: fmriprep.toml
-   :caption: **Example file representation of fMRIPrep settings**.
+   :name: fmripost_aroma.toml
+   :caption: **Example file representation of fMRIPost-AROMA settings**.
 
 This config file is used to pass the settings across processes,
-using the :py:func:`~fmriprep.config.load` function.
+using the :py:func:`~fmripost_aroma.config.load` function.
 
 Configuration sections
 ----------------------
@@ -57,8 +57,8 @@ graph is built across processes.
 
 .. code-block:: Python
 
-    from fmriprep import config
-    config_file = config.execution.work_dir / '.fmriprep.toml'
+    from fmripost_aroma import config
+    config_file = config.execution.work_dir / '.fmripost_aroma.toml'
     config.to_filename(config_file)
     # Call build_workflow(config_file, retval) in a subprocess
     with Manager() as mgr:
@@ -97,7 +97,7 @@ _disable_et = bool(os.getenv("NO_ET") is not None or os.getenv("NIPYPE_NO_ET") i
 os.environ["NIPYPE_NO_ET"] = "1"
 os.environ["NO_ET"] = "1"
 
-CONFIG_FILENAME = "fmriprep.toml"
+CONFIG_FILENAME = "fmripost_aroma.toml"
 
 try:
     set_start_method("forkserver")
@@ -132,7 +132,7 @@ if not any(
     os.environ["PYTHONWARNINGS"] = "ignore"
 elif os.getenv("FMRIPREP_WARNINGS", "0").lower() in ("1", "on", "true", "y", "yes"):
     # allow disabling warnings on development versions
-    # https://github.com/nipreps/fmriprep/pull/2080#discussion_r409118765
+    # https://github.com/nipreps/fmripost_aroma/pull/2080#discussion_r409118765
     from ._warnings import logging
 else:
     import logging
@@ -163,7 +163,7 @@ if os.getenv("IS_DOCKER_8395080871"):
     _cgroup = Path("/proc/1/cgroup")
     if _cgroup.exists() and "docker" in _cgroup.read_text():
         _docker_ver = os.getenv("DOCKER_VERSION_8395080871")
-        _exec_env = "fmriprep-docker" if _docker_ver else "docker"
+        _exec_env = "fmripost_aroma-docker" if _docker_ver else "docker"
     del _cgroup
 
 _fs_license = os.getenv("FS_LICENSE")
@@ -269,7 +269,7 @@ class environment(_Config):
     Read-only options regarding the platform and environment.
 
     Crawls runtime descriptive settings (e.g., default FreeSurfer license,
-    execution environment, nipype and *fMRIPrep* versions, etc.).
+    execution environment, nipype and *fMRIPost-AROMA* versions, etc.).
     The ``environment`` section is not loaded in from file,
     only written out when settings are exported.
     This config section is useful when reporting issues,
@@ -295,7 +295,7 @@ class environment(_Config):
     templateflow_version = _tf_ver
     """The TemplateFlow client version installed."""
     version = __version__
-    """*fMRIPrep*'s version."""
+    """*fMRIPost-AROMA*'s version."""
 
 
 class nipype(_Config):
@@ -394,7 +394,7 @@ class execution(_Config):
     debug = []
     """Debug mode(s)."""
     fmripost_aroma_dir = None
-    """Root of fMRIPrep BIDS Derivatives dataset. Depends on output_layout."""
+    """Root of fMRIPost-AROMA BIDS Derivatives dataset. Depends on output_layout."""
     layout = None
     """A :py:class:`~bids.layout.BIDSLayout` object, see :py:func:`init`."""
     log_dir = None
@@ -406,7 +406,7 @@ class execution(_Config):
     md_only_boilerplate = False
     """Do not convert boilerplate from MarkDown to LaTex and HTML."""
     notrack = False
-    """Do not collect telemetry information for *fMRIPrep*."""
+    """Do not collect telemetry information for *fMRIPost-AROMA*."""
     track_carbon = False
     """Tracks power draws using CodeCarbon package."""
     country_code = "CAN"
@@ -656,7 +656,7 @@ def load(filename, skip=None, init=True):
     Arguments
     ---------
     filename : :py:class:`os.PathLike`
-        TOML file containing fMRIPrep configuration.
+        TOML file containing fMRIPost-AROMA configuration.
     skip : dict or None
         Sets of values to ignore during load, keyed by section name
     init : `bool` or :py:class:`~collections.abc.Container`
