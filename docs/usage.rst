@@ -69,29 +69,6 @@ file on the host system: ::
         participant \
         --ignore fieldmaps
 
-Using FreeSurfer can also be enabled when using ``fmriprep-docker``: ::
-
-    $ fmriprep-docker --fs-license-file $HOME/.licenses/freesurfer/license.txt \
-        /path/to/data/dir /path/to/output/dir participant
-    RUNNING: docker run --rm -it -v /path/to/data/dir:/data:ro \
-        -v /home/user/.licenses/freesurfer/license.txt:/opt/freesurfer/license.txt \
-        -v /path/to_output/dir:/out nipreps/fmriprep:1.0.0 \
-        /data /out participant
-    ...
-
-If the environment variable ``$FS_LICENSE`` is set in the host system, then
-it will automatically used by ``fmriprep-docker``. For instance, the following
-would be equivalent to the latest example: ::
-
-    $ export FS_LICENSE=$HOME/.licenses/freesurfer/license.txt
-    $ fmriprep-docker /path/to/data/dir /path/to/output/dir participant
-    RUNNING: docker run --rm -it -v /path/to/data/dir:/data:ro \
-        -v /home/user/.licenses/freesurfer/license.txt:/opt/freesurfer/license.txt \
-        -v /path/to_output/dir:/out nipreps/fmriprep:1.0.0 \
-        /data /out participant
-    ...
-
-
 .. _prev_derivs:
 
 Reusing precomputed derivatives
