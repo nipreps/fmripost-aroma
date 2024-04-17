@@ -29,16 +29,3 @@ You may obtain a copy of the License at
 https://opensource.org/licenses/BSD-3-Clause
 
 All trademarks referenced herein are property of their respective holders.
-
-The ``fmriprep-wrapper`` for Docker
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Copyright (c) 2020-2023, the *NiPreps* Developers.
-Copyright (c) 2015-2020, the *fMRIPrep* developers and the CRN.
-All rights reserved.
-
-*fMRIPrep-wrapper* is
-licensed under the BSD 3-clause license.
-You may obtain a copy of the License at
-https://opensource.org/licenses/BSD-3-Clause
-
-All trademarks referenced herein are property of their respective holders.
