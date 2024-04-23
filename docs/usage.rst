@@ -5,9 +5,9 @@
 Usage Notes
 ===========
 .. warning::
-   As of *fMRIPost-AROMA* 1.0.12, the software includes a tracking system
-   to report usage statistics and errors. Users can opt-out using
-   the ``--notrack`` command line argument.
+   *fMRIPost-AROMA* includes a tracking system to report usage statistics and errors
+   for debugging and grant reporting purposes.
+   Users can opt-out using the ``--notrack`` command line argument.
 
 
 Execution and the BIDS format

@@ -8,8 +8,7 @@ License information
 -------------------
 Copyright (c) the *NiPreps* Developers.
 
-As of the 21.0.x pre-release and release series, *fMRIPost-AROMA* is
-licensed under the Apache License, Version 2.0 (the "License");
+*fMRIPost-AROMA* is licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 http://www.apache.org/licenses/LICENSE-2.0
@@ -22,10 +21,5 @@ limitations under the License.
 
 Copyright (c), the *fMRIPost-AROMA* developers and the CRN.
 All rights reserved.
-
-*fMRIPost-AROMA* 20.2 series and earlier are
-licensed under the BSD 3-clause license.
-You may obtain a copy of the License at
-https://opensource.org/licenses/BSD-3-Clause
 
 All trademarks referenced herein are property of their respective holders.
