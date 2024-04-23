@@ -60,7 +60,7 @@ def init_ica_aroma_wf(
 
     There is a current discussion on whether other confounds should be extracted
     before or after denoising `here
-    <http://nbviewer.jupyter.org/github/nipreps/fmriprep-notebooks/blob/
+    <http://nbviewer.jupyter.org/github/nipreps/fmripost_aroma-notebooks/blob/
     922e436429b879271fa13e76767a6e73443e74d9/issue-817_aroma_confounds.ipynb>`__.
 
     .. _ICA-AROMA: https://github.com/maartenmennes/ICA-AROMA
@@ -70,7 +70,7 @@ def init_ica_aroma_wf(
             :graph2use: orig
             :simple_form: yes
 
-            from fmriprep.workflows.bold.confounds import init_ica_aroma_wf
+            from fmripost_aroma.workflows.bold.confounds import init_ica_aroma_wf
 
             wf = init_ica_aroma_wf(
                 bold_file="fake.nii.gz",

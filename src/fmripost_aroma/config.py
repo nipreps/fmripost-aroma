@@ -21,23 +21,23 @@
 #     https://www.nipreps.org/community/licensing/
 #
 r"""
-A Python module to maintain unique, run-wide *fMRIPrep* settings.
+A Python module to maintain unique, run-wide *fMRIPost-AROMA* settings.
 
 This module implements the memory structures to keep a consistent, singleton config.
 Settings are passed across processes via filesystem, and a copy of the settings for
 each run and subject is left under
-``<fmriprep_dir>/sub-<participant_id>/log/<run_unique_id>/fmriprep.toml``.
+``<fmriprep_dir>/sub-<participant_id>/log/<run_unique_id>/fmripost_aroma.toml``.
 Settings are stored using :abbr:`ToML (Tom's Markup Language)`.
-The module has a :py:func:`~fmriprep.config.to_filename` function to allow writing out
+The module has a :py:func:`~fmripost_aroma.config.to_filename` function to allow writing out
 the settings to hard disk in *ToML* format, which looks like:
 
-.. literalinclude:: ../fmriprep/data/tests/config.toml
+.. literalinclude:: ../fmripost_aroma/data/tests/config.toml
    :language: toml
-   :name: fmriprep.toml
-   :caption: **Example file representation of fMRIPrep settings**.
+   :name: fmripost_aroma.toml
+   :caption: **Example file representation of fMRIPost-AROMA settings**.
 
 This config file is used to pass the settings across processes,
-using the :py:func:`~fmriprep.config.load` function.
+using the :py:func:`~fmripost_aroma.config.load` function.
 
 Configuration sections
 ----------------------
@@ -57,8 +57,8 @@ graph is built across processes.
 
 .. code-block:: Python
 
-    from fmriprep import config
-    config_file = config.execution.work_dir / '.fmriprep.toml'
+    from fmripost_aroma import config
+    config_file = config.execution.work_dir / '.fmripost_aroma.toml'
     config.to_filename(config_file)
     # Call build_workflow(config_file, retval) in a subprocess
     with Manager() as mgr:
@@ -90,15 +90,17 @@ The :py:mod:`config` is responsible for other conveniency actions.
 import os
 from multiprocessing import set_start_method
 
-# Disable NiPype etelemetry always
-_disable_et = bool(os.getenv('NO_ET') is not None or os.getenv('NIPYPE_NO_ET') is not None)
-os.environ['NIPYPE_NO_ET'] = '1'
-os.environ['NO_ET'] = '1'
+from templateflow.conf import TF_LAYOUT
 
-CONFIG_FILENAME = 'fmriprep.toml'
+# Disable NiPype etelemetry always
+_disable_et = bool(os.getenv("NO_ET") is not None or os.getenv("NIPYPE_NO_ET") is not None)
+os.environ["NIPYPE_NO_ET"] = "1"
+os.environ["NO_ET"] = "1"
+
+CONFIG_FILENAME = "fmripost_aroma.toml"
 
 try:
-    set_start_method('forkserver')
+    set_start_method("forkserver")
 except RuntimeError:
     pass  # context has been already set
 finally:
@@ -115,28 +117,28 @@ finally:
 
     from . import __version__
 
-if not hasattr(sys, '_is_pytest_session'):
+if not hasattr(sys, "_is_pytest_session"):
     sys._is_pytest_session = False  # Trick to avoid sklearn's FutureWarnings
 # Disable all warnings in main and children processes only on production versions
 if not any(
     (
-        '+' in __version__,
-        __version__.endswith('.dirty'),
-        os.getenv('FMRIPREP_DEV', '0').lower() in ('1', 'on', 'true', 'y', 'yes'),
+        "+" in __version__,
+        __version__.endswith(".dirty"),
+        os.getenv("FMRIPREP_DEV", "0").lower() in ("1", "on", "true", "y", "yes"),
     )
 ):
     from ._warnings import logging
 
-    os.environ['PYTHONWARNINGS'] = 'ignore'
-elif os.getenv('FMRIPREP_WARNINGS', '0').lower() in ('1', 'on', 'true', 'y', 'yes'):
+    os.environ["PYTHONWARNINGS"] = "ignore"
+elif os.getenv("FMRIPREP_WARNINGS", "0").lower() in ("1", "on", "true", "y", "yes"):
     # allow disabling warnings on development versions
-    # https://github.com/nipreps/fmriprep/pull/2080#discussion_r409118765
+    # https://github.com/nipreps/fmripost_aroma/pull/2080#discussion_r409118765
     from ._warnings import logging
 else:
     import logging
 
-logging.addLevelName(25, 'IMPORTANT')  # Add a new level between INFO and WARNING
-logging.addLevelName(15, 'VERBOSE')  # Add a new level between INFO and DEBUG
+logging.addLevelName(25, "IMPORTANT")  # Add a new level between INFO and WARNING
+logging.addLevelName(15, "VERBOSE")  # Add a new level between INFO and DEBUG
 
 DEFAULT_MEMORY_MIN_GB = 0.01
 
@@ -150,29 +152,29 @@ if not _disable_et:
     from requests import get as _get_url
 
     with suppress((ConnectionError, ReadTimeout)):
-        _get_url('https://rig.mit.edu/et/projects/nipy/nipype', timeout=0.05)
+        _get_url("https://rig.mit.edu/et/projects/nipy/nipype", timeout=0.05)
 
 # Execution environment
 _exec_env = os.name
 _docker_ver = None
 # special variable set in the container
-if os.getenv('IS_DOCKER_8395080871'):
-    _exec_env = 'singularity'
-    _cgroup = Path('/proc/1/cgroup')
-    if _cgroup.exists() and 'docker' in _cgroup.read_text():
-        _docker_ver = os.getenv('DOCKER_VERSION_8395080871')
-        _exec_env = 'fmriprep-docker' if _docker_ver else 'docker'
+if os.getenv("IS_DOCKER_8395080871"):
+    _exec_env = "singularity"
+    _cgroup = Path("/proc/1/cgroup")
+    if _cgroup.exists() and "docker" in _cgroup.read_text():
+        _docker_ver = os.getenv("DOCKER_VERSION_8395080871")
+        _exec_env = "fmripost_aroma-docker" if _docker_ver else "docker"
     del _cgroup
 
-_fs_license = os.getenv('FS_LICENSE')
-if not _fs_license and os.getenv('FREESURFER_HOME'):
-    _fs_home = os.getenv('FREESURFER_HOME')
-    if _fs_home and (Path(_fs_home) / 'license.txt').is_file():
-        _fs_license = str(Path(_fs_home) / 'license.txt')
+_fs_license = os.getenv("FS_LICENSE")
+if not _fs_license and os.getenv("FREESURFER_HOME"):
+    _fs_home = os.getenv("FREESURFER_HOME")
+    if _fs_home and (Path(_fs_home) / "license.txt").is_file():
+        _fs_license = str(Path(_fs_home) / "license.txt")
     del _fs_home
 
 _templateflow_home = Path(
-    os.getenv('TEMPLATEFLOW_HOME', os.path.join(os.getenv('HOME'), '.cache', 'templateflow'))
+    os.getenv("TEMPLATEFLOW_HOME", os.path.join(os.getenv("HOME"), ".cache", "templateflow"))
 )
 
 try:
@@ -182,28 +184,28 @@ try:
 except ImportError:
     _free_mem_at_start = None
 
-_oc_limit = 'n/a'
-_oc_policy = 'n/a'
+_oc_limit = "n/a"
+_oc_policy = "n/a"
 try:
     # Memory policy may have a large effect on types of errors experienced
-    _proc_oc_path = Path('/proc/sys/vm/overcommit_memory')
+    _proc_oc_path = Path("/proc/sys/vm/overcommit_memory")
     if _proc_oc_path.exists():
-        _oc_policy = {'0': 'heuristic', '1': 'always', '2': 'never'}.get(
-            _proc_oc_path.read_text().strip(), 'unknown'
+        _oc_policy = {"0": "heuristic", "1": "always", "2": "never"}.get(
+            _proc_oc_path.read_text().strip(), "unknown"
         )
-        if _oc_policy != 'never':
-            _proc_oc_kbytes = Path('/proc/sys/vm/overcommit_kbytes')
+        if _oc_policy != "never":
+            _proc_oc_kbytes = Path("/proc/sys/vm/overcommit_kbytes")
             if _proc_oc_kbytes.exists():
                 _oc_limit = _proc_oc_kbytes.read_text().strip()
-            if _oc_limit in ('0', 'n/a') and Path('/proc/sys/vm/overcommit_ratio').exists():
-                _oc_limit = '{}%'.format(Path('/proc/sys/vm/overcommit_ratio').read_text().strip())
+            if _oc_limit in ("0", "n/a") and Path("/proc/sys/vm/overcommit_ratio").exists():
+                _oc_limit = "{}%".format(Path("/proc/sys/vm/overcommit_ratio").read_text().strip())
 except Exception:  # noqa: S110, BLE001
     pass
 
 
 # Debug modes are names that influence the exposure of internal details to
 # the user, either through additional derivatives or increased verbosity
-DEBUG_MODES = ('compcor', 'fieldmaps', 'pdb')
+DEBUG_MODES = ("compcor", "fieldmaps", "pdb")
 
 
 class _Config:
@@ -213,7 +215,7 @@ class _Config:
 
     def __init__(self):
         """Avert instantiation."""
-        raise RuntimeError('Configuration type is not instantiable.')
+        raise RuntimeError("Configuration type is not instantiable.")
 
     @classmethod
     def load(cls, settings, init=True, ignore=None):
@@ -225,6 +227,8 @@ class _Config:
             if k in cls._paths:
                 if isinstance(v, list | tuple):
                     setattr(cls, k, [Path(val).absolute() for val in v])
+                elif isinstance(v, dict):
+                    setattr(cls, k, {key: Path(val).absolute() for key, val in v.items()})
                 else:
                     setattr(cls, k, Path(v).absolute())
             elif hasattr(cls, k):
@@ -243,7 +247,7 @@ class _Config:
 
         out = {}
         for k, v in cls.__dict__.items():
-            if k.startswith('_') or v is None:
+            if k.startswith("_") or v is None:
                 continue
             if callable(getattr(cls, k)):
                 continue
@@ -253,7 +257,7 @@ class _Config:
                 else:
                     v = str(v)
             if isinstance(v, SpatialReferences):
-                v = ' '.join(str(s) for s in v.references) or None
+                v = " ".join(str(s) for s in v.references) or None
             if isinstance(v, Reference):
                 v = str(v) or None
             out[k] = v
@@ -265,7 +269,7 @@ class environment(_Config):
     Read-only options regarding the platform and environment.
 
     Crawls runtime descriptive settings (e.g., default FreeSurfer license,
-    execution environment, nipype and *fMRIPrep* versions, etc.).
+    execution environment, nipype and *fMRIPost-AROMA* versions, etc.).
     The ``environment`` section is not loaded in from file,
     only written out when settings are exported.
     This config section is useful when reporting issues,
@@ -291,13 +295,13 @@ class environment(_Config):
     templateflow_version = _tf_ver
     """The TemplateFlow client version installed."""
     version = __version__
-    """*fMRIPrep*'s version."""
+    """*fMRIPost-AROMA*'s version."""
 
 
 class nipype(_Config):
     """Nipype settings."""
 
-    crashfile_format = 'txt'
+    crashfile_format = "txt"
     """The file format for crashfiles, either text (txt) or pickle (pklz)."""
     get_linked_libs = False
     """Run NiPype's tool to enlist linked libraries for every interface."""
@@ -307,11 +311,11 @@ class nipype(_Config):
     """Number of processes (compute tasks) that can be run in parallel (multiprocessing only)."""
     omp_nthreads = None
     """Number of CPUs a single process can access for multithreaded execution."""
-    plugin = 'MultiProc'
+    plugin = "MultiProc"
     """NiPype's execution plugin."""
     plugin_args = {
-        'maxtasksperchild': 1,
-        'raise_insufficient': False,
+        "maxtasksperchild": 1,
+        "raise_insufficient": False,
     }
     """Settings for NiPype's execution plugin."""
     remove_unnecessary_outputs = True
@@ -325,13 +329,13 @@ class nipype(_Config):
     def get_plugin(cls):
         """Format a dictionary for Nipype consumption."""
         out = {
-            'plugin': cls.plugin,
-            'plugin_args': cls.plugin_args,
+            "plugin": cls.plugin,
+            "plugin_args": cls.plugin_args,
         }
-        if cls.plugin in ('MultiProc', 'LegacyMultiProc'):
-            out['plugin_args']['n_procs'] = int(cls.nprocs)
+        if cls.plugin in ("MultiProc", "LegacyMultiProc"):
+            out["plugin_args"]["n_procs"] = int(cls.nprocs)
             if cls.memory_gb:
-                out['plugin_args']['memory_gb'] = float(cls.memory_gb)
+                out["plugin_args"]["memory_gb"] = float(cls.memory_gb)
         return out
 
     @classmethod
@@ -343,10 +347,10 @@ class nipype(_Config):
         if cls.resource_monitor:
             ncfg.update_config(
                 {
-                    'monitoring': {
-                        'enabled': cls.resource_monitor,
-                        'sample_frequency': '0.5',
-                        'summary_append': True,
+                    "monitoring": {
+                        "enabled": cls.resource_monitor,
+                        "sample_frequency": "0.5",
+                        "summary_append": True,
                     }
                 }
             )
@@ -355,13 +359,13 @@ class nipype(_Config):
         # Nipype config (logs and execution)
         ncfg.update_config(
             {
-                'execution': {
-                    'crashdump_dir': str(execution.log_dir),
-                    'crashfile_format': cls.crashfile_format,
-                    'get_linked_libs': cls.get_linked_libs,
-                    'remove_unnecessary_outputs': cls.remove_unnecessary_outputs,
-                    'stop_on_first_crash': cls.stop_on_first_crash,
-                    'check_version': False,  # disable future telemetry
+                "execution": {
+                    "crashdump_dir": str(execution.log_dir),
+                    "crashfile_format": cls.crashfile_format,
+                    "get_linked_libs": cls.get_linked_libs,
+                    "remove_unnecessary_outputs": cls.remove_unnecessary_outputs,
+                    "stop_on_first_crash": cls.stop_on_first_crash,
+                    "check_version": False,  # disable future telemetry
                 }
             }
         )
@@ -375,7 +379,7 @@ class execution(_Config):
 
     bids_dir = None
     """An existing path to the dataset, which must be BIDS-compliant."""
-    derivatives = []
+    derivatives = {}
     """Path(s) to search for pre-computed derivatives"""
     bids_database_dir = None
     """Path to the directory containing SQLite database indices for the input BIDS dataset."""
@@ -390,7 +394,7 @@ class execution(_Config):
     debug = []
     """Debug mode(s)."""
     fmripost_aroma_dir = None
-    """Root of fMRIPrep BIDS Derivatives dataset. Depends on output_layout."""
+    """Root of fMRIPost-AROMA BIDS Derivatives dataset. Depends on output_layout."""
     layout = None
     """A :py:class:`~bids.layout.BIDSLayout` object, see :py:func:`init`."""
     log_dir = None
@@ -402,10 +406,10 @@ class execution(_Config):
     md_only_boilerplate = False
     """Do not convert boilerplate from MarkDown to LaTex and HTML."""
     notrack = False
-    """Do not collect telemetry information for *fMRIPrep*."""
+    """Do not collect telemetry information for *fMRIPost-AROMA*."""
     track_carbon = False
     """Tracks power draws using CodeCarbon package."""
-    country_code = 'CAN'
+    country_code = "CAN"
     """Country ISO code used by carbon trackers."""
     output_dir = None
     """Folder where derivatives will be stored."""
@@ -424,7 +428,7 @@ class execution(_Config):
     """Select a particular task from all available in the dataset."""
     templateflow_home = _templateflow_home
     """The root folder of the TemplateFlow client."""
-    work_dir = Path('work').absolute()
+    work_dir = Path("work").absolute()
     """Path to a working directory where intermediate results will be available."""
     write_graph = False
     """Write out the computational graph corresponding to the planned preprocessing."""
@@ -432,22 +436,22 @@ class execution(_Config):
     _layout = None
 
     _paths = (
-        'bids_dir',
-        'derivatives',
-        'bids_database_dir',
-        'fmripost_aroma_dir',
-        'layout',
-        'log_dir',
-        'output_dir',
-        'templateflow_home',
-        'work_dir',
+        "bids_dir",
+        "derivatives",
+        "bids_database_dir",
+        "fmripost_aroma_dir",
+        "layout",
+        "log_dir",
+        "output_dir",
+        "templateflow_home",
+        "work_dir",
     )
 
     @classmethod
     def init(cls):
         """Create a new BIDS Layout accessible with :attr:`~execution.layout`."""
         if cls.fs_license_file and Path(cls.fs_license_file).is_file():
-            os.environ['FS_LICENSE'] = str(cls.fs_license_file)
+            os.environ["FS_LICENSE"] = str(cls.fs_license_file)
 
         if cls._layout is None:
             import re
@@ -455,20 +459,20 @@ class execution(_Config):
             from bids.layout import BIDSLayout
             from bids.layout.index import BIDSLayoutIndexer
 
-            _db_path = cls.bids_database_dir or (cls.work_dir / cls.run_uuid / 'bids_db')
+            _db_path = cls.bids_database_dir or (cls.work_dir / cls.run_uuid / "bids_db")
             _db_path.mkdir(exist_ok=True, parents=True)
 
             # Recommended after PyBIDS 12.1
             _indexer = BIDSLayoutIndexer(
                 validate=False,
                 ignore=(
-                    'code',
-                    'stimuli',
-                    'sourcedata',
-                    'models',
-                    re.compile(r'^\.'),
+                    "code",
+                    "stimuli",
+                    "sourcedata",
+                    "models",
+                    re.compile(r"^\."),
                     re.compile(
-                        r'sub-[a-zA-Z0-9]+(/ses-[a-zA-Z0-9]+)?/(beh|dwi|eeg|ieeg|meg|perf)'
+                        r"sub-[a-zA-Z0-9]+(/ses-[a-zA-Z0-9]+)?/(beh|dwi|eeg|ieeg|meg|perf)"
                     ),
                 ),
             )
@@ -490,7 +494,7 @@ class execution(_Config):
                 else:
                     return (
                         getattr(Query, value[7:-4])
-                        if not isinstance(value, Query) and 'Query' in value
+                        if not isinstance(value, Query) and "Query" in value
                         else value
                     )
 
@@ -499,7 +503,15 @@ class execution(_Config):
                 for k, v in filters.items():
                     cls.bids_filters[acq][k] = _process_value(v)
 
-        if 'all' in cls.debug:
+        dataset_links = {
+            "raw": cls.bids_dir,
+            "templateflow": Path(TF_LAYOUT.root),
+        }
+        for deriv_name, deriv_path in cls.derivatives.items():
+            dataset_links[deriv_name] = deriv_path
+        cls.dataset_links = dataset_links
+
+        if "all" in cls.debug:
             cls.debug = list(DEBUG_MODES)
 
 
@@ -534,18 +546,18 @@ class workflow(_Config):
 class loggers:
     """Keep loggers easily accessible (see :py:func:`init`)."""
 
-    _fmt = '%(asctime)s,%(msecs)d %(name)-2s %(levelname)-2s:\n\t %(message)s'
-    _datefmt = '%y%m%d-%H:%M:%S'
+    _fmt = "%(asctime)s,%(msecs)d %(name)-2s %(levelname)-2s:\n\t %(message)s"
+    _datefmt = "%y%m%d-%H:%M:%S"
 
     default = logging.getLogger()
     """The root logger."""
-    cli = logging.getLogger('cli')
+    cli = logging.getLogger("cli")
     """Command-line interface logging."""
-    workflow = logging.getLogger('nipype.workflow')
+    workflow = logging.getLogger("nipype.workflow")
     """NiPype's workflow logger."""
-    interface = logging.getLogger('nipype.interface')
+    interface = logging.getLogger("nipype.interface")
     """NiPype's interface logger."""
-    utils = logging.getLogger('nipype.utils')
+    utils = logging.getLogger("nipype.utils")
     """NiPype's utils logger."""
 
     @classmethod
@@ -570,7 +582,7 @@ class loggers:
         cls.workflow.setLevel(execution.log_level)
         cls.utils.setLevel(execution.log_level)
         ncfg.update_config(
-            {'logging': {'log_directory': str(execution.log_dir), 'log_to_file': True}}
+            {"logging": {"log_directory": str(execution.log_dir), "log_to_file": True}}
         )
 
 
@@ -600,7 +612,7 @@ class seeds(_Config):
 def _set_ants_seed():
     """Fix random seed for antsRegistration, antsAI, antsMotionCorr"""
     val = random.randint(1, 65536)
-    os.environ['ANTS_RANDOM_SEED'] = str(val)
+    os.environ["ANTS_RANDOM_SEED"] = str(val)
     return val
 
 
@@ -630,10 +642,10 @@ def from_dict(settings, init=True, ignore=None):
     def initialize(x):
         return init if init in (True, False) else x in init
 
-    nipype.load(settings, init=initialize('nipype'), ignore=ignore)
-    execution.load(settings, init=initialize('execution'), ignore=ignore)
-    workflow.load(settings, init=initialize('workflow'), ignore=ignore)
-    seeds.load(settings, init=initialize('seeds'), ignore=ignore)
+    nipype.load(settings, init=initialize("nipype"), ignore=ignore)
+    execution.load(settings, init=initialize("execution"), ignore=ignore)
+    workflow.load(settings, init=initialize("workflow"), ignore=ignore)
+    seeds.load(settings, init=initialize("seeds"), ignore=ignore)
 
     loggers.init()
 
@@ -644,7 +656,7 @@ def load(filename, skip=None, init=True):
     Arguments
     ---------
     filename : :py:class:`os.PathLike`
-        TOML file containing fMRIPrep configuration.
+        TOML file containing fMRIPost-AROMA configuration.
     skip : dict or None
         Sets of values to ignore during load, keyed by section name
     init : `bool` or :py:class:`~collections.abc.Container`
@@ -661,7 +673,7 @@ def load(filename, skip=None, init=True):
     filename = Path(filename)
     settings = loads(filename.read_text())
     for sectionname, configs in settings.items():
-        if sectionname != 'environment':
+        if sectionname != "environment":
             section = getattr(sys.modules[__name__], sectionname)
             ignore = skip.get(sectionname)
             section.load(configs, ignore=ignore, init=initialize(sectionname))
@@ -671,17 +683,17 @@ def load(filename, skip=None, init=True):
 def get(flat=False):
     """Get config as a dict."""
     settings = {
-        'environment': environment.get(),
-        'execution': execution.get(),
-        'workflow': workflow.get(),
-        'nipype': nipype.get(),
-        'seeds': seeds.get(),
+        "environment": environment.get(),
+        "execution": execution.get(),
+        "workflow": workflow.get(),
+        "nipype": nipype.get(),
+        "seeds": seeds.get(),
     }
     if not flat:
         return settings
 
     return {
-        '.'.join((section, k)): v
+        ".".join((section, k)): v
         for section, configs in settings.items()
         for k, v in configs.items()
     }
@@ -707,15 +719,15 @@ def init_spaces(checkpoint=True):
     spaces = execution.output_spaces or SpatialReferences()
     if not isinstance(spaces, SpatialReferences):
         spaces = SpatialReferences(
-            [ref for s in spaces.split(' ') for ref in Reference.from_string(s)]
+            [ref for s in spaces.split(" ") for ref in Reference.from_string(s)]
         )
 
     if checkpoint and not spaces.is_cached():
         spaces.checkpoint()
 
     # Add the default standard space if not already present (required by several sub-workflows)
-    if 'MNI152NLin2009cAsym' not in spaces.get_spaces(nonstandard=False, dim=(3,)):
-        spaces.add(Reference('MNI152NLin2009cAsym', {}))
+    if "MNI152NLin2009cAsym" not in spaces.get_spaces(nonstandard=False, dim=(3,)):
+        spaces.add(Reference("MNI152NLin2009cAsym", {}))
 
     # Ensure user-defined spatial references for outputs are correctly parsed.
     # Certain options require normalization to a space not explicitly defined by users.
@@ -723,8 +735,8 @@ def init_spaces(checkpoint=True):
     cifti_output = workflow.cifti_output
     if cifti_output:
         # CIFTI grayordinates to corresponding FSL-MNI resolutions.
-        vol_res = '2' if cifti_output == '91k' else '1'
-        spaces.add(Reference('MNI152NLin6Asym', {'res': vol_res}))
+        vol_res = "2" if cifti_output == "91k" else "1"
+        spaces.add(Reference("MNI152NLin6Asym", {"res": vol_res}))
 
     # Make the SpatialReferences object available
     workflow.spaces = spaces

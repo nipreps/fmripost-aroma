@@ -31,13 +31,31 @@ def _build_parser(**kwargs):
 
     ``kwargs`` are passed to ``argparse.ArgumentParser`` (mainly useful for debugging).
     """
-    from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
+    from argparse import Action, ArgumentDefaultsHelpFormatter, ArgumentParser
     from functools import partial
     from pathlib import Path
 
+    from niworkflows.utils.spaces import OutputReferencesAction
     from packaging.version import Version
 
     from fmripost_aroma.cli.version import check_latest, is_flagged
+
+    class ToDict(Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            d = {}
+            for spec in values:
+                try:
+                    name, loc = spec.split('=')
+                    loc = Path(loc)
+                except ValueError:
+                    loc = Path(spec)
+                    name = loc.name
+
+                if name in d:
+                    raise ValueError(f'Received duplicate derivative name: {name}')
+
+                d[name] = loc
+            setattr(namespace, self.dest, d)
 
     def _path_exists(path, parser):
         """Ensure a given path exists."""
@@ -171,17 +189,17 @@ def _build_parser(**kwargs):
         ),
     )
     g_bids.add_argument(
-        "-d",
-        "--derivatives",
-        action="store",
-        metavar="PATH",
-        type=Path,
-        nargs="*",
+        '-d',
+        '--derivatives',
+        action=ToDict,
+        metavar='PACKAGE=PATH',
+        type=str,
+        nargs='+',
         help=(
-            "Search PATH(s) for pre-computed derivatives. "
-            "This must include the preprocessing derivatives."
+            'Search PATH(s) for pre-computed derivatives. '
+            'These may be provided as named folders '
+            '(e.g., `--derivatives smriprep=/path/to/smriprep`).'
         ),
-        required=True,
     )
     g_bids.add_argument(
         "--bids-database-dir",
@@ -219,7 +237,7 @@ def _build_parser(**kwargs):
         action="store",
         type=_to_gb,
         metavar="MEMORY_MB",
-        help="Upper bound memory limit for fMRIPrep processes",
+        help="Upper bound memory limit for fMRIPost-AROMA processes",
     )
     g_perfm.add_argument(
         "--low-mem",
@@ -272,6 +290,21 @@ def _build_parser(**kwargs):
             "Ignore selected aspects of the input dataset to disable corresponding "
             "parts of the workflow (a space delimited list)"
         ),
+    )
+    g_conf.add_argument(
+        '--output-spaces',
+        nargs='*',
+        action=OutputReferencesAction,
+        help="""\
+Standard and non-standard spaces to resample denoised functional images to. \
+Standard spaces may be specified by the form \
+``<SPACE>[:cohort-<label>][:res-<resolution>][...]``, where ``<SPACE>`` is \
+a keyword designating a spatial reference, and may be followed by optional, \
+colon-separated parameters. \
+Non-standard spaces imply specific orientations and sampling grids. \
+For further details, please check out \
+https://fmriprep.readthedocs.io/en/%s/spaces.html"""
+        % (currentv.base_version if is_release else 'latest'),
     )
     g_conf.add_argument(
         "--dummy-scans",
@@ -358,7 +391,7 @@ def _build_parser(**kwargs):
         action="store_true",
         default=False,
         help="Clears working directory of contents. Use of this flag is not "
-        "recommended when running concurrent processes of fMRIPrep.",
+        "recommended when running concurrent processes of fMRIPost-AROMA.",
     )
     g_other.add_argument(
         "--resource-monitor",
@@ -406,7 +439,7 @@ def _build_parser(**kwargs):
     if latest is not None and currentv < latest:
         print(
             """\
-You are using fMRIPrep-%s, and a newer version of fMRIPrep is available: %s.
+You are using fMRIPost-AROMA-%s, and a newer version of fMRIPost-AROMA is available: %s.
 Please check out our documentation about how and when to upgrade:
 https://fmriprep.readthedocs.io/en/latest/faq.html#upgrading"""
             % (currentv, latest),
@@ -418,7 +451,7 @@ https://fmriprep.readthedocs.io/en/latest/faq.html#upgrading"""
         _reason = _blist[1] or "unknown"
         print(
             """\
-WARNING: Version %s of fMRIPrep (current) has been FLAGGED
+WARNING: Version %s of fMRIPost-AROMA (current) has been FLAGGED
 (reason: %s).
 That means some severe flaw was found in it and we strongly
 discourage its usage."""
@@ -491,7 +524,7 @@ def parse_args(args=None, namespace=None):
     if opts.clean_workdir and work_dir.exists():
         from niworkflows.utils.misc import clean_directory
 
-        build_log.info(f"Clearing previous fMRIPrep working directory: {work_dir}")
+        build_log.info(f"Clearing previous fMRIPost-AROMA working directory: {work_dir}")
         if not clean_directory(work_dir):
             build_log.warning(f"Could not clear all contents of working directory: {work_dir}")
 
@@ -506,7 +539,7 @@ def parse_args(args=None, namespace=None):
         parser.error(
             "The selected output folder is the same as the input BIDS folder. "
             "Please modify the output path "
-            f"(suggestion: {bids_dir / 'derivatives' / 'fmriprep-' + version.split('+')[0]}."
+            f"(suggestion: {bids_dir / 'derivatives' / 'fmripost_aroma-' + version.split('+')[0]}."
         )
 
     if bids_dir in work_dir.parents:
