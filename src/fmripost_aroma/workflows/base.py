@@ -318,6 +318,9 @@ Functional data postprocessing
 """
 
     for bold_file in subject_data["bold"]:
+        ica_aroma_wf = init_ica_aroma_wf(bold_file=bold_file)
+        ica_aroma_wf.__desc__ = func_pre_desc + (ica_aroma_wf.__desc__ or "")
+
         functional_cache = {}
         if config.execution.derivatives:
             # Collect native-space derivatives and warp them to MNI152NLin6Asym
@@ -332,30 +335,33 @@ Functional data postprocessing
                         entities=entities,
                     )
                 )
+
+            resample_raw_wf = init_resample_raw_wf(
+                bold_file=bold_file,
+                precomputed=functional_cache,
+            )
+            workflow.connect([
+                (resample_raw_wf, ica_aroma_wf, [
+                    ("outputnode.bold_std", "inputnode.bold_std"),
+                    ("outputnode.bold_mask_std", "inputnode.bold_mask_std"),
+                ]),
+            ])  # fmt:skip
         else:
             # Collect standard-space derivatives
             from fmripost_aroma.utils.bids import collect_derivatives
 
-            ...
+            functional_cache.update(
+                collect_derivatives(
+                    derivatives_dir=deriv_dir,
+                    entities=entities,
+                )
+            )
+            ica_aroma_wf.inputs.inputnode.bold_std = functional_cache["bold_std"]
+            ica_aroma_wf.inputs.inputnode.bold_mask_std = functional_cache["bold_mask_std"]
 
-        ica_aroma_wf = init_ica_aroma_wf(
-            bold_file=bold_file,
-            precomputed=functional_cache,
-        )
-        ica_aroma_wf.__desc__ = func_pre_desc + (ica_aroma_wf.__desc__ or "")
-
-        # fmt:off
-        workflow.connect([
-            (inputnode, ica_aroma_wf, [
-                ('bold_std', 'inputnode.bold_std'),
-                ("bold_mask_std", "inputnode.bold_mask_std"),
-                ("movpar_file", "inputnode.movpar_file"),
-                ("name_source", "inputnode.name_source"),
-                ("skip_vols", "inputnode.skip_vols"),
-                ("spatial_reference", "inputnode.spatial_reference"),
-            ]),
-        ])
-        # fmt:on
+        ica_aroma_wf.inputs.inputnode.movpar_file = functional_cache["movpar_file"]
+        ica_aroma_wf.inputs.inputnode.skip_vols = functional_cache["skip_vols"]
+        ica_aroma_wf.inputs.inputnode.spatial_reference = functional_cache["spatial_reference"]
 
     return clean_datasinks(workflow)
 
