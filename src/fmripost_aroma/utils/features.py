@@ -1,18 +1,19 @@
 """Functions to calculate ICA-AROMA features for component classification."""
 
 import logging
-import os
 
+import nibabel as nb
 import numpy as np
+import pandas as pd
 from nilearn import image, masking
-from nilearn._utils import load_niimg
 
-from aroma import utils
+from fmripost_aroma import data as load_data
+from fmripost_aroma.utils import utils
 
 LGR = logging.getLogger(__name__)
 
 
-def feature_time_series(mel_mix, mc, metric_metadata=None):
+def feature_time_series(mixing: np.ndarray, motpars: np.ndarray):
     """Extract maximum motion parameter correlation scores from components.
 
     This function determines the maximum robust correlation of each component
@@ -20,17 +21,12 @@ def feature_time_series(mel_mix, mc, metric_metadata=None):
 
     Parameters
     ----------
-    mel_mix : numpy.ndarray of shape (T, C)
+    mixing : numpy.ndarray of shape (T, C)
         Mixing matrix in shape T (time) by C (component).
-    mc : str or array_like
-        Full path of the text file containing the realignment parameters.
+    motpars : array_like
         Motion parameters are (time x 6), with the first three columns being
         rotation parameters (in radians) and the final three being translation
         parameters (in mm).
-    metric_metadata : None or dict, optional
-        A dictionary containing metadata about the AROMA metrics.
-        If provided, metadata for the ``max_RP_corr`` metric will be added.
-        Otherwise, no operations will be performed on this parameter.
 
     Returns
     -------
@@ -42,8 +38,8 @@ def feature_time_series(mel_mix, mc, metric_metadata=None):
         Otherwise, this will be a dictionary containing existing information,
         as well as new metadata for the ``max_RP_corr`` metric.
     """
-    if isinstance(metric_metadata, dict):
-        metric_metadata["max_RP_corr"] = {
+    metric_metadata = {
+        "max_RP_corr": {
             "LongName": "Maximum motion parameter correlation",
             "Description": (
                 "The maximum correlation coefficient between each component and "
@@ -62,66 +58,60 @@ def feature_time_series(mel_mix, mc, metric_metadata=None):
                 "correlation coefficients are averaged across permutations for the final metric."
             ),
             "Units": "arbitrary",
-        }
+        },
+    }
 
-    if isinstance(mc, str):
-        rp6 = utils.load_motpars(mc, source="auto")
-    else:
-        rp6 = mc
-
+    rp6 = motpars.copy()
     if (rp6.ndim != 2) or (rp6.shape[1] != 6):
         raise ValueError(f"Motion parameters must of shape (n_trs, 6), not {rp6.shape}")
 
-    if rp6.shape[0] != mel_mix.shape[0]:
+    if rp6.shape[0] != mixing.shape[0]:
         raise ValueError(
-            f"Number of rows in mixing matrix ({mel_mix.shape[0]}) does not match "
+            f"Number of rows in mixing matrix ({mixing.shape[0]}) does not match "
             f"number of rows in motion parameters ({rp6.shape[0]})."
         )
 
     # Determine the derivatives of the RPs (add zeros at time-point zero)
-    _, nparams = rp6.shape
-    rp6_der = np.vstack((np.zeros(nparams), np.diff(rp6, axis=0)))
+    _, n_motpars = rp6.shape
+    rp6_der = np.vstack((np.zeros(n_motpars), np.diff(rp6, axis=0)))
 
     # Create an RP-model including the RPs and its derivatives
     rp12 = np.hstack((rp6, rp6_der))
 
     # add the fw and bw shifted versions
-    rp12_1fw = np.vstack((np.zeros(2 * nparams), rp12[:-1]))
-    rp12_1bw = np.vstack((rp12[1:], np.zeros(2 * nparams)))
+    rp12_1fw = np.vstack((np.zeros(2 * n_motpars), rp12[:-1]))
+    rp12_1bw = np.vstack((rp12[1:], np.zeros(2 * n_motpars)))
     rp_model = np.hstack((rp12, rp12_1fw, rp12_1bw))
 
     # Determine the maximum correlation between RPs and IC time-series
-    nsplits = 1000
-    nmixrows, nmixcols = mel_mix.shape
-    nrows_to_choose = int(round(0.9 * nmixrows))
+    n_splits = 1000
+    n_volumes, n_components = mixing.shape
+    n_rows_to_choose = int(round(0.9 * n_volumes))
 
-    # Max correlations for multiple splits of the dataset (for a robust
-    # estimate)
-    max_correls = np.empty((nsplits, nmixcols))
-    for i in range(nsplits):
-        # Select a random subset of 90% of the dataset rows
-        # (*without* replacement)
-        chosen_rows = np.random.choice(a=range(nmixrows), size=nrows_to_choose, replace=False)
+    # Max correlations for multiple splits of the dataset (for a robust estimate)
+    max_correlations = np.empty((n_splits, n_components))
+    for i_split in range(n_splits):
+        # Select a random subset of 90% of the dataset rows (*without* replacement)
+        chosen_rows = np.random.choice(a=range(n_volumes), size=n_rows_to_choose, replace=False)
 
-        # Combined correlations between RP and IC time-series, squared and
-        # non squared
-        correl_nonsquared = utils.cross_correlation(mel_mix[chosen_rows], rp_model[chosen_rows])
+        # Combined correlations between RP and IC time-series, squared and non squared
+        correl_nonsquared = utils.cross_correlation(mixing[chosen_rows], rp_model[chosen_rows])
         correl_squared = utils.cross_correlation(
-            mel_mix[chosen_rows] ** 2, rp_model[chosen_rows] ** 2
+            mixing[chosen_rows] ** 2, rp_model[chosen_rows] ** 2
         )
         correl_both = np.hstack((correl_squared, correl_nonsquared))
 
         # Maximum absolute temporal correlation for every IC
-        max_correls[i] = np.abs(correl_both).max(axis=1)
+        max_correlations[i_split] = np.abs(correl_both).max(axis=1)
 
-    # Feature score is the mean of the maximum correlation over all the random
-    # splits
+    # Feature score is the mean of the maximum correlation over all the random splits.
     # Avoid propagating occasional nans that arise in artificial test cases
-    max_RP_corr = np.nanmean(max_correls, axis=0)
-    return max_RP_corr, metric_metadata
+    max_RP_corr = np.nanmean(max_correlations, axis=0)
+    metric_df = pd.DataFrame(data=max_RP_corr, columns=["max_RP_corr"])
+    return metric_df, metric_metadata
 
 
-def feature_frequency(mel_FT_mix: np.ndarray, TR: float, metric_metadata=None, f_hp: float = 0.01):
+def feature_frequency(mixing_fft: np.ndarray, TR: float, f_hp: float = 0.01):
     """Extract the high-frequency content feature scores.
 
     This function determines the frequency, as fraction of the Nyquist
@@ -130,15 +120,11 @@ def feature_frequency(mel_FT_mix: np.ndarray, TR: float, metric_metadata=None, f
 
     Parameters
     ----------
-    mel_FT_mix : numpy.ndarray of shape (F, C)
+    mixing_fft : numpy.ndarray of shape (F, C)
         Stored array is (frequency x component), with frequencies
         ranging from 0 Hz to Nyquist frequency.
     TR : float
         TR (in seconds) of the fMRI data
-    metric_metadata : None or dict, optional
-        A dictionary containing metadata about the AROMA metrics.
-        If provided, metadata for the ``HFC`` metric will be added.
-        Otherwise, no operations will be performed on this parameter.
     f_hp: float, optional
         High-pass cutoff frequency in spectrum computations.
 
@@ -152,14 +138,16 @@ def feature_frequency(mel_FT_mix: np.ndarray, TR: float, metric_metadata=None, f
         Otherwise, this will be a dictionary containing existing information,
         as well as new metadata for the ``HFC`` metric.
     """
-    if isinstance(metric_metadata, dict):
-        metric_metadata["HFC"] = {
+    metric_metadata = {
+        "HFC": {
             "LongName": "High-frequency content",
             "Description": (
-                "The proportion of the power spectrum for each component that falls above 0.01 Hz."
+                "The proportion of the power spectrum for each component that falls above "
+                f"{f_hp} Hz."
             ),
             "Units": "arbitrary",
-        }
+        },
+    }
 
     # Determine sample frequency
     Fs = 1 / TR
@@ -167,36 +155,34 @@ def feature_frequency(mel_FT_mix: np.ndarray, TR: float, metric_metadata=None, f
     # Determine Nyquist-frequency
     Ny = Fs / 2
 
-    n_frequencies = mel_FT_mix.shape[0]
+    n_frequencies = mixing_fft.shape[0]
 
     # Determine which frequencies are associated with every row in the
     # melodic_FTmix file (assuming the rows range from 0Hz to Nyquist)
-    f = Ny * np.arange(1, n_frequencies + 1) / n_frequencies
+    frequencies = Ny * np.arange(1, n_frequencies + 1) / n_frequencies
 
     # Only include frequencies higher than f_hp Hz
-    fincl = np.squeeze(np.array(np.where(f > f_hp)))
-    mel_FT_mix = mel_FT_mix[fincl, :]
-    f = f[fincl]
+    included_freqs_idx = np.squeeze(np.array(np.where(frequencies > f_hp)))
+    mixing_fft = mixing_fft[included_freqs_idx, :]
+    frequencies = frequencies[included_freqs_idx]
 
     # Set frequency range to [0-1]
-    f_norm = (f - f_hp) / (Ny - f_hp)
+    frequencies_normalized = (frequencies - f_hp) / (Ny - f_hp)
 
     # For every IC; get the cumulative sum as a fraction of the total sum
-    fcumsum_fract = np.cumsum(mel_FT_mix, axis=0) / np.sum(mel_FT_mix, axis=0)
+    fcumsum_fract = np.cumsum(mixing_fft, axis=0) / np.sum(mixing_fft, axis=0)
 
-    # Determine the index of the frequency with the fractional cumulative sum
-    # closest to 0.5
-    idx_cutoff = np.argmin(np.abs(fcumsum_fract - 0.5), axis=0)
+    # Determine the index of the frequency with the fractional cumulative sum closest to 0.5
+    cutoff_idx = np.argmin(np.abs(fcumsum_fract - 0.5), axis=0)
 
-    # Now get the fractions associated with those indices index, these are the
-    # final feature scores
-    HFC = f_norm[idx_cutoff]
+    # Now get the fractions associated with those indices index, these are the final feature scores
+    high_frequency_content = frequencies_normalized[cutoff_idx]
+    metric_df = pd.DataFrame(data=high_frequency_content, columns=["HFC"])
 
-    # Return feature score
-    return HFC, metric_metadata
+    return metric_df, metric_metadata
 
 
-def feature_spatial(mel_IC, metric_metadata=None):
+def feature_spatial(component_maps):
     """Extract the spatial feature scores.
 
     For each IC it determines the fraction of the mixture modeled thresholded
@@ -205,31 +191,26 @@ def feature_spatial(mel_IC, metric_metadata=None):
 
     Parameters
     ----------
-    mel_IC : str or niimg_like
+    component_maps : str or niimg_like
         Full path of the nii.gz file containing mixture-modeled thresholded
         (p<0.5) Z-maps, registered to the MNI152 2mm template
-    metric_metadata : None or dict, optional
-        A dictionary containing metadata about the AROMA metrics.
-        If provided, metadata for the ``edge_fract`` and ``csf_fract`` metrics
-        will be added.
-        Otherwise, no operations will be performed on this parameter.
 
     Returns
     -------
     edge_fract : array_like
         Array of the edge fraction feature scores for the components of the
-        mel_IC file
+        component_maps file
     csf_fract : array_like
         Array of the CSF fraction feature scores for the components of the
-        mel_IC file
+        component_maps file
     metric_metadata : None or dict
         If the ``metric_metadata`` input was None, then None will be returned.
         Otherwise, this will be a dictionary containing existing information,
         as well as new metadata for the ``edge_fract`` and ``csf_fract``
         metrics.
     """
-    if isinstance(metric_metadata, dict):
-        metric_metadata["edge_fract"] = {
+    metric_metadata = {
+        "edge_fract": {
             "LongName": "Edge content fraction",
             "Description": (
                 "The fraction of thresholded component z-values at the edge of the brain. "
@@ -245,8 +226,8 @@ def feature_spatial(mel_IC, metric_metadata=None):
                 "sum."
             ),
             "Units": "arbitrary",
-        }
-        metric_metadata["csf_fract"] = {
+        },
+        "csf_fract": {
             "LongName": "CSF content fraction",
             "Description": (
                 "The fraction of thresholded component z-values in the brain's cerebrospinal "
@@ -258,55 +239,51 @@ def feature_spatial(mel_IC, metric_metadata=None):
                 "(4) dividing the CSF z-statistic sum by the whole brain z-statistic sum."
             ),
             "Units": "arbitrary",
-        }
+        },
+    }
 
     # Get the number of ICs
-    mel_IC_img = load_niimg(mel_IC)
-    num_ICs = mel_IC_img.shape[3]
+    components_img = nb.load(component_maps)
+    n_components = components_img.shape[3]
 
-    masks_dir = utils.get_resource_path()
-    csf_mask = os.path.join(masks_dir, "mask_csf.nii.gz")
-    edge_mask = os.path.join(masks_dir, "mask_edge.nii.gz")
-    out_mask = os.path.join(masks_dir, "mask_out.nii.gz")
+    csf_mask = load_data("mask_csf.nii.gz")
+    edge_mask = load_data("mask_edge.nii.gz")
+    out_mask = load_data("mask_out.nii.gz")
 
     # Loop over ICs
-    edge_fract = np.zeros(num_ICs)
-    csf_fract = np.zeros(num_ICs)
-    for i in range(num_ICs):
+    metric_df = pd.DataFrame(columns=["edge_fract", "csf_fract"], data=np.zeros((n_components, 2)))
+    for i_comp in range(n_components):
         # Extract IC from the merged melodic_IC_thr2MNI2mm file
-        temp_IC = image.index_img(mel_IC, i)
+        component_img = image.index_img(component_maps, i_comp)
 
         # Change to absolute Z-values
-        temp_IC = image.math_img("np.abs(img)", img=temp_IC)
+        component_img = image.math_img("np.abs(img)", img=component_img)
 
         # Get sum of Z-values within the total Z-map
-        temp_IC_data = temp_IC.get_fdata()
-        tot_sum = np.sum(temp_IC_data)
+        component_data = component_img.get_fdata()
+        tot_sum = np.sum(component_data)
 
         if tot_sum == 0:
-            LGR.info(
-                "\t- The spatial map of component {} is empty. " "Please check!".format(i + 1)
-            )
+            LGR.info(f"\t- The spatial map of component {i_comp + 1} is empty. Please check!")
 
         # Get sum of Z-values of the voxels located within the CSF
-        csf_data = masking.apply_mask(temp_IC, csf_mask)
+        csf_data = masking.apply_mask(component_img, csf_mask)
         csf_sum = np.sum(csf_data)
 
         # Get sum of Z-values of the voxels located within the Edge
-        edge_data = masking.apply_mask(temp_IC, edge_mask)
+        edge_data = masking.apply_mask(component_img, edge_mask)
         edge_sum = np.sum(edge_data)
 
         # Get sum of Z-values of the voxels located outside the brain
-        out_data = masking.apply_mask(temp_IC, out_mask)
+        out_data = masking.apply_mask(component_img, out_mask)
         out_sum = np.sum(out_data)
 
         # Determine edge and CSF fraction
         if tot_sum != 0:
-            edge_fract[i] = (out_sum + edge_sum) / (tot_sum - csf_sum)
-            csf_fract[i] = csf_sum / tot_sum
+            metric_df.loc[i_comp, "edge_fract"] = (out_sum + edge_sum) / (tot_sum - csf_sum)
+            metric_df.loc[i_comp, "csf_fract"] = csf_sum / tot_sum
         else:
-            edge_fract[i] = 0
-            csf_fract[i] = 0
+            metric_df.loc[i_comp, "edge_fract"] = 0
+            metric_df.loc[i_comp, "csf_fract"] = 0
 
-    # Return feature scores
-    return edge_fract, csf_fract, metric_metadata
+    return metric_df, metric_metadata

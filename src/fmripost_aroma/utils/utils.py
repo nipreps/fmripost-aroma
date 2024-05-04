@@ -41,7 +41,7 @@ def cross_correlation(a, b):
     return np.corrcoef(a.T, b.T)[:ncols_a, ncols_a:]
 
 
-def classification(features_df, metric_metadata=None):
+def classification(features_df: pd.DataFrame):
     """Classify components as motion or non-motion based on four features.
 
     The four features used for classification are: maximum RP correlation,
@@ -52,13 +52,11 @@ def classification(features_df, metric_metadata=None):
     features_df : (C x 4) :obj:`pandas.DataFrame`
         DataFrame with the following columns:
         "edge_fract", "csf_fract", "max_RP_corr", and "HFC".
-    metric_metadata : :obj:`dict` or None, optional
-        Metric metadata in a dictionary.
 
     Returns
     -------
-    features_df
-    metric_metadata
+    clf_df
+    clf_metadata
     """
     # Define criteria needed for classification (thresholds and
     # hyperplane-parameters)
@@ -66,16 +64,16 @@ def classification(features_df, metric_metadata=None):
     THR_HFC = 0.35
     HYPERPLANE = np.array([-19.9751070082159, 9.95127547670627, 24.8333160239175])
 
-    if isinstance(metric_metadata, dict):
-        metric_metadata["classification"] = {
+    clf_metadata = {
+        "classification": {
             "LongName": "Component classification",
             "Description": ("Classification from the classification procedure."),
             "Levels": {
                 "accepted": "A component that is determined not to be associated with motion.",
                 "rejected": "A motion-related component.",
             },
-        }
-        metric_metadata["rationale"] = {
+        },
+        "rationale": {
             "LongName": "Rationale for component classification",
             "Description": (
                 "The reason for the classification. "
@@ -90,38 +88,40 @@ def classification(features_df, metric_metadata=None):
                     "to a hyperplane, the projected point is less than zero."
                 ),
             },
-        }
+        },
+    }
 
     # Classify the ICs as motion (rejected) or non-motion (accepted)
-    features_df["classification"] = "accepted"
-    features_df["rationale"] = ""
+    clf_df = pd.DataFrame(index=features_df.index, columns=["classification", "rationale"])
+    clf_df["classification"] = "accepted"
+    clf_df["rationale"] = ""
 
     # CSF
     rej_csf = features_df["csf_fract"] > THR_CSF
-    features_df.loc[rej_csf, "classification"] = "rejected"
-    features_df.loc[rej_csf, "rationale"] += "CSF;"
+    clf_df.loc[rej_csf, "classification"] = "rejected"
+    clf_df.loc[rej_csf, "rationale"] += "CSF;"
 
     # HFC
     rej_hfc = features_df["HFC"] > THR_HFC
-    features_df.loc[rej_hfc, "classification"] = "rejected"
-    features_df.loc[rej_hfc, "rationale"] += "HFC;"
+    clf_df.loc[rej_hfc, "classification"] = "rejected"
+    clf_df.loc[rej_hfc, "rationale"] += "HFC;"
 
     # Hyperplane
     # Project edge & max_RP_corr feature scores to new 1D space
     x = features_df[["max_RP_corr", "edge_fract"]].values
     proj = HYPERPLANE[0] + np.dot(x, HYPERPLANE[1:])
     rej_hyperplane = proj > 0
-    features_df.loc[rej_hyperplane, "classification"] = "rejected"
-    features_df.loc[rej_hyperplane, "rationale"] += "hyperplane;"
+    clf_df.loc[rej_hyperplane, "classification"] = "rejected"
+    clf_df.loc[rej_hyperplane, "rationale"] += "hyperplane;"
 
-    # Classify the ICs
+    # Check the classifications
     is_motion = (features_df["csf_fract"] > THR_CSF) | (features_df["HFC"] > THR_HFC) | (proj > 0)
-    assert np.array_equal(is_motion, (features_df["classification"] == "rejected").values)
+    assert np.array_equal(is_motion, (clf_df["classification"] == "rejected").values)
 
-    # Reorder columns and remove trailing semicolons
-    features_df = clean_dataframe(features_df)
+    # Remove trailing semicolons
+    clf_df["rationale"] = clf_df["rationale"].str.rstrip(";")
 
-    return features_df, metric_metadata
+    return clf_df, clf_metadata
 
 
 def write_metrics(features_df, out_dir, metric_metadata=None):
@@ -239,20 +239,6 @@ def denoising(in_file, out_dir, mixing, den_type, den_idx):
 
         if den_type in ("aggr", "both"):
             shutil.copyfile(in_file, aggr_denoised_file)
-
-
-def clean_dataframe(comptable):
-    """Reorder columns in component table.
-
-    This places "rationale" and "classification" at the end and
-    removes trailing semicolons from rationale column.
-    """
-    cols_at_end = ["classification", "rationale"]
-    comptable = comptable[
-        [c for c in comptable if c not in cols_at_end] + [c for c in cols_at_end if c in comptable]
-    ]
-    comptable["rationale"] = comptable["rationale"].str.rstrip(";")
-    return comptable
 
 
 def motpars_fmriprep2fsl(confounds):

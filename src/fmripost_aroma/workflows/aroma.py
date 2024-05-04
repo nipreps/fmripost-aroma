@@ -28,6 +28,7 @@ from nipype.pipeline import engine as pe
 
 from fmripost_aroma import config
 from fmripost_aroma.interfaces.bids import DerivativesDataSink
+from fmripost_aroma.interfaces.aroma import AROMAClassifier
 
 
 def init_ica_aroma_wf(
@@ -95,21 +96,13 @@ def init_ica_aroma_wf(
 
     Inputs
     ------
-    itk_bold_to_t1
-        Affine transform from ``ref_bold_brain`` to T1 space (ITK format)
-    anat2std_xfm
-        ANTs-compatible affine-and-warp transform file
     name_source
         BOLD series NIfTI file
         Used to recover original information lost during processing
     skip_vols
         number of non steady state volumes
-    bold_split
-        Individual 3D BOLD volumes, not motion corrected
     bold_mask
         BOLD series mask in template space
-    hmc_xforms
-        List of affine transforms aligning each volume to ``ref_image`` in ITK format
     movpar_file
         SPM-formatted motion parameters file
 
@@ -170,36 +163,44 @@ in the corresponding confounds file.
         name="outputnode",
     )
 
-    # Convert confounds to FSL motpars file.
+    # TODO: Convert confounds to FSL motpars file.
     ...
 
     rm_non_steady_state = pe.Node(
         niu.Function(function=_remove_volumes, output_names=["bold_cut"]),
         name="rm_nonsteady",
     )
-    # fmt:off
     workflow.connect([
         (inputnode, rm_non_steady_state, [
             ("skip_vols", "skip_vols"),
             ("bold_std", "bold_file"),
         ]),
-    ])
-    # fmt:on
+    ])  # fmt:skip
 
     calc_median_val = pe.Node(
         fsl.ImageStats(op_string="-k %s -p 50"),
         name="calc_median_val",
     )
+    workflow.connect([
+        (inputnode, calc_median_val, [("bold_mask_std", "mask_file")]),
+        (rm_non_steady_state, calc_median_val, [("bold_cut", "in_file")]),
+    ])  # fmt:skip
+
     calc_bold_mean = pe.Node(
         fsl.MeanImage(),
         name="calc_bold_mean",
     )
+    workflow.connect([(rm_non_steady_state, calc_bold_mean, [("bold_cut", "in_file")])])
 
     getusans = pe.Node(
         niu.Function(function=_getusans_func, output_names=["usans"]),
         name="getusans",
         mem_gb=0.01,
     )
+    workflow.connect([
+        (calc_median_val, getusans, [("out_stat", "thresh")]),
+        (calc_bold_mean, getusans, [("out_file", "image")]),
+    ])  # fmt:skip
 
     smooth = pe.Node(
         fsl.SUSAN(
@@ -208,6 +209,11 @@ in the corresponding confounds file.
         ),
         name="smooth",
     )
+    workflow.connect([
+        (rm_non_steady_state, smooth, [("bold_cut", "in_file")]),
+        (getusans, smooth, [("usans", "usans")]),
+        (calc_median_val, smooth, [(("out_stat", _getbtthresh), "brightness_threshold")]),
+    ])  # fmt:skip
 
     # melodic node
     melodic = pe.Node(
@@ -220,28 +226,65 @@ in the corresponding confounds file.
         ),
         name="melodic",
     )
+    workflow.connect([
+        (inputnode, melodic, [("bold_mask_std", "mask")]),
+        (smooth, melodic, [("smoothed_file", "in_files")]),
+    ])  # fmt:skip
 
-    # ica_aroma node
-    ica_aroma = pe.Node(
+    # Run the ICA-AROMA classifier
+    ica_aroma = pe.Node(AROMAClassifier(TR=metadata["RepetitionTime"]))
+    workflow.connect([
+        (inputnode, ica_aroma, [("movpar_file", "motion_parameters")]),
+        # TODO: Add node to select the MELODIC files AROMA uses
+        (melodic, ica_aroma, [("out_dir", "melodic_dir")]),
+    ])  # fmt:skip
+
+    # Generate the ICA-AROMA report
+    # What steps does this entail?
+    aroma_rpt = pe.Node(
         ICAAROMARPT(
             denoise_type="nonaggr",
             generate_report=True,
             TR=metadata["RepetitionTime"],
             args="-np",
         ),
-        name="ica_aroma",
+        name="aroma_rpt",
     )
+    workflow.connect([
+        (inputnode, aroma_rpt, [
+            ("bold_mask_std", "report_mask"),
+            ("bold_mask_std", "mask"),
+        ]),
+        (smooth, aroma_rpt, [("smoothed_file", "in_file")]),
+    ])  # fmt:skip
 
     add_non_steady_state = pe.Node(
         niu.Function(function=_add_volumes, output_names=["bold_add"]),
-        name="add_nonsteady",
+        name="add_non_steady_state",
     )
+    workflow.connect([
+        (inputnode, add_non_steady_state, [
+            ("bold_std", "bold_file"),
+            ("skip_vols", "skip_vols"),
+        ]),
+        (aroma_rpt, add_non_steady_state, [("nonaggr_denoised_file", "bold_cut_file")]),
+        (add_non_steady_state, outputnode, [("bold_add", "nonaggr_denoised_file")]),
+    ])  # fmt:skip
 
     # extract the confound ICs from the results
     ica_aroma_confound_extraction = pe.Node(
         ICAConfounds(err_on_aroma_warn=err_on_aroma_warn),
         name="ica_aroma_confound_extraction",
     )
+    workflow.connect([
+        (inputnode, ica_aroma_confound_extraction, [("skip_vols", "skip_vols")]),
+        (ica_aroma, ica_aroma_confound_extraction, [("out_dir", "in_directory")]),
+        (ica_aroma_confound_extraction, outputnode, [
+            ("aroma_confounds", "aroma_confounds"),
+            ("aroma_noise_ics", "aroma_noise_ics"),
+            ("melodic_mix", "melodic_mix"),
+        ]),
+    ])  # fmt:skip
 
     ica_aroma_metadata_fmt = pe.Node(
         TSV2JSON(
@@ -257,6 +300,10 @@ in the corresponding confounds file.
         ),
         name="ica_aroma_metadata_fmt",
     )
+    workflow.connect([
+        (ica_aroma_confound_extraction, ica_aroma_metadata_fmt, [("aroma_metadata", "in_file")]),
+        (ica_aroma_metadata_fmt, outputnode, [("output", "aroma_metadata")]),
+    ])  # fmt:skip
 
     ds_report_ica_aroma = pe.Node(
         DerivativesDataSink(desc="aroma", datatype="figures", dismiss_entities=("echo",)),
@@ -264,48 +311,8 @@ in the corresponding confounds file.
         run_without_submitting=True,
         mem_gb=config.DEFAULT_MEMORY_MIN_GB,
     )
+    workflow.connect([(aroma_rpt, ds_report_ica_aroma, [("out_report", "in_file")])])
 
-    # fmt:off
-    workflow.connect([
-        (inputnode, ica_aroma, [("movpar_file", "motion_parameters")]),
-        (inputnode, calc_median_val, [("bold_mask_std", "mask_file")]),
-        (rm_non_steady_state, calc_median_val, [("bold_cut", "in_file")]),
-        (rm_non_steady_state, calc_bold_mean, [("bold_cut", "in_file")]),
-        (calc_bold_mean, getusans, [("out_file", "image")]),
-        (calc_median_val, getusans, [("out_stat", "thresh")]),
-        # Connect input nodes to complete smoothing
-        (rm_non_steady_state, smooth, [("bold_cut", "in_file")]),
-        (getusans, smooth, [("usans", "usans")]),
-        (calc_median_val, smooth, [(("out_stat", _getbtthresh), "brightness_threshold")]),
-        # connect smooth to melodic
-        (smooth, melodic, [("smoothed_file", "in_files")]),
-        (inputnode, melodic, [("bold_mask_std", "mask")]),
-        # connect nodes to ICA-AROMA
-        (smooth, ica_aroma, [("smoothed_file", "in_file")]),
-        (inputnode, ica_aroma, [
-            ("bold_mask_std", "report_mask"),
-            ("bold_mask_std", "mask")]),
-        (melodic, ica_aroma, [("out_dir", "melodic_dir")]),
-        # generate tsvs from ICA-AROMA
-        (ica_aroma, ica_aroma_confound_extraction, [("out_dir", "in_directory")]),
-        (inputnode, ica_aroma_confound_extraction, [("skip_vols", "skip_vols")]),
-        (ica_aroma_confound_extraction, ica_aroma_metadata_fmt, [("aroma_metadata", "in_file")]),
-        # output for processing and reporting
-        (ica_aroma_confound_extraction, outputnode, [
-            ("aroma_confounds", "aroma_confounds"),
-            ("aroma_noise_ics", "aroma_noise_ics"),
-            ("melodic_mix", "melodic_mix"),
-        ]),
-        (ica_aroma_metadata_fmt, outputnode, [("output", "aroma_metadata")]),
-        (ica_aroma, add_non_steady_state, [("nonaggr_denoised_file", "bold_cut_file")]),
-        (inputnode, add_non_steady_state, [
-            ("bold_std", "bold_file"),
-            ("skip_vols", "skip_vols"),
-        ]),
-        (add_non_steady_state, outputnode, [("bold_add", "nonaggr_denoised_file")]),
-        (ica_aroma, ds_report_ica_aroma, [("out_report", "in_file")]),
-    ])
-    # fmt:on
     return workflow
 
 
