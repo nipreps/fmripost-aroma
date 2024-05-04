@@ -6,7 +6,7 @@ import os
 import os.path as op
 import shutil
 
-import nibabel as nib
+import nibabel as nb
 import numpy as np
 import pandas as pd
 
@@ -133,7 +133,7 @@ def aroma_workflow(
     # Prepare
     # Get TR of the fMRI data, if not specified
     if not TR:
-        in_img = nib.load(in_file)
+        in_img = nb.load(in_file)
         TR = in_img.header.get_zooms()[3]
 
     # Check TR
@@ -150,7 +150,7 @@ def aroma_workflow(
     # Load more inputs
     motion_params = utils.load_motpars(mc, source=mc_source)  # T x 6
     mixing = np.loadtxt(mixing)  # T x C
-    component_maps = nib.load(component_maps)  # X x Y x Z x C
+    component_maps = nb.load(component_maps)  # X x Y x Z x C
     if mixing.shape[1] != component_maps.shape[3]:
         raise ValueError(
             f"Number of columns in mixing matrix ({mixing.shape[1]}) does not match "
