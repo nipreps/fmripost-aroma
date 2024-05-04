@@ -40,6 +40,7 @@ from packaging.version import Version
 from fmripost_aroma import config
 from fmripost_aroma.interfaces.bids import DerivativesDataSink
 from fmripost_aroma.interfaces.reportlets import AboutSummary, SubjectSummary
+from fmripost_aroma.workflows.resampling import init_resample_raw_wf
 
 
 def init_fmripost_aroma_wf():
@@ -256,7 +257,8 @@ It is released under the [CC0]\
     )
 
     bids_info = pe.Node(
-        BIDSInfo(bids_dir=config.execution.bids_dir, bids_validate=False), name="bids_info"
+        BIDSInfo(bids_dir=config.execution.bids_dir, bids_validate=False),
+        name="bids_info",
     )
 
     summary = pe.Node(

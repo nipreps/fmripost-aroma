@@ -3,10 +3,8 @@
 from nipype.interfaces.base import (
     BaseInterfaceInputSpec,
     File,
-    InputMultiObject,
     SimpleInterface,
     TraitedSpec,
-    isdefined,
     traits,
 )
 
