@@ -35,8 +35,6 @@ def init_ica_aroma_wf(
     *,
     bold_file: str,
     metadata: dict,
-    aroma_melodic_dim: int = -200,
-    err_on_aroma_warn: bool = False,
     susan_fwhm: float = 6.0,
 ):
     """Build a workflow that runs `ICA-AROMA`_.
@@ -86,13 +84,6 @@ def init_ica_aroma_wf(
     susan_fwhm : :obj:`float`
         Kernel width (FWHM in mm) for the smoothing step with
         FSL ``susan`` (default: 6.0mm)
-    err_on_aroma_warn : :obj:`bool`
-        Do not fail on ICA-AROMA errors
-    aroma_melodic_dim : :obj:`int`
-        Set the dimensionality of the MELODIC ICA decomposition.
-        Negative numbers set a maximum on automatic dimensionality estimation.
-        Positive numbers set an exact number of components to extract.
-        (default: -200, i.e., estimate <=200 components)
 
     Inputs
     ------
@@ -222,7 +213,7 @@ in the corresponding confounds file.
             tr_sec=float(metadata["RepetitionTime"]),
             mm_thresh=0.5,
             out_stats=True,
-            dim=aroma_melodic_dim,
+            dim=config.workflow.melodic_dim,
         ),
         name="melodic",
     )
@@ -242,20 +233,14 @@ in the corresponding confounds file.
     # Generate the ICA-AROMA report
     # What steps does this entail?
     aroma_rpt = pe.Node(
-        ICAAROMARPT(
-            denoise_type="nonaggr",
-            generate_report=True,
-            TR=metadata["RepetitionTime"],
-            args="-np",
-        ),
+        ICAAROMARPT(TR=metadata["RepetitionTime"]),
         name="aroma_rpt",
     )
     workflow.connect([
-        (inputnode, aroma_rpt, [
-            ("bold_mask_std", "report_mask"),
-            ("bold_mask_std", "mask"),
-        ]),
+        (inputnode, aroma_rpt, [("bold_mask_std", "report_mask")]),
         (smooth, aroma_rpt, [("smoothed_file", "in_file")]),
+        (melodic, aroma_rpt, [("out_dir", "melodic_dir")]),
+        (ica_aroma, aroma_rpt, [("aroma_noise_ics", "aroma_noise_ics")]),
     ])  # fmt:skip
 
     add_non_steady_state = pe.Node(
@@ -273,12 +258,20 @@ in the corresponding confounds file.
 
     # extract the confound ICs from the results
     ica_aroma_confound_extraction = pe.Node(
-        ICAConfounds(err_on_aroma_warn=err_on_aroma_warn),
+        ICAConfounds(
+            err_on_aroma_warn=config.workflow.err_on_warn,
+            orthogonalize=config.workflow.orthogonalize,
+        ),
         name="ica_aroma_confound_extraction",
     )
     workflow.connect([
         (inputnode, ica_aroma_confound_extraction, [("skip_vols", "skip_vols")]),
-        (ica_aroma, ica_aroma_confound_extraction, [("out_dir", "in_directory")]),
+        (melodic, ica_aroma_confound_extraction, [("out_dir", "melodic_dir")]),
+        (ica_aroma, ica_aroma_confound_extraction, [
+            ("aroma_features", "aroma_features"),
+            ("aroma_noise_ics", "aroma_noise_ics"),
+            ("aroma_metadata", "aroma_metadata"),
+        ]),
         (ica_aroma_confound_extraction, outputnode, [
             ("aroma_confounds", "aroma_confounds"),
             ("aroma_noise_ics", "aroma_noise_ics"),
@@ -312,6 +305,84 @@ in the corresponding confounds file.
         mem_gb=config.DEFAULT_MEMORY_MIN_GB,
     )
     workflow.connect([(aroma_rpt, ds_report_ica_aroma, [("out_report", "in_file")])])
+
+    return workflow
+
+
+def init_denoise_wf(bold_file):
+    """Build a workflow that denoises a BOLD series using AROMA confounds.
+
+    This workflow performs the denoising in the requested output space(s).
+    """
+    from niworkflows.engine.workflows import LiterateWorkflow as Workflow
+
+    if config.workflow.denoise_method == "all":
+        denoise_methods = ["nonaggr", "aggr", "orthaggr"]
+    else:
+        denoise_methods = [config.workflow.denoise_method]
+
+    workflow = Workflow(name=_get_wf_name(bold_file, "denoise"))
+
+    inputnode = pe.Node(
+        niu.IdentityInterface(
+            fields=[
+                "bold_file",
+                "confounds",
+                "name_source",
+                "skip_vols",
+                "spatial_reference",
+            ],
+        ),
+        name="inputnode",
+    )
+
+    rm_non_steady_state = pe.Node(
+        niu.Function(function=_remove_volumes, output_names=["bold_cut"]),
+        name="rm_nonsteady",
+    )
+    workflow.connect([
+        (inputnode, rm_non_steady_state, [
+            ("skip_vols", "skip_vols"),
+            ("bold_file", "bold_file"),
+        ]),
+    ])  # fmt:skip
+
+    for denoise_method in denoise_methods:
+        denoise = pe.Node(
+            ICADenoise(method=denoise_method),
+            name=f"denoise_{denoise_method}",
+        )
+        workflow.connect([
+            (inputnode, denoise, [
+                ("confounds", "confounds_file"),
+                ("skip_vols", "skip_vols"),
+            ]),
+            (rm_non_steady_state, denoise, [("bold_cut", "bold_file")]),
+        ])  # fmt:skip
+
+        add_non_steady_state = pe.Node(
+            niu.Function(function=_add_volumes, output_names=["bold_add"]),
+            name="add_non_steady_state",
+        )
+        workflow.connect([
+            (inputnode, add_non_steady_state, [
+                ("bold_file", "bold_file"),
+                ("skip_vols", "skip_vols"),
+            ]),
+            (denoise, add_non_steady_state, [("denoised_file", "bold_cut_file")]),
+        ])  # fmt:skip
+
+        ds_denoised = pe.Node(
+            DerivativesDataSink(
+                desc=f"{denoise_method}Denoised",
+                datatype="func",
+                dismiss_entities=("echo",),
+            ),
+            name=f"ds_denoised_{denoise_method}",
+            run_without_submitting=True,
+            mem_gb=config.DEFAULT_MEMORY_MIN_GB,
+        )
+        workflow.connect([(add_non_steady_state, ds_denoised, [("bold_add", "denoised_file")])])
 
     return workflow
 

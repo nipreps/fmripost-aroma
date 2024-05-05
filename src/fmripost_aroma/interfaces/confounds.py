@@ -126,3 +126,121 @@ def _get_ica_confounds(ica_out_dir, skip_vols, newpath=None):
     ).to_csv(aroma_confounds, sep="\t", index=None)
 
     return aroma_confounds, motion_ics_out, melodic_mix_out, aroma_metadata_out
+
+
+class _ICADenoiseInputSpec(BaseInterfaceInputSpec):
+    method = traits.Enum("aggr", "nonaggr", "orthaggr", mandatory=True, desc="denoising method")
+    bold_file = File(exists=True, mandatory=True, desc="input file to denoise")
+    confounds = File(exists=True, mandatory=True, desc="confounds file")
+
+
+class _ICADenoiseOutputSpec(TraitedSpec):
+    denoised_file = File(exists=True, desc="denoised output file")
+
+
+class ICADenoise(SimpleInterface):
+
+    input_spec = _ICADenoiseInputSpec
+    output_spec = _ICADenoiseOutputSpec
+
+    def _run_interface(self, runtime):
+        import nibabel as nb
+        import numpy as np
+        import pandas as pd
+
+        method = self.inputs.method
+        bold_file = self.inputs.bold_file
+        confounds_file = self.inputs.confounds
+        metrics_file = self.inputs.metrics_file
+
+        bold_img = nb.load(bold_file)
+        bold_data = bold_img.get_fdata()
+        confounds_df = pd.read_table(confounds_file)
+
+        # Split up component time series into accepted and rejected components
+        metrics_df = pd.read_table(metrics_file)
+        rejected_columns = metrics_df.loc[metrics_df["classification"] == "rejected", "Component"]
+        accepted_columns = metrics_df.loc[metrics_df["classification"] == "accepted", "Component"]
+        rejected_components = confounds_df[rejected_columns].to_numpy()
+        accepted_components = confounds_df[accepted_columns].to_numpy()
+
+        if method == "aggr":
+            # Denoise the data with the motion components
+            masker = NiftiMasker(
+                mask_img=mask_file,
+                standardize_confounds=True,
+                standardize=False,
+                smoothing_fwhm=None,
+                detrend=False,
+                low_pass=None,
+                high_pass=None,
+                t_r=None,  # This shouldn't be necessary since we aren't bandpass filtering
+                reports=False,
+            )
+
+            # Denoise the data by fitting and transforming the data file using the masker
+            denoised_img_2d = masker.fit_transform(data_file, confounds=rejected_components)
+
+            # Transform denoised data back into 4D space
+            denoised_img_4d = masker.inverse_transform(denoised_img_2d)
+
+            # Save to file
+            denoised_img_4d.to_filename(
+                "sub-01_task-rest_space-MNI152NLin2009cAsym_desc-aggrDenoised_bold.nii.gz"
+            )
+        elif method == "orthaggr":
+            # Regress the good components out of the bad time series to get "pure evil" regressors
+            betas = np.linalg.lstsq(accepted_components, rejected_components, rcond=None)[0]
+            pred_bad_timeseries = np.dot(accepted_components, betas)
+            orth_bad_timeseries = rejected_components - pred_bad_timeseries
+
+            # Once you have these "pure evil" components, you can denoise the data
+            masker = NiftiMasker(
+                mask_img=mask_file,
+                standardize_confounds=True,
+                standardize=False,
+                smoothing_fwhm=None,
+                detrend=False,
+                low_pass=None,
+                high_pass=None,
+                t_r=None,  # This shouldn't be necessary since we aren't bandpass filtering
+                reports=False,
+            )
+
+            # Denoise the data by fitting and transforming the data file using the masker
+            denoised_img_2d = masker.fit_transform(data_file, confounds=orth_bad_timeseries)
+
+            # Transform denoised data back into 4D space
+            denoised_img_4d = masker.inverse_transform(denoised_img_2d)
+
+            # Save to file
+            denoised_img_4d.to_filename(
+                "sub-01_task-rest_space-MNI152NLin2009cAsym_desc-orthAggrDenoised_bold.nii.gz"
+            )
+        else:
+            # Apply the mask to the data image to get a 2d array
+            data = apply_mask(data_file, mask_file)
+
+            # Fit GLM to accepted components, rejected components and nuisance regressors
+            # (after adding a constant term)
+            regressors = np.hstack(
+                (
+                    rejected_components,
+                    accepted_components,
+                    np.ones((mixing_df.shape[0], 1)),
+                ),
+            )
+            betas = np.linalg.lstsq(regressors, data, rcond=None)[0][:-1]
+
+            # Denoise the data using the betas from just the bad components
+            confounds_idx = np.arange(rejected_components.shape[1])
+            pred_data = np.dot(rejected_components, betas[confounds_idx, :])
+            data_denoised = data - pred_data
+
+            # Save to file
+            denoised_img = unmask(data_denoised, mask_file)
+            denoised_img.to_filename(
+                "sub-01_task-rest_space-MNI152NLin2009cAsym_desc-nonaggrDenoised_bold.nii.gz"
+            )
+
+        return runtime

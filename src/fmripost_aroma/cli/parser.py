@@ -353,6 +353,23 @@ https://fmriprep.readthedocs.io/en/%s/spaces.html"""
             "(e.g., if all the components are classified as signal or noise)"
         ),
     )
+    g_aroma.add_argument(
+        "--denoising-method",
+        action="store",
+        choices=["aggr", "nonaggr", "both", "none"],
+        default="nonaggr",
+        help="Denoising method to apply, if any.",
+    )
+    g_aroma.add_argument(
+        "--orthogonalize",
+        action="store_true",
+        default=False,
+        help=(
+            "If True, the AROMA-flagged noise components will be orthogonalized with respect to "
+            "the non-noise components in the MELODIC mixing matrix. "
+            "This can serve as an alternative to non-aggressive denoising."
+        ),
+    )
 
     g_carbon = parser.add_argument_group("Options for carbon usage tracking")
     g_carbon.add_argument(

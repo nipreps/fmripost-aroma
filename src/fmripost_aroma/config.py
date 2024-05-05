@@ -534,6 +534,10 @@ class workflow(_Config):
     melodic_dim = None
     """Number of ICA components to be estimated by MELODIC
     (positive = exact, negative = maximum)."""
+    denoising_method = "nonaggr"
+    """Denoising strategy to be used."""
+    orthogonalize = False
+    """Orthogonalize the AROMA-flagged components w.r.t. the non-flagged components."""
     cifti_output = None
     """Generate HCP Grayordinates, accepts either ``'91k'`` (default) or ``'170k'``."""
     dummy_scans = None

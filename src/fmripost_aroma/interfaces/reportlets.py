@@ -185,10 +185,11 @@ class MELODICRPT(fsl.MELODIC):
         )
 
 
-class _ICAAROMAInputSpecRPT(
-    nrb._SVGReportCapableInputSpec,
-    fsl.aroma.ICA_AROMAInputSpec,
-):
+class _ICAAROMAInputSpecRPT(nrb._SVGReportCapableInputSpec):
+    aroma_noise_ics = File(
+        exists=True,
+        desc="Noise components estimated by ICA-AROMA, in a comma-separated values file.",
+    )
     out_report = File(
         "ica_aroma_reportlet.svg",
         usedefault=True,
@@ -202,14 +203,11 @@ class _ICAAROMAInputSpecRPT(
     )
 
 
-class _ICAAROMAOutputSpecRPT(
-    reporting.ReportCapableOutputSpec,
-    fsl.aroma.ICA_AROMAOutputSpec,
-):
+class _ICAAROMAOutputSpecRPT(reporting.ReportCapableOutputSpec):
     pass
 
 
-class ICAAROMARPT(reporting.ReportCapableInterface, fsl.ICA_AROMA):
+class ICAAROMARPT(reporting.ReportCapableInterface):
     """Create a reportlet for ICA-AROMA outputs."""
 
     input_spec = _ICAAROMAInputSpecRPT
@@ -224,13 +222,10 @@ class ICAAROMARPT(reporting.ReportCapableInterface, fsl.ICA_AROMA):
             out_file=self.inputs.out_report,
             compress=self.inputs.compress_report,
             report_mask=self.inputs.report_mask,
-            noise_components_file=self._noise_components_file,
+            noise_components_file=self.inputs.aroma_noise_ics,
         )
 
     def _post_run_hook(self, runtime):
-        outputs = self.aggregate_outputs(runtime=runtime)
-        self._noise_components_file = os.path.join(outputs.out_dir, "classified_motion_ICs.txt")
-
         NIWORKFLOWS_LOG.info("Generating report for ICA AROMA")
 
         return super()._post_run_hook(runtime)
