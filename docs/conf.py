@@ -13,7 +13,9 @@
 import os
 import sys
 
-from packaging import version as pver  # Avoid distutils.LooseVersion which is deprecated
+from packaging import (
+    version as pver,  # Avoid distutils.LooseVersion which is deprecated
+)
 from sphinx import __version__ as sphinxversion
 
 # If extensions (or modules to document with autodoc) are in another directory,
