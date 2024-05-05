@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """fMRIPost-AROMA workflows to run ICA-AROMA."""
+
 import os
 
 from nipype.interfaces import utility as niu
@@ -124,6 +125,7 @@ def init_ica_aroma_wf(
     nonaggr_denoised_file
         BOLD series with non-aggressive ICA-AROMA denoising applied
     """
+
     from nipype.interfaces import fsl
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
     from niworkflows.interfaces.utility import TSV2JSON
@@ -137,7 +139,7 @@ Automatic removal of motion artifacts using independent component analysis
 [ICA-AROMA, @aroma] was performed on the *preprocessed BOLD on MNI space*
 time-series after removal of non-steady state volumes and spatial smoothing
 with an isotropic, Gaussian kernel of 6mm FWHM (full-width half-maximum).
-Corresponding "non-aggresively" denoised runs were produced after such
+Corresponding "non-aggressively" denoised runs were produced after such
 smoothing.
 Additionally, the "aggressive" noise-regressors were collected and placed
 in the corresponding confounds file.

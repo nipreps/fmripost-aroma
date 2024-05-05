@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Parser."""
+
 import sys
 
 from fmripost_aroma import config
@@ -31,6 +32,7 @@ def _build_parser(**kwargs):
 
     ``kwargs`` are passed to ``argparse.ArgumentParser`` (mainly useful for debugging).
     """
+
     from argparse import Action, ArgumentDefaultsHelpFormatter, ArgumentParser
     from functools import partial
     from pathlib import Path
@@ -464,6 +466,7 @@ discourage its usage."""
 
 def parse_args(args=None, namespace=None):
     """Parse args and run further checks on the command line."""
+
     import logging
 
     parser = _build_parser()

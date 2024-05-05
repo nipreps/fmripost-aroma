@@ -22,6 +22,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """fMRI preprocessing workflow."""
+
 from fmripost_aroma import config
 
 EXITCODE: int = -1
@@ -29,6 +30,7 @@ EXITCODE: int = -1
 
 def main():
     """Entry point."""
+
     import gc
     import sys
     from multiprocessing import Manager, Process
