@@ -140,7 +140,9 @@ def main():
 
     config.loggers.workflow.log(
         15,
-        "\n".join(["fMRIPost-AROMA config:"] + ["\t\t%s" % s for s in config.dumps().splitlines()]),
+        "\n".join(
+            ["fMRIPost-AROMA config:"] + ["\t\t%s" % s for s in config.dumps().splitlines()]
+        ),
     )
     config.loggers.workflow.log(25, "fMRIPost-AROMA started!")
     errno = 1  # Default is error exit unless otherwise set
@@ -151,7 +153,10 @@ def main():
             from fmripost_aroma.utils.telemetry import process_crashfile
 
             crashfolders = [
-                config.execution.fmripost_aroma_dir / f"sub-{s}" / "log" / config.execution.run_uuid
+                config.execution.fmripost_aroma_dir
+                / f"sub-{s}"
+                / "log"
+                / config.execution.run_uuid
                 for s in config.execution.participant_label
             ]
             for crashfolder in crashfolders:
@@ -195,7 +200,9 @@ def main():
 
             dseg_tsv = str(api.get("fsaverage", suffix="dseg", extension=[".tsv"]))
             _copy_any(dseg_tsv, str(config.execution.fmripost_aroma_dir / "desc-aseg_dseg.tsv"))
-            _copy_any(dseg_tsv, str(config.execution.fmripost_aroma_dir / "desc-aparcaseg_dseg.tsv"))
+            _copy_any(
+                dseg_tsv, str(config.execution.fmripost_aroma_dir / "desc-aparcaseg_dseg.tsv")
+            )
         errno = 0
     finally:
         from pkg_resources import resource_filename as pkgrf
@@ -217,7 +224,9 @@ def main():
             config=pkgrf("fmripost_aroma", "data/reports-spec.yml"),
             packagename="fmripost_aroma",
         )
-        write_derivative_description(config.execution.bids_dir, config.execution.fmripost_aroma_dir)
+        write_derivative_description(
+            config.execution.bids_dir, config.execution.fmripost_aroma_dir
+        )
         write_bidsignore(config.execution.fmripost_aroma_dir)
 
         if sentry_sdk is not None and failed_reports:

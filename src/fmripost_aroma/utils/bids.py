@@ -76,8 +76,7 @@ def collect_derivatives_old(
     """Collect preprocessing derivatives."""
     subj_data = {
         "bold_raw": "",
-        ""
-        "bold_boldref": "",
+        "" "bold_boldref": "",
         "bold_MNI152NLin6": "",
     }
     query = {
