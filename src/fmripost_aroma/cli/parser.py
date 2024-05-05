@@ -356,8 +356,9 @@ https://fmriprep.readthedocs.io/en/%s/spaces.html"""
     g_aroma.add_argument(
         "--denoising-method",
         action="store",
-        choices=["aggr", "nonaggr", "both", "none"],
-        default="nonaggr",
+        nargs="+",
+        choices=["aggr", "nonaggr", "orthaggr"],
+        default=None,
         help="Denoising method to apply, if any.",
     )
     g_aroma.add_argument(

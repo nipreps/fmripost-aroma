@@ -534,7 +534,7 @@ class workflow(_Config):
     melodic_dim = None
     """Number of ICA components to be estimated by MELODIC
     (positive = exact, negative = maximum)."""
-    denoising_method = "nonaggr"
+    denoising_method = None
     """Denoising strategy to be used."""
     orthogonalize = False
     """Orthogonalize the AROMA-flagged components w.r.t. the non-flagged components."""

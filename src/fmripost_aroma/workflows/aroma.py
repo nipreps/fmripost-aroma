@@ -313,13 +313,11 @@ def init_denoise_wf(bold_file):
     """Build a workflow that denoises a BOLD series using AROMA confounds.
 
     This workflow performs the denoising in the requested output space(s).
+    It doesn't currently work on CIFTIs.
     """
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
-    if config.workflow.denoise_method == "all":
-        denoise_methods = ["nonaggr", "aggr", "orthaggr"]
-    else:
-        denoise_methods = [config.workflow.denoise_method]
+    from fmripost_aroma.interfaces.confounds import ICADenoise
 
     workflow = Workflow(name=_get_wf_name(bold_file, "denoise"))
 
@@ -327,6 +325,7 @@ def init_denoise_wf(bold_file):
         niu.IdentityInterface(
             fields=[
                 "bold_file",
+                "bold_mask_std",
                 "confounds",
                 "name_source",
                 "skip_vols",
@@ -347,7 +346,7 @@ def init_denoise_wf(bold_file):
         ]),
     ])  # fmt:skip
 
-    for denoise_method in denoise_methods:
+    for denoise_method in config.workflow.denoise_method:
         denoise = pe.Node(
             ICADenoise(method=denoise_method),
             name=f"denoise_{denoise_method}",
@@ -356,6 +355,7 @@ def init_denoise_wf(bold_file):
             (inputnode, denoise, [
                 ("confounds", "confounds_file"),
                 ("skip_vols", "skip_vols"),
+                ("bold_mask_std", "mask_file"),
             ]),
             (rm_non_steady_state, denoise, [("bold_cut", "bold_file")]),
         ])  # fmt:skip
