@@ -222,12 +222,24 @@ in the corresponding confounds file.
         (smooth, melodic, [("smoothed_file", "in_files")]),
     ])  # fmt:skip
 
+    select_melodic_files = pe.Node(
+        niu.Function(
+            function=_select_melodic_files,
+            input_names=["melodic_dir"],
+            output_names=["mixing", "component_maps"],
+        ),
+        name="select_melodic_files",
+    )
+    workflow.connect([(melodic, select_melodic_files, [("out_dir", "melodic_dir")])])
+
     # Run the ICA-AROMA classifier
     ica_aroma = pe.Node(AROMAClassifier(TR=metadata["RepetitionTime"]))
     workflow.connect([
         (inputnode, ica_aroma, [("movpar_file", "motion_parameters")]),
-        # TODO: Add node to select the MELODIC files AROMA uses
-        (melodic, ica_aroma, [("out_dir", "melodic_dir")]),
+        (select_melodic_files, ica_aroma, [
+            ("mixing", "mixing"),
+            ("component_maps", "component_maps"),
+        ]),
     ])  # fmt:skip
 
     # Generate the ICA-AROMA report
@@ -448,3 +460,14 @@ def _get_wf_name(bold_fname, prefix):
     fname = split_filename(bold_fname)[1]
     fname_nosub = "_".join(fname.split("_")[1:-1])
     return f"{prefix}_{fname_nosub.replace('-', '_')}_wf"
+
+
+def _select_melodic_files(melodic_dir):
+    """Select the mixing and component maps from the Melodic output."""
+    import os
+
+    mixing = os.path.join(melodic_dir, "melodic_mix")
+    assert os.path.isfile(mixing), f"Missing MELODIC mixing matrix: {mixing}"
+    component_maps = os.path.join(melodic_dir, "melodic_IC.nii.gz")
+    assert os.path.isfile(component_maps), f"Missing MELODIC ICs: {component_maps}"
+    return mixing, component_maps
