@@ -320,7 +320,7 @@ Functional data postprocessing
     for bold_file in subject_data["bold"]:
         functional_cache = {}
         if config.execution.derivatives:
-            # Collect native-space derivatives and warp them to MNI152NLin6Asym
+            # Collect native-space derivatives and transforms
             from fmripost_aroma.utils.bids import collect_derivatives, extract_entities
 
             entities = extract_entities(bold_file)
@@ -333,10 +333,12 @@ Functional data postprocessing
                     )
                 )
         else:
-            # Collect standard-space derivatives
+            # Only derivatives dataset was passed in, so we expected standard-space derivatives
             from fmripost_aroma.utils.bids import collect_derivatives
 
             ...
+
+        # Resample the BOLD series to MNI152NLin6Asym-2mm
 
         # Run ICA-AROMA using MNI152NLin6Asym-2mm BOLD data
         ica_aroma_wf = init_ica_aroma_wf(
@@ -358,6 +360,8 @@ Functional data postprocessing
 
         if config.workflow.denoise_method:
             # Warp the BOLD series to requested output spaces
+            # XXX: Probably should just grab the MNI152NLin6Asym-2mm file if that
+            # space+resolution is requested.
 
             # Run the denoising workflow on each requested BOLD series
             denoise_wf = init_denoise_wf(bold_file=bold_file)
