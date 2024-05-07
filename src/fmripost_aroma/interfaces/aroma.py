@@ -31,7 +31,7 @@ class _AROMAClassifierOutputSpec(TraitedSpec):
 
 
 class AROMAClassifier(SimpleInterface):
-    """Extract confounds from ICA-AROMA result directory."""
+    """Calculate ICA-AROMA features and classify components as signal or noise."""
 
     input_spec = _AROMAClassifierInputSpec
     output_spec = _AROMAClassifierOutputSpec
