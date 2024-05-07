@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import typing as ty
 from collections import defaultdict
 from pathlib import Path
 
@@ -18,7 +17,7 @@ def collect_derivatives(
     entities: dict,
     fieldmap_id: str | None,
     spec: dict | None = None,
-    patterns: ty.List[str] | None = None,
+    patterns: list[str] | None = None,
 ):
     """Gather existing derivatives and compose a cache."""
     if spec is None or patterns is None:

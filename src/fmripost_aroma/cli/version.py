@@ -87,7 +87,7 @@ def check_latest():
 def is_flagged():
     """Check whether current version is flagged."""
     # https://raw.githubusercontent.com/nipreps/fmripost_aroma/main/.versions.json
-    flagged = tuple()
+    flagged = ()
     try:
         response = requests.get(
             url="""\

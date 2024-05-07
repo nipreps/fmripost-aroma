@@ -316,7 +316,7 @@ def _getbtthresh(medianval):
 
 
 def _getusans_func(image, thresh):
-    return [tuple([image, thresh])]
+    return [(image, thresh)]
 
 
 def _remove_volumes(bold_file, skip_vols):
