@@ -18,7 +18,7 @@ from fmripost_aroma.utils import features, utils
 
 
 class _AROMAClassifierInputSpec(BaseInterfaceInputSpec):
-    motpars = File(exists=True, desc="motion parameters")
+    motpars = File(exists=True, desc="motion parameters or general confounds file")
     mixing = File(exists=True, desc="mixing matrix")
     component_maps = File(exists=True, desc="thresholded z-statistic component maps")
     TR = traits.Float(desc="repetition time in seconds")
@@ -38,7 +38,7 @@ class AROMAClassifier(SimpleInterface):
 
     def _run_interface(self, runtime):
         TR = self.inputs.TR
-        motion_params = utils.load_motpars(self.inputs.motpars, source="FSL")
+        motion_params = utils.load_motpars(self.inputs.motpars, source="fmriprep")
         mixing = np.loadtxt(self.inputs.mixing)  # T x C
         component_maps = nb.load(self.inputs.component_maps)  # X x Y x Z x C
         if mixing.shape[1] != component_maps.shape[3]:

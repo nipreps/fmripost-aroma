@@ -26,6 +26,7 @@ import os
 
 from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
+from niworkflows.interfaces.confounds import NormalizeMotionParams
 
 from fmripost_aroma import config
 from fmripost_aroma.interfaces.bids import DerivativesDataSink
@@ -78,6 +79,7 @@ def init_ica_aroma_wf(
     Parameters
     ----------
     bold_file
+        BOLD series used as name source for derivatives
     metadata : :obj:`dict`
         BIDS metadata for BOLD file
     susan_fwhm : :obj:`float`
@@ -86,12 +88,15 @@ def init_ica_aroma_wf(
 
     Inputs
     ------
+    bold_std
+        BOLD series in template space
+    bold_mask_std
+        BOLD series mask in template space
+    confounds
+        fMRIPrep-formatted confounds file, which must include the following columns:
+        "trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z".
     skip_vols
         number of non steady state volumes
-    bold_mask
-        BOLD series mask in template space
-    movpar_file
-        SPM-formatted motion parameters file
 
     Outputs
     -------
@@ -155,9 +160,6 @@ in the corresponding confounds file.
         ),
         name="outputnode",
     )
-
-    # TODO: Convert confounds to FSL motpars file.
-    ...
 
     rm_non_steady_state = pe.Node(
         niu.Function(function=_remove_volumes, output_names=["bold_cut"]),
@@ -237,7 +239,7 @@ in the corresponding confounds file.
     # Run the ICA-AROMA classifier
     ica_aroma = pe.Node(AROMAClassifier(TR=metadata["RepetitionTime"]))
     workflow.connect([
-        (inputnode, ica_aroma, [("movpar_file", "motion_parameters")]),
+        (inputnode, ica_aroma, [("confounds", "motion_parameters")]),
         (select_melodic_files, ica_aroma, [
             ("mixing", "mixing"),
             ("component_maps", "component_maps"),
