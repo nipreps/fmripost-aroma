@@ -28,6 +28,7 @@ fMRIPost AROMA workflows
 .. autofunction:: init_single_subject_wf
 
 """
+
 import os
 import sys
 import warnings

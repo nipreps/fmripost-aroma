@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Parser."""
+
 import sys
 
 from fmripost_aroma import config
@@ -31,6 +32,7 @@ def _build_parser(**kwargs):
 
     ``kwargs`` are passed to ``argparse.ArgumentParser`` (mainly useful for debugging).
     """
+
     from argparse import Action, ArgumentDefaultsHelpFormatter, ArgumentParser
     from functools import partial
     from pathlib import Path
@@ -45,14 +47,14 @@ def _build_parser(**kwargs):
             d = {}
             for spec in values:
                 try:
-                    name, loc = spec.split('=')
+                    name, loc = spec.split("=")
                     loc = Path(loc)
                 except ValueError:
                     loc = Path(spec)
                     name = loc.name
 
                 if name in d:
-                    raise ValueError(f'Received duplicate derivative name: {name}')
+                    raise ValueError(f"Received duplicate derivative name: {name}")
 
                 d[name] = loc
             setattr(namespace, self.dest, d)
@@ -189,16 +191,16 @@ def _build_parser(**kwargs):
         ),
     )
     g_bids.add_argument(
-        '-d',
-        '--derivatives',
+        "-d",
+        "--derivatives",
         action=ToDict,
-        metavar='PACKAGE=PATH',
+        metavar="PACKAGE=PATH",
         type=str,
-        nargs='+',
+        nargs="+",
         help=(
-            'Search PATH(s) for pre-computed derivatives. '
-            'These may be provided as named folders '
-            '(e.g., `--derivatives smriprep=/path/to/smriprep`).'
+            "Search PATH(s) for pre-computed derivatives. "
+            "These may be provided as named folders "
+            "(e.g., `--derivatives smriprep=/path/to/smriprep`)."
         ),
     )
     g_bids.add_argument(
@@ -292,8 +294,8 @@ def _build_parser(**kwargs):
         ),
     )
     g_conf.add_argument(
-        '--output-spaces',
-        nargs='*',
+        "--output-spaces",
+        nargs="*",
         action=OutputReferencesAction,
         help="""\
 Standard and non-standard spaces to resample denoised functional images to. \
@@ -304,7 +306,7 @@ colon-separated parameters. \
 Non-standard spaces imply specific orientations and sampling grids. \
 For further details, please check out \
 https://fmriprep.readthedocs.io/en/%s/spaces.html"""
-        % (currentv.base_version if is_release else 'latest'),
+        % (currentv.base_version if is_release else "latest"),
     )
     g_conf.add_argument(
         "--dummy-scans",
@@ -482,6 +484,7 @@ discourage its usage."""
 
 def parse_args(args=None, namespace=None):
     """Parse args and run further checks on the command line."""
+
     import logging
 
     parser = _build_parser()
