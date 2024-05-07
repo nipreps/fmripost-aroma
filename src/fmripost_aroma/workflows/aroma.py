@@ -26,7 +26,6 @@ import os
 
 from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
-from niworkflows.interfaces.confounds import NormalizeMotionParams
 
 from fmripost_aroma import config
 from fmripost_aroma.interfaces.bids import DerivativesDataSink
