@@ -15,4 +15,7 @@ repos:
     rev: v0.4.3
     hooks:
       - id: ruff
+        args: [ --fix ]
       - id: ruff-format
+      - id: ruff
+        args: [ --select, ISC001, --fix ]
