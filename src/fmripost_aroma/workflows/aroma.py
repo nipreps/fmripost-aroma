@@ -532,7 +532,11 @@ def _select_melodic_files(melodic_dir):
     import os
 
     mixing = os.path.join(melodic_dir, 'melodic_mix')
-    assert os.path.isfile(mixing), f'Missing MELODIC mixing matrix: {mixing}'
+    if not os.path.isfile(mixing):
+        raise FileNotFoundError(f'Missing MELODIC mixing matrix: {mixing}')
+
     component_maps = os.path.join(melodic_dir, 'melodic_IC.nii.gz')
-    assert os.path.isfile(component_maps), f'Missing MELODIC ICs: {component_maps}'
+    if not os.path.isfile(component_maps):
+        raise FileNotFoundError(f'Missing MELODIC ICs: {component_maps}')
+
     return mixing, component_maps

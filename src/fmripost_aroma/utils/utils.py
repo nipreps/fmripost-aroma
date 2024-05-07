@@ -116,7 +116,8 @@ def classification(features_df: pd.DataFrame):
 
     # Check the classifications
     is_motion = (features_df['csf_fract'] > THR_CSF) | (features_df['HFC'] > THR_HFC) | (proj > 0)
-    assert np.array_equal(is_motion, (clf_df['classification'] == 'rejected').values)
+    if not np.array_equal(is_motion, (clf_df['classification'] == 'rejected').values):
+        raise ValueError('Classification error: classifications do not match criteria.')
 
     # Remove trailing semicolons
     clf_df['rationale'] = clf_df['rationale'].str.rstrip(';')
