@@ -10,29 +10,29 @@ from nipype.interfaces.base import (
 
 
 class _ResamplerInputSpec(BaseInterfaceInputSpec):
-    bold_file = File(exists=True, desc="BOLD file to resample.")
+    bold_file = File(exists=True, desc='BOLD file to resample.')
     derivs_path = traits.Directory(
         exists=True,
-        desc="Path to derivatives.",
+        desc='Path to derivatives.',
     )
     output_dir = traits.Directory(
         exists=True,
-        desc="Output directory.",
+        desc='Output directory.',
     )
     space = traits.Str(
-        "MNI152NLin6Asym",
+        'MNI152NLin6Asym',
         usedefault=True,
-        desc="Output space.",
+        desc='Output space.',
     )
     resolution = traits.Str(
-        "2",
+        '2',
         usedefault=True,
-        desc="Output resolution.",
+        desc='Output resolution.',
     )
 
 
 class _ResamplerOutputSpec(TraitedSpec):
-    output_file = File(exists=True, desc="Resampled BOLD file.")
+    output_file = File(exists=True, desc='Resampled BOLD file.')
 
 
 class Resampler(SimpleInterface):
@@ -57,6 +57,6 @@ class Resampler(SimpleInterface):
             resolution=self.inputs.resolution,
         )
 
-        self._results["output_file"] = output_file
+        self._results['output_file'] = output_file
 
         return runtime

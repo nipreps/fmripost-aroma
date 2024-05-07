@@ -11,21 +11,21 @@ def init_resample_raw_wf(bold_file, functional_cache):
 
     from fmripost_aroma.interfaces.resampler import Resampler
 
-    workflow = Workflow(name="resample_raw_wf")
+    workflow = Workflow(name='resample_raw_wf')
 
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=["bold_file", "mask_file"]),
-        name="inputnode",
+        niu.IdentityInterface(fields=['bold_file', 'mask_file']),
+        name='inputnode',
     )
     inputnode.inputs.bold_file = bold_file
-    inputnode.inputs.mask_file = functional_cache["bold_mask"]
+    inputnode.inputs.mask_file = functional_cache['bold_mask']
 
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["bold_std", "bold_mask_std"]),
-        name="outputnode",
+        niu.IdentityInterface(fields=['bold_std', 'bold_mask_std']),
+        name='outputnode',
     )
 
-    stc_wf = init_bold_stc_wf(name="resample_stc_wf")
+    stc_wf = init_bold_stc_wf(name='resample_stc_wf')
     workflow.connect([
         (inputnode, stc_wf, [
             ('bold_file', 'inputnode.bold_file'),
@@ -34,8 +34,8 @@ def init_resample_raw_wf(bold_file, functional_cache):
     ])  # fmt:skip
 
     resample_bold = pe.Node(
-        Resampler(space="MNI152NLin6Asym", resolution="2"),
-        name="resample_bold",
+        Resampler(space='MNI152NLin6Asym', resolution='2'),
+        name='resample_bold',
     )
     workflow.connect([
         (stc_wf, resample_bold, [('outputnode.bold_file', 'bold_file')]),
@@ -43,8 +43,8 @@ def init_resample_raw_wf(bold_file, functional_cache):
     ])  # fmt:skip
 
     resample_bold_mask = pe.Node(
-        Resampler(space="MNI152NLin6Asym", resolution="2"),
-        name="resample_bold_mask",
+        Resampler(space='MNI152NLin6Asym', resolution='2'),
+        name='resample_bold_mask',
     )
     workflow.connect([
         (inputnode, resample_bold_mask, [('mask_file', 'bold_file')]),

@@ -321,7 +321,7 @@ Functional data postprocessing
 
     for bold_file in subject_data['bold']:
         ica_aroma_wf = init_ica_aroma_wf(bold_file=bold_file)
-        ica_aroma_wf.__desc__ = func_pre_desc + (ica_aroma_wf.__desc__ or "")
+        ica_aroma_wf.__desc__ = func_pre_desc + (ica_aroma_wf.__desc__ or '')
 
         functional_cache = {}
         if config.execution.derivatives:
@@ -344,8 +344,8 @@ Functional data postprocessing
             )
             workflow.connect([
                 (resample_raw_wf, ica_aroma_wf, [
-                    ("outputnode.bold_std", "inputnode.bold_std"),
-                    ("outputnode.bold_mask_std", "inputnode.bold_mask_std"),
+                    ('outputnode.bold_std', 'inputnode.bold_std'),
+                    ('outputnode.bold_mask_std', 'inputnode.bold_mask_std'),
                 ]),
             ])  # fmt:skip
         else:
@@ -358,13 +358,13 @@ Functional data postprocessing
                     entities=entities,
                 )
             )
-            ica_aroma_wf.inputs.inputnode.bold_std = functional_cache["bold_std"]
-            ica_aroma_wf.inputs.inputnode.bold_mask_std = functional_cache["bold_mask_std"]
+            ica_aroma_wf.inputs.inputnode.bold_std = functional_cache['bold_std']
+            ica_aroma_wf.inputs.inputnode.bold_mask_std = functional_cache['bold_mask_std']
             workflow.add_nodes([ica_aroma_wf])
 
-        ica_aroma_wf.inputs.inputnode.movpar_file = functional_cache["movpar_file"]
-        ica_aroma_wf.inputs.inputnode.skip_vols = functional_cache["skip_vols"]
-        ica_aroma_wf.inputs.inputnode.spatial_reference = functional_cache["spatial_reference"]
+        ica_aroma_wf.inputs.inputnode.movpar_file = functional_cache['movpar_file']
+        ica_aroma_wf.inputs.inputnode.skip_vols = functional_cache['skip_vols']
+        ica_aroma_wf.inputs.inputnode.spatial_reference = functional_cache['spatial_reference']
 
         # Now denoise the native-space BOLD data using ICA-AROMA
 

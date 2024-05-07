@@ -1,3 +1,7 @@
+"""Resampler methods for fMRI data."""
+
+from __future__ import annotations
+
 import asyncio
 import os
 from functools import partial
@@ -18,7 +22,6 @@ from sdcflows.transform import grid_bspline_weights
 from sdcflows.utils.tools import ensure_positive_cosines
 from templateflow import api as tf
 from typing_extensions import Annotated
-
 
 R = TypeVar('R')
 
