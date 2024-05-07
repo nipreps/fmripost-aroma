@@ -38,13 +38,13 @@ def mock_config(bids_dir=None):
     """Create a mock config for documentation and testing purposes."""
     from ... import config
 
-    _old_fs = os.getenv("FREESURFER_HOME")
+    _old_fs = os.getenv('FREESURFER_HOME')
     if not _old_fs:
-        os.environ["FREESURFER_HOME"] = mkdtemp()
+        os.environ['FREESURFER_HOME'] = mkdtemp()
 
-    settings = loads(data.load.readable("tests/config.toml").read_text())
+    settings = loads(data.load.readable('tests/config.toml').read_text())
     for sectionname, configs in settings.items():
-        if sectionname != "environment":
+        if sectionname != 'environment':
             section = getattr(config, sectionname)
             section.load(configs, init=False)
     config.nipype.omp_nthreads = 1
@@ -52,7 +52,7 @@ def mock_config(bids_dir=None):
     config.loggers.init()
     config.init_spaces()
 
-    bids_dir = bids_dir or data.load("tests/ds000005").absolute()
+    bids_dir = bids_dir or data.load('tests/ds000005').absolute()
 
     config.execution.work_dir = Path(mkdtemp())
     config.execution.bids_dir = bids_dir
@@ -67,4 +67,4 @@ def mock_config(bids_dir=None):
     shutil.rmtree(config.execution.fmriprep_dir)
 
     if not _old_fs:
-        del os.environ["FREESURFER_HOME"]
+        del os.environ['FREESURFER_HOME']

@@ -2,4 +2,4 @@
 
 from fmripost_aroma.workflows import aroma, base
 
-__all__ = ["aroma", "base"]
+__all__ = ['aroma', 'base']
