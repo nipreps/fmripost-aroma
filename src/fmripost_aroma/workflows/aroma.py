@@ -28,8 +28,8 @@ from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
 
 from fmripost_aroma import config
-from fmripost_aroma.interfaces.bids import DerivativesDataSink
 from fmripost_aroma.interfaces.aroma import AROMAClassifier
+from fmripost_aroma.interfaces.bids import DerivativesDataSink
 
 
 def init_ica_aroma_wf(
@@ -136,10 +136,10 @@ in the corresponding confounds file.
     inputnode = pe.Node(
         niu.IdentityInterface(
             fields=[
-                "bold_std",
-                "bold_mask_std",
-                "confounds",
-                "skip_vols",
+                'bold_std',
+                'bold_mask_std',
+                'confounds',
+                'skip_vols',
             ],
         ),
         name='inputnode',
@@ -148,13 +148,13 @@ in the corresponding confounds file.
     outputnode = pe.Node(
         niu.IdentityInterface(
             fields=[
-                "melodic_mix",
-                "aroma_features",
-                "features_metadata",
-                "aroma_confounds",
-                "confounds_metadata",
-                "aroma_noise_ics",
-                "nonaggr_denoised_file",
+                'melodic_mix',
+                'aroma_features',
+                'features_metadata',
+                'aroma_confounds',
+                'confounds_metadata',
+                'aroma_noise_ics',
+                'nonaggr_denoised_file',
             ],
         ),
         name='outputnode',
@@ -176,15 +176,15 @@ in the corresponding confounds file.
         name='calc_median_val',
     )
     workflow.connect([
-        (inputnode, calc_median_val, [("bold_mask_std", "mask_file")]),
-        (rm_non_steady_state, calc_median_val, [("bold_cut", "in_file")]),
+        (inputnode, calc_median_val, [('bold_mask_std', 'mask_file')]),
+        (rm_non_steady_state, calc_median_val, [('bold_cut', 'in_file')]),
     ])  # fmt:skip
 
     calc_bold_mean = pe.Node(
         fsl.MeanImage(),
         name='calc_bold_mean',
     )
-    workflow.connect([(rm_non_steady_state, calc_bold_mean, [("bold_cut", "in_file")])])
+    workflow.connect([(rm_non_steady_state, calc_bold_mean, [('bold_cut', 'in_file')])])
 
     getusans = pe.Node(
         niu.Function(function=_getusans_func, output_names=['usans']),
@@ -192,8 +192,8 @@ in the corresponding confounds file.
         mem_gb=0.01,
     )
     workflow.connect([
-        (calc_median_val, getusans, [("out_stat", "thresh")]),
-        (calc_bold_mean, getusans, [("out_file", "image")]),
+        (calc_median_val, getusans, [('out_stat', 'thresh')]),
+        (calc_bold_mean, getusans, [('out_file', 'image')]),
     ])  # fmt:skip
 
     smooth = pe.Node(
@@ -204,9 +204,9 @@ in the corresponding confounds file.
         name='smooth',
     )
     workflow.connect([
-        (rm_non_steady_state, smooth, [("bold_cut", "in_file")]),
-        (getusans, smooth, [("usans", "usans")]),
-        (calc_median_val, smooth, [(("out_stat", _getbtthresh), "brightness_threshold")]),
+        (rm_non_steady_state, smooth, [('bold_cut', 'in_file')]),
+        (getusans, smooth, [('usans', 'usans')]),
+        (calc_median_val, smooth, [(('out_stat', _getbtthresh), 'brightness_threshold')]),
     ])  # fmt:skip
 
     # ICA with MELODIC
@@ -221,58 +221,58 @@ in the corresponding confounds file.
         name='melodic',
     )
     workflow.connect([
-        (inputnode, melodic, [("bold_mask_std", "mask")]),
-        (smooth, melodic, [("smoothed_file", "in_files")]),
+        (inputnode, melodic, [('bold_mask_std', 'mask')]),
+        (smooth, melodic, [('smoothed_file', 'in_files')]),
     ])  # fmt:skip
 
     select_melodic_files = pe.Node(
         niu.Function(
             function=_select_melodic_files,
-            input_names=["melodic_dir"],
-            output_names=["mixing", "component_maps"],
+            input_names=['melodic_dir'],
+            output_names=['mixing', 'component_maps'],
         ),
-        name="select_melodic_files",
+        name='select_melodic_files',
     )
-    workflow.connect([(melodic, select_melodic_files, [("out_dir", "melodic_dir")])])
+    workflow.connect([(melodic, select_melodic_files, [('out_dir', 'melodic_dir')])])
 
     # Run the ICA-AROMA classifier
-    ica_aroma = pe.Node(AROMAClassifier(TR=metadata["RepetitionTime"]))
+    ica_aroma = pe.Node(AROMAClassifier(TR=metadata['RepetitionTime']))
     workflow.connect([
-        (inputnode, ica_aroma, [("confounds", "motpars")]),
+        (inputnode, ica_aroma, [('confounds', 'motpars')]),
         (select_melodic_files, ica_aroma, [
-            ("mixing", "mixing"),
-            ("component_maps", "component_maps"),
+            ('mixing', 'mixing'),
+            ('component_maps', 'component_maps'),
         ]),
         (ica_aroma, outputnode, [
-            ("aroma_features", "aroma_features"),
-            ("aroma_metadata", "features_metadata"),
+            ('aroma_features', 'aroma_features'),
+            ('aroma_metadata', 'features_metadata'),
         ]),
     ])  # fmt:skip
 
     # Generate the ICA-AROMA report
     # What steps does this entail?
     aroma_rpt = pe.Node(
-        ICAAROMARPT(TR=metadata["RepetitionTime"]),
-        name="aroma_rpt",
+        ICAAROMARPT(TR=metadata['RepetitionTime']),
+        name='aroma_rpt',
     )
     workflow.connect([
-        (inputnode, aroma_rpt, [("bold_mask_std", "report_mask")]),
-        (smooth, aroma_rpt, [("smoothed_file", "in_file")]),
-        (melodic, aroma_rpt, [("out_dir", "melodic_dir")]),
-        (ica_aroma, aroma_rpt, [("aroma_noise_ics", "aroma_noise_ics")]),
+        (inputnode, aroma_rpt, [('bold_mask_std', 'report_mask')]),
+        (smooth, aroma_rpt, [('smoothed_file', 'in_file')]),
+        (melodic, aroma_rpt, [('out_dir', 'melodic_dir')]),
+        (ica_aroma, aroma_rpt, [('aroma_noise_ics', 'aroma_noise_ics')]),
     ])  # fmt:skip
 
     add_non_steady_state = pe.Node(
-        niu.Function(function=_add_volumes, output_names=["bold_add"]),
-        name="add_non_steady_state",
+        niu.Function(function=_add_volumes, output_names=['bold_add']),
+        name='add_non_steady_state',
     )
     workflow.connect([
         (inputnode, add_non_steady_state, [
-            ("bold_std", "bold_file"),
-            ("skip_vols", "skip_vols"),
+            ('bold_std', 'bold_file'),
+            ('skip_vols', 'skip_vols'),
         ]),
-        (aroma_rpt, add_non_steady_state, [("nonaggr_denoised_file", "bold_cut_file")]),
-        (add_non_steady_state, outputnode, [("bold_add", "nonaggr_denoised_file")]),
+        (aroma_rpt, add_non_steady_state, [('nonaggr_denoised_file', 'bold_cut_file')]),
+        (add_non_steady_state, outputnode, [('bold_add', 'nonaggr_denoised_file')]),
     ])  # fmt:skip
 
     # extract the confound ICs from the results
@@ -281,20 +281,20 @@ in the corresponding confounds file.
             err_on_aroma_warn=config.workflow.err_on_warn,
             orthogonalize=config.workflow.orthogonalize,
         ),
-        name="ica_aroma_confound_extraction",
+        name='ica_aroma_confound_extraction',
     )
     workflow.connect([
-        (inputnode, ica_aroma_confound_extraction, [("skip_vols", "skip_vols")]),
-        (melodic, ica_aroma_confound_extraction, [("out_dir", "melodic_dir")]),
+        (inputnode, ica_aroma_confound_extraction, [('skip_vols', 'skip_vols')]),
+        (melodic, ica_aroma_confound_extraction, [('out_dir', 'melodic_dir')]),
         (ica_aroma, ica_aroma_confound_extraction, [
-            ("aroma_features", "aroma_features"),
-            ("aroma_noise_ics", "aroma_noise_ics"),
-            ("aroma_metadata", "aroma_metadata"),
+            ('aroma_features', 'aroma_features'),
+            ('aroma_noise_ics', 'aroma_noise_ics'),
+            ('aroma_metadata', 'aroma_metadata'),
         ]),
         (ica_aroma_confound_extraction, outputnode, [
-            ("aroma_confounds", "aroma_confounds"),
-            ("aroma_noise_ics", "aroma_noise_ics"),
-            ("melodic_mix", "melodic_mix"),
+            ('aroma_confounds', 'aroma_confounds'),
+            ('aroma_noise_ics', 'aroma_noise_ics'),
+            ('melodic_mix', 'melodic_mix'),
         ]),
     ])  # fmt:skip
 
@@ -313,8 +313,8 @@ in the corresponding confounds file.
         name='ica_aroma_metadata_fmt',
     )
     workflow.connect([
-        (ica_aroma_confound_extraction, ica_aroma_metadata_fmt, [("aroma_metadata", "in_file")]),
-        (ica_aroma_metadata_fmt, outputnode, [("output", "confounds_metadata")]),
+        (ica_aroma_confound_extraction, ica_aroma_metadata_fmt, [('aroma_metadata', 'in_file')]),
+        (ica_aroma_metadata_fmt, outputnode, [('output', 'confounds_metadata')]),
     ])  # fmt:skip
 
     ds_report_ica_aroma = pe.Node(
@@ -323,65 +323,65 @@ in the corresponding confounds file.
         run_without_submitting=True,
         mem_gb=config.DEFAULT_MEMORY_MIN_GB,
     )
-    workflow.connect([(aroma_rpt, ds_report_ica_aroma, [("out_report", "in_file")])])
+    workflow.connect([(aroma_rpt, ds_report_ica_aroma, [('out_report', 'in_file')])])
 
     ds_components = pe.Node(
         DerivativesDataSink(
-            stat="dunno",
-            thresh="0p5",
-            desc="melodic",
-            datatype="func",
+            stat='dunno',
+            thresh='0p5',
+            desc='melodic',
+            datatype='func',
             name_source=bold_file,
         ),
-        name="ds_components",
+        name='ds_components',
         run_without_submitting=True,
         mem_gb=config.DEFAULT_MEMORY_MIN_GB,
     )
-    workflow.connect([(select_melodic_files, ds_components, [("component_maps", "in_file")])])
+    workflow.connect([(select_melodic_files, ds_components, [('component_maps', 'in_file')])])
 
     ds_mixing = pe.Node(
         DerivativesDataSink(
-            desc="melodic",
-            datatype="func",
+            desc='melodic',
+            datatype='func',
             name_source=bold_file,
         ),
-        name="ds_mixing",
+        name='ds_mixing',
         run_without_submitting=True,
         mem_gb=config.DEFAULT_MEMORY_MIN_GB,
     )
-    workflow.connect([(select_melodic_files, ds_mixing, [("mixing", "in_file")])])
+    workflow.connect([(select_melodic_files, ds_mixing, [('mixing', 'in_file')])])
 
     ds_aroma_features = pe.Node(
         DerivativesDataSink(
-            desc="melodic",
-            datatype="func",
+            desc='melodic',
+            datatype='func',
             name_source=bold_file,
         ),
-        name="ds_aroma_features",
+        name='ds_aroma_features',
         run_without_submitting=True,
         mem_gb=config.DEFAULT_MEMORY_MIN_GB,
     )
     workflow.connect([
         (ica_aroma, ds_aroma_features, [
-            ("aroma_features", "in_file"),
-            ("aroma_metadata", "meta_dict"),
+            ('aroma_features', 'in_file'),
+            ('aroma_metadata', 'meta_dict'),
         ]),
     ])  # fmt:skip
 
     ds_aroma_confounds = pe.Node(
         DerivativesDataSink(
-            desc="melodic",
-            datatype="func",
+            desc='melodic',
+            datatype='func',
             name_source=bold_file,
         ),
-        name="ds_aroma_confounds",
+        name='ds_aroma_confounds',
         run_without_submitting=True,
         mem_gb=config.DEFAULT_MEMORY_MIN_GB,
     )
     workflow.connect([
         (ica_aroma_confound_extraction, ds_aroma_confounds, [
-            ("aroma_confounds", "in_file"),
-            ("aroma_metadata", "meta_dict"),
+            ('aroma_confounds', 'in_file'),
+            ('aroma_metadata', 'meta_dict'),
         ]),
     ])  # fmt:skip
 
@@ -398,68 +398,68 @@ def init_denoise_wf(bold_file):
 
     from fmripost_aroma.interfaces.confounds import ICADenoise
 
-    workflow = Workflow(name=_get_wf_name(bold_file, "denoise"))
+    workflow = Workflow(name=_get_wf_name(bold_file, 'denoise'))
 
     inputnode = pe.Node(
         niu.IdentityInterface(
             fields=[
-                "bold_file",
-                "bold_mask_std",
-                "confounds",
-                "skip_vols",
+                'bold_file',
+                'bold_mask_std',
+                'confounds',
+                'skip_vols',
             ],
         ),
-        name="inputnode",
+        name='inputnode',
     )
 
     rm_non_steady_state = pe.Node(
-        niu.Function(function=_remove_volumes, output_names=["bold_cut"]),
-        name="rm_nonsteady",
+        niu.Function(function=_remove_volumes, output_names=['bold_cut']),
+        name='rm_nonsteady',
     )
     workflow.connect([
         (inputnode, rm_non_steady_state, [
-            ("skip_vols", "skip_vols"),
-            ("bold_file", "bold_file"),
+            ('skip_vols', 'skip_vols'),
+            ('bold_file', 'bold_file'),
         ]),
     ])  # fmt:skip
 
     for denoise_method in config.workflow.denoise_method:
         denoise = pe.Node(
             ICADenoise(method=denoise_method),
-            name=f"denoise_{denoise_method}",
+            name=f'denoise_{denoise_method}',
         )
         workflow.connect([
             (inputnode, denoise, [
-                ("confounds", "confounds_file"),
-                ("skip_vols", "skip_vols"),
-                ("bold_mask_std", "mask_file"),
+                ('confounds', 'confounds_file'),
+                ('skip_vols', 'skip_vols'),
+                ('bold_mask_std', 'mask_file'),
             ]),
-            (rm_non_steady_state, denoise, [("bold_cut", "bold_file")]),
+            (rm_non_steady_state, denoise, [('bold_cut', 'bold_file')]),
         ])  # fmt:skip
 
         add_non_steady_state = pe.Node(
-            niu.Function(function=_add_volumes, output_names=["bold_add"]),
-            name="add_non_steady_state",
+            niu.Function(function=_add_volumes, output_names=['bold_add']),
+            name='add_non_steady_state',
         )
         workflow.connect([
             (inputnode, add_non_steady_state, [
-                ("bold_file", "bold_file"),
-                ("skip_vols", "skip_vols"),
+                ('bold_file', 'bold_file'),
+                ('skip_vols', 'skip_vols'),
             ]),
-            (denoise, add_non_steady_state, [("denoised_file", "bold_cut_file")]),
+            (denoise, add_non_steady_state, [('denoised_file', 'bold_cut_file')]),
         ])  # fmt:skip
 
         ds_denoised = pe.Node(
             DerivativesDataSink(
-                desc=f"{denoise_method}Denoised",
-                datatype="func",
+                desc=f'{denoise_method}Denoised',
+                datatype='func',
                 name_source=bold_file,
             ),
-            name=f"ds_denoised_{denoise_method}",
+            name=f'ds_denoised_{denoise_method}',
             run_without_submitting=True,
             mem_gb=config.DEFAULT_MEMORY_MIN_GB,
         )
-        workflow.connect([(add_non_steady_state, ds_denoised, [("bold_add", "denoised_file")])])
+        workflow.connect([(add_non_steady_state, ds_denoised, [('bold_add', 'denoised_file')])])
 
     return workflow
 
@@ -531,8 +531,8 @@ def _select_melodic_files(melodic_dir):
     """Select the mixing and component maps from the Melodic output."""
     import os
 
-    mixing = os.path.join(melodic_dir, "melodic_mix")
-    assert os.path.isfile(mixing), f"Missing MELODIC mixing matrix: {mixing}"
-    component_maps = os.path.join(melodic_dir, "melodic_IC.nii.gz")
-    assert os.path.isfile(component_maps), f"Missing MELODIC ICs: {component_maps}"
+    mixing = os.path.join(melodic_dir, 'melodic_mix')
+    assert os.path.isfile(mixing), f'Missing MELODIC mixing matrix: {mixing}'
+    component_maps = os.path.join(melodic_dir, 'melodic_IC.nii.gz')
+    assert os.path.isfile(component_maps), f'Missing MELODIC ICs: {component_maps}'
     return mixing, component_maps

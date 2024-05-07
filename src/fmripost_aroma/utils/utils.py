@@ -30,10 +30,10 @@ def cross_correlation(a, b):
         Cross-correlations of columns of a against columns of b.
     """
     if a.ndim != 2:
-        raise ValueError(f"Input `a` must be 2D, not {a.ndim}D")
+        raise ValueError(f'Input `a` must be 2D, not {a.ndim}D')
 
     if b.ndim != 2:
-        raise ValueError(f"Input `b` must be 2D, not {b.ndim}D")
+        raise ValueError(f'Input `b` must be 2D, not {b.ndim}D')
 
     _, ncols_a = a.shape
     # nb variables in columns rather than rows hence transpose
@@ -65,61 +65,61 @@ def classification(features_df: pd.DataFrame):
     HYPERPLANE = np.array([-19.9751070082159, 9.95127547670627, 24.8333160239175])
 
     clf_metadata = {
-        "classification": {
-            "LongName": "Component classification",
-            "Description": ("Classification from the classification procedure."),
-            "Levels": {
-                "accepted": "A component that is determined not to be associated with motion.",
-                "rejected": "A motion-related component.",
+        'classification': {
+            'LongName': 'Component classification',
+            'Description': ('Classification from the classification procedure.'),
+            'Levels': {
+                'accepted': 'A component that is determined not to be associated with motion.',
+                'rejected': 'A motion-related component.',
             },
         },
-        "rationale": {
-            "LongName": "Rationale for component classification",
-            "Description": (
-                "The reason for the classification. "
-                "In cases where components are classified based on more than one criterion, "
-                "they are listed sequentially, separated by semicolons."
+        'rationale': {
+            'LongName': 'Rationale for component classification',
+            'Description': (
+                'The reason for the classification. '
+                'In cases where components are classified based on more than one criterion, '
+                'they are listed sequentially, separated by semicolons.'
             ),
-            "Levels": {
-                "CSF": f"The csf_fract value is higher than {THR_CSF}",
-                "HFC": f"The HFC value is higher than {THR_HFC}",
-                "hyperplane": (
-                    "After the max_RP_corr and edge_fract values are projected "
-                    "to a hyperplane, the projected point is less than zero."
+            'Levels': {
+                'CSF': f'The csf_fract value is higher than {THR_CSF}',
+                'HFC': f'The HFC value is higher than {THR_HFC}',
+                'hyperplane': (
+                    'After the max_RP_corr and edge_fract values are projected '
+                    'to a hyperplane, the projected point is less than zero.'
                 ),
             },
         },
     }
 
     # Classify the ICs as motion (rejected) or non-motion (accepted)
-    clf_df = pd.DataFrame(index=features_df.index, columns=["classification", "rationale"])
-    clf_df["classification"] = "accepted"
-    clf_df["rationale"] = ""
+    clf_df = pd.DataFrame(index=features_df.index, columns=['classification', 'rationale'])
+    clf_df['classification'] = 'accepted'
+    clf_df['rationale'] = ''
 
     # CSF
-    rej_csf = features_df["csf_fract"] > THR_CSF
-    clf_df.loc[rej_csf, "classification"] = "rejected"
-    clf_df.loc[rej_csf, "rationale"] += "CSF;"
+    rej_csf = features_df['csf_fract'] > THR_CSF
+    clf_df.loc[rej_csf, 'classification'] = 'rejected'
+    clf_df.loc[rej_csf, 'rationale'] += 'CSF;'
 
     # HFC
-    rej_hfc = features_df["HFC"] > THR_HFC
-    clf_df.loc[rej_hfc, "classification"] = "rejected"
-    clf_df.loc[rej_hfc, "rationale"] += "HFC;"
+    rej_hfc = features_df['HFC'] > THR_HFC
+    clf_df.loc[rej_hfc, 'classification'] = 'rejected'
+    clf_df.loc[rej_hfc, 'rationale'] += 'HFC;'
 
     # Hyperplane
     # Project edge & max_RP_corr feature scores to new 1D space
-    x = features_df[["max_RP_corr", "edge_fract"]].values
+    x = features_df[['max_RP_corr', 'edge_fract']].values
     proj = HYPERPLANE[0] + np.dot(x, HYPERPLANE[1:])
     rej_hyperplane = proj > 0
-    clf_df.loc[rej_hyperplane, "classification"] = "rejected"
-    clf_df.loc[rej_hyperplane, "rationale"] += "hyperplane;"
+    clf_df.loc[rej_hyperplane, 'classification'] = 'rejected'
+    clf_df.loc[rej_hyperplane, 'rationale'] += 'hyperplane;'
 
     # Check the classifications
-    is_motion = (features_df["csf_fract"] > THR_CSF) | (features_df["HFC"] > THR_HFC) | (proj > 0)
-    assert np.array_equal(is_motion, (clf_df["classification"] == "rejected").values)
+    is_motion = (features_df['csf_fract'] > THR_CSF) | (features_df['HFC'] > THR_HFC) | (proj > 0)
+    assert np.array_equal(is_motion, (clf_df['classification'] == 'rejected').values)
 
     # Remove trailing semicolons
-    clf_df["rationale"] = clf_df["rationale"].str.rstrip(";")
+    clf_df['rationale'] = clf_df['rationale'].str.rstrip(';')
 
     return clf_df, clf_metadata
 
@@ -151,19 +151,19 @@ def write_metrics(features_df, out_dir, metric_metadata=None):
     desc-AROMA_metrics.json
     """
     # Put the indices of motion-classified ICs in a text file (starting with 1)
-    motion_ICs = features_df["classification"][features_df["classification"] == "rejected"].index
+    motion_ICs = features_df['classification'][features_df['classification'] == 'rejected'].index
     motion_ICs = motion_ICs.values
 
-    with open(op.join(out_dir, "AROMAnoiseICs.csv"), "w") as file_obj:
-        out_str = ",".join(motion_ICs.astype(str))
+    with open(op.join(out_dir, 'AROMAnoiseICs.csv'), 'w') as file_obj:
+        out_str = ','.join(motion_ICs.astype(str))
         file_obj.write(out_str)
 
     # Create a summary overview of the classification
-    out_file = op.join(out_dir, "desc-AROMA_metrics.tsv")
-    features_df.to_csv(out_file, sep="\t", index_label="IC")
+    out_file = op.join(out_dir, 'desc-AROMA_metrics.tsv')
+    features_df.to_csv(out_file, sep='\t', index_label='IC')
 
     if isinstance(metric_metadata, dict):
-        with open(op.join(out_dir, "desc-AROMA_metrics.json"), "w") as file_obj:
+        with open(op.join(out_dir, 'desc-AROMA_metrics.json'), 'w') as file_obj:
             json.dump(metric_metadata, file_obj, sort_keys=True, indent=4)
 
     return motion_ICs
@@ -193,8 +193,8 @@ def denoising(in_file, out_dir, mixing, den_type, den_idx):
     # Check if denoising is needed (i.e. are there motion components?)
     motion_components_found = den_idx.size > 0
 
-    nonaggr_denoised_file = op.join(out_dir, "desc-smoothAROMAnonaggr_bold.nii.gz")
-    aggr_denoised_file = op.join(out_dir, "desc-smoothAROMAaggr_bold.nii.gz")
+    nonaggr_denoised_file = op.join(out_dir, 'desc-smoothAROMAnonaggr_bold.nii.gz')
+    aggr_denoised_file = op.join(out_dir, 'desc-smoothAROMAaggr_bold.nii.gz')
 
     if motion_components_found:
         motion_components = mixing[:, den_idx]
@@ -206,7 +206,7 @@ def denoising(in_file, out_dir, mixing, den_type, den_idx):
 
         # Non-aggressive denoising of the data using fsl_regfilt
         # (partial regression), if requested
-        if den_type in ("nonaggr", "both"):
+        if den_type in ('nonaggr', 'both'):
             # Fit GLM to all components
             betas = np.linalg.lstsq(mixing, data, rcond=None)[0]
 
@@ -219,7 +219,7 @@ def denoising(in_file, out_dir, mixing, den_type, den_idx):
             img_denoised.to_filename(nonaggr_denoised_file)
 
         # Aggressive denoising of the data using fsl_regfilt (full regression)
-        if den_type in ("aggr", "both"):
+        if den_type in ('aggr', 'both'):
             # Denoise the data with the bad components.
             betas = np.linalg.lstsq(motion_components, data, rcond=None)[0]
             pred_data = np.dot(motion_components, betas)
@@ -230,14 +230,14 @@ def denoising(in_file, out_dir, mixing, den_type, den_idx):
             img_denoised.to_filename(aggr_denoised_file)
     else:
         LGR.warning(
-            "  - None of the components were classified as motion, "
-            "so no denoising is applied (the input file is copied "
-            "as-is)."
+            '  - None of the components were classified as motion, '
+            'so no denoising is applied (the input file is copied '
+            'as-is).'
         )
-        if den_type in ("nonaggr", "both"):
+        if den_type in ('nonaggr', 'both'):
             shutil.copyfile(in_file, nonaggr_denoised_file)
 
-        if den_type in ("aggr", "both"):
+        if den_type in ('aggr', 'both'):
             shutil.copyfile(in_file, aggr_denoised_file)
 
 
@@ -260,10 +260,10 @@ def motpars_fmriprep2fsl(confounds):
     if isinstance(confounds, str) and op.isfile(confounds):
         confounds = pd.read_table(confounds)
     elif not isinstance(confounds, pd.DataFrame):
-        raise ValueError("Input must be an existing file or a DataFrame.")
+        raise ValueError('Input must be an existing file or a DataFrame.')
 
     # Rotations are in radians
-    motpars_fsl = confounds[["rot_x", "rot_y", "rot_z", "trans_x", "trans_y", "trans_z"]].values
+    motpars_fsl = confounds[['rot_x', 'rot_y', 'rot_z', 'trans_x', 'trans_y', 'trans_z']].values
     return motpars_fsl
 
 
@@ -285,11 +285,11 @@ def motpars_spm2fsl(motpars):
     if isinstance(motpars, str) and op.isfile(motpars):
         motpars = np.loadtxt(motpars)
     elif not isinstance(motpars, np.ndarray):
-        raise ValueError("Input must be an existing file or a numpy array.")
+        raise ValueError('Input must be an existing file or a numpy array.')
 
     if motpars.shape[1] != 6:
         raise ValueError(
-            "Motion parameters must have exactly 6 columns, not {}.".format(motpars.shape[1])
+            f'Motion parameters must have exactly 6 columns, not {motpars.shape[1]}.'
         )
 
     # Split translations from rotations
@@ -321,11 +321,11 @@ def motpars_afni2fsl(motpars):
     if isinstance(motpars, str) and op.isfile(motpars):
         motpars = np.loadtxt(motpars)
     elif not isinstance(motpars, np.ndarray):
-        raise ValueError("Input must be an existing file or a numpy array.")
+        raise ValueError('Input must be an existing file or a numpy array.')
 
     if motpars.shape[1] != 6:
         raise ValueError(
-            "Motion parameters must have exactly 6 columns, not {}.".format(motpars.shape[1])
+            f'Motion parameters must have exactly 6 columns, not {motpars.shape[1]}.'
         )
 
     # Split translations from rotations
@@ -339,7 +339,7 @@ def motpars_afni2fsl(motpars):
     return motpars_fsl
 
 
-def load_motpars(motion_file, source="auto"):
+def load_motpars(motion_file, source='auto'):
     """Load motion parameters from file.
 
     Parameters
@@ -356,28 +356,28 @@ def load_motpars(motion_file, source="auto"):
         Motion parameters in FSL format, with rotations first (in radians) and
         translations second.
     """
-    if source == "auto":
-        if op.basename(motion_file).startswith("rp_") and motion_file.endswith(".txt"):
-            source = "spm"
-        elif motion_file.endswith(".1D"):
-            source = "afni"
-        elif motion_file.endswith(".tsv"):
-            source = "fmriprep"
-        elif motion_file.endswith(".txt"):
-            source = "fsl"
+    if source == 'auto':
+        if op.basename(motion_file).startswith('rp_') and motion_file.endswith('.txt'):
+            source = 'spm'
+        elif motion_file.endswith('.1D'):
+            source = 'afni'
+        elif motion_file.endswith('.tsv'):
+            source = 'fmriprep'
+        elif motion_file.endswith('.txt'):
+            source = 'fsl'
         else:
-            raise Exception("Motion parameter source could not be determined automatically.")
+            raise Exception('Motion parameter source could not be determined automatically.')
 
-    if source == "spm":
+    if source == 'spm':
         motpars = motpars_spm2fsl(motion_file)
-    elif source == "afni":
+    elif source == 'afni':
         motpars = motpars_afni2fsl(motion_file)
-    elif source == "fsl":
+    elif source == 'fsl':
         motpars = np.loadtxt(motion_file)
-    elif source == "fmriprep":
+    elif source == 'fmriprep':
         motpars = motpars_fmriprep2fsl(motion_file)
     else:
-        raise ValueError('Source "{0}" not supported.'.format(source))
+        raise ValueError(f'Source "{source}" not supported.')
 
     return motpars
 
@@ -394,7 +394,7 @@ def get_resource_path():
     resource_path : str
         Absolute path to resources folder.
     """
-    return op.abspath(op.join(op.dirname(__file__), "resources") + op.sep)
+    return op.abspath(op.join(op.dirname(__file__), 'resources') + op.sep)
 
 
 def get_spectrum(data: np.array, tr: float):
@@ -416,7 +416,7 @@ def get_spectrum(data: np.array, tr: float):
         Frequencies corresponding to the columns of power_spectrum.
     """
     if data.ndim > 2:
-        raise ValueError(f"Input `data` must be 1D or 2D, not {data.ndim}D")
+        raise ValueError(f'Input `data` must be 1D or 2D, not {data.ndim}D')
 
     if data.ndim == 1:
         data = data[:, None]

@@ -39,36 +39,36 @@ def feature_time_series(mixing: np.ndarray, motpars: np.ndarray):
         as well as new metadata for the ``max_RP_corr`` metric.
     """
     metric_metadata = {
-        "max_RP_corr": {
-            "LongName": "Maximum motion parameter correlation",
-            "Description": (
-                "The maximum correlation coefficient between each component and "
-                "a set of 36 regressors derived from the motion parameters. "
-                "The derived regressors are the raw six motion parameters (6), "
-                "their derivatives (6), "
-                "the parameters and their derivatives time-shifted one TR forward (12), and "
-                "the parameters and their derivatives time-shifted one TR backward (12). "
-                "The correlations are performed on a series of 1000 permutations, "
-                "in which 90 percent of the volumes are selected from both the "
-                "component time series and the motion parameters. "
-                "The correlation is performed between each permuted component time series and "
-                "each permuted regressor in the motion parameter model, "
-                "as well as the squared versions of both. "
-                "The maximum correlation coefficient from each permutation is retained and these "
-                "correlation coefficients are averaged across permutations for the final metric."
+        'max_RP_corr': {
+            'LongName': 'Maximum motion parameter correlation',
+            'Description': (
+                'The maximum correlation coefficient between each component and '
+                'a set of 36 regressors derived from the motion parameters. '
+                'The derived regressors are the raw six motion parameters (6), '
+                'their derivatives (6), '
+                'the parameters and their derivatives time-shifted one TR forward (12), and '
+                'the parameters and their derivatives time-shifted one TR backward (12). '
+                'The correlations are performed on a series of 1000 permutations, '
+                'in which 90 percent of the volumes are selected from both the '
+                'component time series and the motion parameters. '
+                'The correlation is performed between each permuted component time series and '
+                'each permuted regressor in the motion parameter model, '
+                'as well as the squared versions of both. '
+                'The maximum correlation coefficient from each permutation is retained and these '
+                'correlation coefficients are averaged across permutations for the final metric.'
             ),
-            "Units": "arbitrary",
+            'Units': 'arbitrary',
         },
     }
 
     rp6 = motpars.copy()
     if (rp6.ndim != 2) or (rp6.shape[1] != 6):
-        raise ValueError(f"Motion parameters must of shape (n_trs, 6), not {rp6.shape}")
+        raise ValueError(f'Motion parameters must of shape (n_trs, 6), not {rp6.shape}')
 
     if rp6.shape[0] != mixing.shape[0]:
         raise ValueError(
-            f"Number of rows in mixing matrix ({mixing.shape[0]}) does not match "
-            f"number of rows in motion parameters ({rp6.shape[0]})."
+            f'Number of rows in mixing matrix ({mixing.shape[0]}) does not match '
+            f'number of rows in motion parameters ({rp6.shape[0]}).'
         )
 
     # Determine the derivatives of the RPs (add zeros at time-point zero)
@@ -107,7 +107,7 @@ def feature_time_series(mixing: np.ndarray, motpars: np.ndarray):
     # Feature score is the mean of the maximum correlation over all the random splits.
     # Avoid propagating occasional nans that arise in artificial test cases
     max_RP_corr = np.nanmean(max_correlations, axis=0)
-    metric_df = pd.DataFrame(data=max_RP_corr, columns=["max_RP_corr"])
+    metric_df = pd.DataFrame(data=max_RP_corr, columns=['max_RP_corr'])
     return metric_df, metric_metadata
 
 
@@ -139,13 +139,13 @@ def feature_frequency(mixing_fft: np.ndarray, TR: float, f_hp: float = 0.01):
         as well as new metadata for the ``HFC`` metric.
     """
     metric_metadata = {
-        "HFC": {
-            "LongName": "High-frequency content",
-            "Description": (
-                "The proportion of the power spectrum for each component that falls above "
-                f"{f_hp} Hz."
+        'HFC': {
+            'LongName': 'High-frequency content',
+            'Description': (
+                'The proportion of the power spectrum for each component that falls above '
+                f'{f_hp} Hz.'
             ),
-            "Units": "arbitrary",
+            'Units': 'arbitrary',
         },
     }
 
@@ -177,7 +177,7 @@ def feature_frequency(mixing_fft: np.ndarray, TR: float, f_hp: float = 0.01):
 
     # Now get the fractions associated with those indices index, these are the final feature scores
     high_frequency_content = frequencies_normalized[cutoff_idx]
-    metric_df = pd.DataFrame(data=high_frequency_content, columns=["HFC"])
+    metric_df = pd.DataFrame(data=high_frequency_content, columns=['HFC'])
 
     return metric_df, metric_metadata
 
@@ -210,26 +210,26 @@ def feature_spatial(component_maps):
         metrics.
     """
     metric_metadata = {
-        "edge_fract": {
-            "LongName": "Edge content fraction",
-            "Description": (
-                "The fraction of thresholded component z-values at the edge of the brain. "
-                "This is calculated by "
-                "(1) taking the absolute value of the thresholded Z map for each component, "
-                "(2) summing z-statistics from the whole brain, "
-                "(3) summing z-statistics from outside of the brain, "
-                "(4) summing z-statistics from voxels in CSF compartments, "
-                "(5) summing z-statistics from voxels at the edge of the brain, "
-                "(6) adding the sums from outside of the brain and the edge of the brain, "
-                "(7) subtracting the CSF sum from the total brain sum, and "
-                "(8) dividing the out-of-brain+edge-of-brain sum by the whole brain (minus CSF) "
-                "sum."
+        'edge_fract': {
+            'LongName': 'Edge content fraction',
+            'Description': (
+                'The fraction of thresholded component z-values at the edge of the brain. '
+                'This is calculated by '
+                '(1) taking the absolute value of the thresholded Z map for each component, '
+                '(2) summing z-statistics from the whole brain, '
+                '(3) summing z-statistics from outside of the brain, '
+                '(4) summing z-statistics from voxels in CSF compartments, '
+                '(5) summing z-statistics from voxels at the edge of the brain, '
+                '(6) adding the sums from outside of the brain and the edge of the brain, '
+                '(7) subtracting the CSF sum from the total brain sum, and '
+                '(8) dividing the out-of-brain+edge-of-brain sum by the whole brain (minus CSF) '
+                'sum.'
             ),
-            "Units": "arbitrary",
+            'Units': 'arbitrary',
         },
-        "csf_fract": {
-            "LongName": "CSF content fraction",
-            "Description": (
+        'csf_fract': {
+            'LongName': 'CSF content fraction',
+            'Description': (
                 "The fraction of thresholded component z-values in the brain's cerebrospinal "
                 "fluid. "
                 "This is calculated by "
@@ -238,7 +238,7 @@ def feature_spatial(component_maps):
                 "(3) summing z-statistics from voxels in CSF compartments, and "
                 "(4) dividing the CSF z-statistic sum by the whole brain z-statistic sum."
             ),
-            "Units": "arbitrary",
+            'Units': 'arbitrary',
         },
     }
 
@@ -246,25 +246,25 @@ def feature_spatial(component_maps):
     components_img = nb.load(component_maps)
     n_components = components_img.shape[3]
 
-    csf_mask = load_data("mask_csf.nii.gz")
-    edge_mask = load_data("mask_edge.nii.gz")
-    out_mask = load_data("mask_out.nii.gz")
+    csf_mask = load_data('mask_csf.nii.gz')
+    edge_mask = load_data('mask_edge.nii.gz')
+    out_mask = load_data('mask_out.nii.gz')
 
     # Loop over ICs
-    metric_df = pd.DataFrame(columns=["edge_fract", "csf_fract"], data=np.zeros((n_components, 2)))
+    metric_df = pd.DataFrame(columns=['edge_fract', 'csf_fract'], data=np.zeros((n_components, 2)))
     for i_comp in range(n_components):
         # Extract IC from the merged melodic_IC_thr2MNI2mm file
         component_img = image.index_img(component_maps, i_comp)
 
         # Change to absolute Z-values
-        component_img = image.math_img("np.abs(img)", img=component_img)
+        component_img = image.math_img('np.abs(img)', img=component_img)
 
         # Get sum of Z-values within the total Z-map
         component_data = component_img.get_fdata()
         tot_sum = np.sum(component_data)
 
         if tot_sum == 0:
-            LGR.info(f"\t- The spatial map of component {i_comp + 1} is empty. Please check!")
+            LGR.info(f'\t- The spatial map of component {i_comp + 1} is empty. Please check!')
 
         # Get sum of Z-values of the voxels located within the CSF
         csf_data = masking.apply_mask(component_img, csf_mask)
@@ -280,10 +280,10 @@ def feature_spatial(component_maps):
 
         # Determine edge and CSF fraction
         if tot_sum != 0:
-            metric_df.loc[i_comp, "edge_fract"] = (out_sum + edge_sum) / (tot_sum - csf_sum)
-            metric_df.loc[i_comp, "csf_fract"] = csf_sum / tot_sum
+            metric_df.loc[i_comp, 'edge_fract'] = (out_sum + edge_sum) / (tot_sum - csf_sum)
+            metric_df.loc[i_comp, 'csf_fract'] = csf_sum / tot_sum
         else:
-            metric_df.loc[i_comp, "edge_fract"] = 0
-            metric_df.loc[i_comp, "csf_fract"] = 0
+            metric_df.loc[i_comp, 'edge_fract'] = 0
+            metric_df.loc[i_comp, 'csf_fract'] = 0
 
     return metric_df, metric_metadata

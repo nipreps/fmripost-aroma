@@ -369,12 +369,12 @@ Functional data postprocessing
             denoise_wf = init_denoise_wf(bold_file=bold_file)
             workflow.connect([
                 (inputnode, denoise_wf, [
-                    ("bold_std", "inputnode.bold_std"),
-                    ("bold_mask_std", "inputnode.bold_mask_std"),
-                    ("spatial_reference", "inputnode.spatial_reference"),
+                    ('bold_std', 'inputnode.bold_std'),
+                    ('bold_mask_std', 'inputnode.bold_mask_std'),
+                    ('spatial_reference', 'inputnode.spatial_reference'),
                 ]),
                 (ica_aroma_wf, denoise_wf, [
-                    ("outputnode.aroma_confounds", "inputnode.confounds"),
+                    ('outputnode.aroma_confounds', 'inputnode.confounds'),
                 ]),
             ])  # fmt:skip
 

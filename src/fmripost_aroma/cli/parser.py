@@ -356,21 +356,21 @@ https://fmriprep.readthedocs.io/en/%s/spaces.html"""
         ),
     )
     g_aroma.add_argument(
-        "--denoising-method",
-        action="store",
-        nargs="+",
-        choices=["aggr", "nonaggr", "orthaggr"],
+        '--denoising-method',
+        action='store',
+        nargs='+',
+        choices=['aggr', 'nonaggr', 'orthaggr'],
         default=None,
-        help="Denoising method to apply, if any.",
+        help='Denoising method to apply, if any.',
     )
     g_aroma.add_argument(
-        "--orthogonalize",
-        action="store_true",
+        '--orthogonalize',
+        action='store_true',
         default=False,
         help=(
-            "If True, the AROMA-flagged noise components will be orthogonalized with respect to "
-            "the non-noise components in the MELODIC mixing matrix. "
-            "This can serve as an alternative to non-aggressive denoising."
+            'If True, the AROMA-flagged noise components will be orthogonalized with respect to '
+            'the non-noise components in the MELODIC mixing matrix. '
+            'This can serve as an alternative to non-aggressive denoising.'
         ),
     )
 

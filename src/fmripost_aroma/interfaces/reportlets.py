@@ -188,16 +188,16 @@ class _ICAAROMAInputSpecRPT(nrb._SVGReportCapableInputSpec):
     in_file = File(
         exists=True,
         mandatory=True,
-        desc="BOLD series input to ICA-AROMA",
+        desc='BOLD series input to ICA-AROMA',
     )
     melodic_dir = Directory(
         exists=True,
         mandatory=True,
-        desc="MELODIC directory containing the ICA outputs",
+        desc='MELODIC directory containing the ICA outputs',
     )
     aroma_noise_ics = File(
         exists=True,
-        desc="Noise components estimated by ICA-AROMA, in a comma-separated values file.",
+        desc='Noise components estimated by ICA-AROMA, in a comma-separated values file.',
     )
     out_report = File(
         'ica_aroma_reportlet.svg',
@@ -237,7 +237,7 @@ class ICAAROMARPT(reporting.ReportCapableInterface):
         )
 
     def _post_run_hook(self, runtime):
-        NIWORKFLOWS_LOG.info("Generating report for ICA AROMA")
+        NIWORKFLOWS_LOG.info('Generating report for ICA AROMA')
 
         return super()._post_run_hook(runtime)
 

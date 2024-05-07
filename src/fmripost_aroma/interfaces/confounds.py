@@ -129,14 +129,14 @@ def _get_ica_confounds(ica_out_dir, skip_vols, newpath=None):
 
 
 class _ICADenoiseInputSpec(BaseInterfaceInputSpec):
-    method = traits.Enum("aggr", "nonaggr", "orthaggr", mandatory=True, desc="denoising method")
-    bold_file = File(exists=True, mandatory=True, desc="input file to denoise")
-    mask_file = File(exists=True, mandatory=True, desc="mask file")
-    confounds = File(exists=True, mandatory=True, desc="confounds file")
+    method = traits.Enum('aggr', 'nonaggr', 'orthaggr', mandatory=True, desc='denoising method')
+    bold_file = File(exists=True, mandatory=True, desc='input file to denoise')
+    mask_file = File(exists=True, mandatory=True, desc='mask file')
+    confounds = File(exists=True, mandatory=True, desc='confounds file')
 
 
 class _ICADenoiseOutputSpec(TraitedSpec):
-    denoised_file = File(exists=True, desc="denoised output file")
+    denoised_file = File(exists=True, desc='denoised output file')
 
 
 class ICADenoise(SimpleInterface):
@@ -160,12 +160,12 @@ class ICADenoise(SimpleInterface):
 
         # Split up component time series into accepted and rejected components
         metrics_df = pd.read_table(metrics_file)
-        rejected_columns = metrics_df.loc[metrics_df["classification"] == "rejected", "Component"]
-        accepted_columns = metrics_df.loc[metrics_df["classification"] == "accepted", "Component"]
+        rejected_columns = metrics_df.loc[metrics_df['classification'] == 'rejected', 'Component']
+        accepted_columns = metrics_df.loc[metrics_df['classification'] == 'accepted', 'Component']
         rejected_components = confounds_df[rejected_columns].to_numpy()
         accepted_components = confounds_df[accepted_columns].to_numpy()
 
-        if method == "aggr":
+        if method == 'aggr':
             # Denoise the data with the motion components
             masker = NiftiMasker(
                 mask_img=self.inputs.mask_file,
@@ -184,7 +184,7 @@ class ICADenoise(SimpleInterface):
 
             # Transform denoised data back into 4D space
             denoised_img = masker.inverse_transform(denoised_img_2d)
-        elif method == "orthaggr":
+        elif method == 'orthaggr':
             # Regress the good components out of the bad time series to get "pure evil" regressors
             betas = np.linalg.lstsq(accepted_components, rejected_components, rcond=None)[0]
             pred_bad_timeseries = np.dot(accepted_components, betas)
@@ -231,7 +231,7 @@ class ICADenoise(SimpleInterface):
             # Save to file
             denoised_img = unmask(data_denoised, self.inputs.mask_file)
 
-        self._results["denoised_file"] = os.path.abspath("denoised.nii.gz")
-        denoised_img.to_filename(self._results["denoised_file"])
+        self._results['denoised_file'] = os.path.abspath('denoised.nii.gz')
+        denoised_img.to_filename(self._results['denoised_file'])
 
         return runtime
