@@ -312,11 +312,13 @@ def parse_combined_hdf5(h5_fn, to_ras=True):
     xform = ITKCompositeH5.from_h5obj(h)
     affine = xform[0].to_ras()
     # Confirm these transformations are applicable
-    assert (
+    if (
         h['TransformGroup']['2']['TransformType'][:][0]
-        == b'DisplacementFieldTransform_float_3_3'
-    )
-    assert np.array_equal(
+        != b'DisplacementFieldTransform_float_3_3'
+    ):
+        raise ValueError('Unsupported transform type')
+
+    if not np.array_equal(
         h['TransformGroup']['2']['TransformFixedParameters'][:],
         np.array(
             [
@@ -340,7 +342,9 @@ def parse_combined_hdf5(h5_fn, to_ras=True):
                 1.0,
             ]
         ),
-    )
+    ):
+        raise ValueError('Unsupported fixed parameters')
+
     warp = h['TransformGroup']['2']['TransformParameters'][:]
     warp = warp.reshape((193, 229, 193, 3)).transpose(2, 1, 0, 3)
     warp *= np.array([-1, -1, 1])
@@ -533,7 +537,8 @@ def resample_bold(
         The BOLD series resampled into the target space
     """
     # HMC goes last
-    assert isinstance(transforms[-1], nt.linear.LinearTransformsMapping)
+    if not isinstance(transforms[-1], nt.linear.LinearTransformsMapping):
+        raise ValueError('Last transform must be a linear mapping')
 
     # Retrieve the RAS coordinates of the target space
     coordinates = (
@@ -645,8 +650,8 @@ def main(
         hmc = derivs.get(
             extension='.txt', **mkents('orig', 'boldref', **entities)
         )[0]
-    except IndexError:
-        raise ValueError('Could not find HMC transforms')
+    except IndexError as err:
+        raise ValueError('Could not find HMC transforms') from err
 
     bold_xfms.append(hmc)
 
@@ -659,8 +664,8 @@ def main(
             coreg = derivs.get(
                 extension='.txt', **mkents('boldref', 'T1w', **entities)
             )[0]
-        except IndexError:
-            raise ValueError('Could not find coregistration transform')
+        except IndexError as err:
+            raise ValueError('Could not find coregistration transform') from err
 
         bold_xfms.append(coreg)
         fmap_xfms.append(coreg)
@@ -682,10 +687,8 @@ def main(
                 subject=entities['subject'],
                 **mkents('T1w', space),
             )[0]
-        except IndexError:
-            raise ValueError(
-                f'Could not find template registration for {space}'
-            )
+        except IndexError as err :
+            raise ValueError(f'Could not find template registration for {space}') from err
 
         bold_xfms.append(template_reg)
         fmap_xfms.append(template_reg)
