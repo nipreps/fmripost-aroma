@@ -133,7 +133,7 @@ def init_ica_aroma_wf(
     from fmripost_aroma.interfaces.confounds import ICAConfounds
     from fmripost_aroma.interfaces.reportlets import ICAAROMARPT
 
-    workflow = Workflow(name=_get_wf_name(bold_file, "aroma"))
+    workflow = Workflow(name=_get_wf_name(bold_file, 'aroma'))
     workflow.__postdesc__ = """\
 Automatic removal of motion artifacts using independent component analysis
 [ICA-AROMA, @aroma] was performed on the *preprocessed BOLD on MNI space*
@@ -148,164 +148,164 @@ in the corresponding confounds file.
     inputnode = pe.Node(
         niu.IdentityInterface(
             fields=[
-                "bold_std",
-                "bold_mask_std",
-                "confounds",
-                "name_source",
-                "skip_vols",
-                "spatial_reference",
+                'bold_std',
+                'bold_mask_std',
+                'confounds',
+                'name_source',
+                'skip_vols',
+                'spatial_reference',
             ],
         ),
-        name="inputnode",
+        name='inputnode',
     )
 
     outputnode = pe.Node(
         niu.IdentityInterface(
             fields=[
-                "aroma_confounds",
-                "aroma_noise_ics",
-                "melodic_mix",
-                "nonaggr_denoised_file",
-                "aroma_metadata",
+                'aroma_confounds',
+                'aroma_noise_ics',
+                'melodic_mix',
+                'nonaggr_denoised_file',
+                'aroma_metadata',
             ],
         ),
-        name="outputnode",
+        name='outputnode',
     )
 
     # Convert confounds to FSL motpars file.
     ...
 
     rm_non_steady_state = pe.Node(
-        niu.Function(function=_remove_volumes, output_names=["bold_cut"]),
-        name="rm_nonsteady",
+        niu.Function(function=_remove_volumes, output_names=['bold_cut']),
+        name='rm_nonsteady',
     )
     # fmt:off
     workflow.connect([
         (inputnode, rm_non_steady_state, [
-            ("skip_vols", "skip_vols"),
-            ("bold_std", "bold_file"),
+            ('skip_vols', 'skip_vols'),
+            ('bold_std', 'bold_file'),
         ]),
     ])
     # fmt:on
 
     calc_median_val = pe.Node(
-        fsl.ImageStats(op_string="-k %s -p 50"),
-        name="calc_median_val",
+        fsl.ImageStats(op_string='-k %s -p 50'),
+        name='calc_median_val',
     )
     calc_bold_mean = pe.Node(
         fsl.MeanImage(),
-        name="calc_bold_mean",
+        name='calc_bold_mean',
     )
 
     getusans = pe.Node(
-        niu.Function(function=_getusans_func, output_names=["usans"]),
-        name="getusans",
+        niu.Function(function=_getusans_func, output_names=['usans']),
+        name='getusans',
         mem_gb=0.01,
     )
 
     smooth = pe.Node(
         fsl.SUSAN(
             fwhm=susan_fwhm,
-            output_type="NIFTI" if config.execution.low_mem else "NIFTI_GZ",
+            output_type='NIFTI' if config.execution.low_mem else 'NIFTI_GZ',
         ),
-        name="smooth",
+        name='smooth',
     )
 
     # melodic node
     melodic = pe.Node(
         fsl.MELODIC(
             no_bet=True,
-            tr_sec=float(metadata["RepetitionTime"]),
+            tr_sec=float(metadata['RepetitionTime']),
             mm_thresh=0.5,
             out_stats=True,
             dim=aroma_melodic_dim,
         ),
-        name="melodic",
+        name='melodic',
     )
 
     # ica_aroma node
     ica_aroma = pe.Node(
         ICAAROMARPT(
-            denoise_type="nonaggr",
+            denoise_type='nonaggr',
             generate_report=True,
-            TR=metadata["RepetitionTime"],
-            args="-np",
+            TR=metadata['RepetitionTime'],
+            args='-np',
         ),
-        name="ica_aroma",
+        name='ica_aroma',
     )
 
     add_non_steady_state = pe.Node(
-        niu.Function(function=_add_volumes, output_names=["bold_add"]),
-        name="add_nonsteady",
+        niu.Function(function=_add_volumes, output_names=['bold_add']),
+        name='add_nonsteady',
     )
 
     # extract the confound ICs from the results
     ica_aroma_confound_extraction = pe.Node(
         ICAConfounds(err_on_aroma_warn=err_on_aroma_warn),
-        name="ica_aroma_confound_extraction",
+        name='ica_aroma_confound_extraction',
     )
 
     ica_aroma_metadata_fmt = pe.Node(
         TSV2JSON(
-            index_column="IC",
+            index_column='IC',
             output=None,
             enforce_case=True,
             additional_metadata={
-                "Method": {
-                    "Name": "ICA-AROMA",
-                    "Version": os.getenv("AROMA_VERSION", "n/a"),
+                'Method': {
+                    'Name': 'ICA-AROMA',
+                    'Version': os.getenv('AROMA_VERSION', 'n/a'),
                 },
             },
         ),
-        name="ica_aroma_metadata_fmt",
+        name='ica_aroma_metadata_fmt',
     )
 
     ds_report_ica_aroma = pe.Node(
-        DerivativesDataSink(desc="aroma", datatype="figures", dismiss_entities=("echo",)),
-        name="ds_report_ica_aroma",
+        DerivativesDataSink(desc='aroma', datatype='figures', dismiss_entities=('echo',)),
+        name='ds_report_ica_aroma',
         run_without_submitting=True,
         mem_gb=config.DEFAULT_MEMORY_MIN_GB,
     )
 
     # fmt:off
     workflow.connect([
-        (inputnode, ica_aroma, [("movpar_file", "motion_parameters")]),
-        (inputnode, calc_median_val, [("bold_mask_std", "mask_file")]),
-        (rm_non_steady_state, calc_median_val, [("bold_cut", "in_file")]),
-        (rm_non_steady_state, calc_bold_mean, [("bold_cut", "in_file")]),
-        (calc_bold_mean, getusans, [("out_file", "image")]),
-        (calc_median_val, getusans, [("out_stat", "thresh")]),
+        (inputnode, ica_aroma, [('movpar_file', 'motion_parameters')]),
+        (inputnode, calc_median_val, [('bold_mask_std', 'mask_file')]),
+        (rm_non_steady_state, calc_median_val, [('bold_cut', 'in_file')]),
+        (rm_non_steady_state, calc_bold_mean, [('bold_cut', 'in_file')]),
+        (calc_bold_mean, getusans, [('out_file', 'image')]),
+        (calc_median_val, getusans, [('out_stat', 'thresh')]),
         # Connect input nodes to complete smoothing
-        (rm_non_steady_state, smooth, [("bold_cut", "in_file")]),
-        (getusans, smooth, [("usans", "usans")]),
-        (calc_median_val, smooth, [(("out_stat", _getbtthresh), "brightness_threshold")]),
+        (rm_non_steady_state, smooth, [('bold_cut', 'in_file')]),
+        (getusans, smooth, [('usans', 'usans')]),
+        (calc_median_val, smooth, [(('out_stat', _getbtthresh), 'brightness_threshold')]),
         # connect smooth to melodic
-        (smooth, melodic, [("smoothed_file", "in_files")]),
-        (inputnode, melodic, [("bold_mask_std", "mask")]),
+        (smooth, melodic, [('smoothed_file', 'in_files')]),
+        (inputnode, melodic, [('bold_mask_std', 'mask')]),
         # connect nodes to ICA-AROMA
-        (smooth, ica_aroma, [("smoothed_file", "in_file")]),
+        (smooth, ica_aroma, [('smoothed_file', 'in_file')]),
         (inputnode, ica_aroma, [
-            ("bold_mask_std", "report_mask"),
-            ("bold_mask_std", "mask")]),
-        (melodic, ica_aroma, [("out_dir", "melodic_dir")]),
+            ('bold_mask_std', 'report_mask'),
+            ('bold_mask_std', 'mask')]),
+        (melodic, ica_aroma, [('out_dir', 'melodic_dir')]),
         # generate tsvs from ICA-AROMA
-        (ica_aroma, ica_aroma_confound_extraction, [("out_dir", "in_directory")]),
-        (inputnode, ica_aroma_confound_extraction, [("skip_vols", "skip_vols")]),
-        (ica_aroma_confound_extraction, ica_aroma_metadata_fmt, [("aroma_metadata", "in_file")]),
+        (ica_aroma, ica_aroma_confound_extraction, [('out_dir', 'in_directory')]),
+        (inputnode, ica_aroma_confound_extraction, [('skip_vols', 'skip_vols')]),
+        (ica_aroma_confound_extraction, ica_aroma_metadata_fmt, [('aroma_metadata', 'in_file')]),
         # output for processing and reporting
         (ica_aroma_confound_extraction, outputnode, [
-            ("aroma_confounds", "aroma_confounds"),
-            ("aroma_noise_ics", "aroma_noise_ics"),
-            ("melodic_mix", "melodic_mix"),
+            ('aroma_confounds', 'aroma_confounds'),
+            ('aroma_noise_ics', 'aroma_noise_ics'),
+            ('melodic_mix', 'melodic_mix'),
         ]),
-        (ica_aroma_metadata_fmt, outputnode, [("output", "aroma_metadata")]),
-        (ica_aroma, add_non_steady_state, [("nonaggr_denoised_file", "bold_cut_file")]),
+        (ica_aroma_metadata_fmt, outputnode, [('output', 'aroma_metadata')]),
+        (ica_aroma, add_non_steady_state, [('nonaggr_denoised_file', 'bold_cut_file')]),
         (inputnode, add_non_steady_state, [
-            ("bold_std", "bold_file"),
-            ("skip_vols", "skip_vols"),
+            ('bold_std', 'bold_file'),
+            ('skip_vols', 'skip_vols'),
         ]),
-        (add_non_steady_state, outputnode, [("bold_add", "nonaggr_denoised_file")]),
-        (ica_aroma, ds_report_ica_aroma, [("out_report", "in_file")]),
+        (add_non_steady_state, outputnode, [('bold_add', 'nonaggr_denoised_file')]),
+        (ica_aroma, ds_report_ica_aroma, [('out_report', 'in_file')]),
     ])
     # fmt:on
     return workflow
@@ -327,7 +327,7 @@ def _remove_volumes(bold_file, skip_vols):
     if skip_vols == 0:
         return bold_file
 
-    out = fname_presuffix(bold_file, suffix="_cut")
+    out = fname_presuffix(bold_file, suffix='_cut')
     bold_img = nb.load(bold_file)
     bold_img.__class__(
         bold_img.dataobj[..., skip_vols:], bold_img.affine, bold_img.header
@@ -349,7 +349,7 @@ def _add_volumes(bold_file, bold_cut_file, skip_vols):
 
     bold_data = np.concatenate((bold_img.dataobj[..., :skip_vols], bold_cut_img.dataobj), axis=3)
 
-    out = fname_presuffix(bold_cut_file, suffix="_addnonsteady")
+    out = fname_presuffix(bold_cut_file, suffix='_addnonsteady')
     bold_img.__class__(bold_data, bold_img.affine, bold_img.header).to_filename(out)
     return out
 
@@ -370,5 +370,5 @@ def _get_wf_name(bold_fname, prefix):
     from nipype.utils.filemanip import split_filename
 
     fname = split_filename(bold_fname)[1]
-    fname_nosub = "_".join(fname.split("_")[1:-1])
+    fname_nosub = '_'.join(fname.split('_')[1:-1])
     return f"{prefix}_{fname_nosub.replace('-', '_')}_wf"

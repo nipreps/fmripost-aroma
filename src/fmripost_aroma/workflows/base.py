@@ -68,7 +68,7 @@ def init_fmripost_aroma_wf():
 
     ver = Version(config.environment.version)
 
-    fmripost_aroma_wf = Workflow(name=f"fmripost_aroma_{ver.major}_{ver.minor}_wf")
+    fmripost_aroma_wf = Workflow(name=f'fmripost_aroma_{ver.major}_{ver.minor}_wf')
     fmripost_aroma_wf.base_dir = config.execution.work_dir
 
     freesurfer = config.workflow.run_reconall
@@ -76,9 +76,9 @@ def init_fmripost_aroma_wf():
         fsdir = pe.Node(
             BIDSFreeSurferDir(
                 derivatives=config.execution.output_dir,
-                freesurfer_home=os.getenv("FREESURFER_HOME"),
+                freesurfer_home=os.getenv('FREESURFER_HOME'),
                 spaces=config.workflow.spaces.get_fs_spaces(),
-                minimum_fs_version="7.0.0",
+                minimum_fs_version='7.0.0',
             ),
             name=f"fsdir_run_{config.execution.run_uuid.replace('-', '_')}",
             run_without_submitting=True,
@@ -89,10 +89,10 @@ def init_fmripost_aroma_wf():
     for subject_id in config.execution.participant_label:
         single_subject_wf = init_single_subject_wf(subject_id)
 
-        single_subject_wf.config["execution"]["crashdump_dir"] = str(
+        single_subject_wf.config['execution']['crashdump_dir'] = str(
             config.execution.fmripost_aroma_dir
-            / f"sub-{subject_id}"
-            / "log"
+            / f'sub-{subject_id}'
+            / 'log'
             / config.execution.run_uuid
         )
         for node in single_subject_wf._get_all_nodes():
@@ -101,9 +101,9 @@ def init_fmripost_aroma_wf():
         if freesurfer:
             fmripost_aroma_wf.connect(
                 fsdir,
-                "subjects_dir",
+                'subjects_dir',
                 single_subject_wf,
-                "inputnode.subjects_dir",
+                'inputnode.subjects_dir',
             )
         else:
             fmripost_aroma_wf.add_nodes([single_subject_wf])
@@ -111,12 +111,12 @@ def init_fmripost_aroma_wf():
         # Dump a copy of the config file into the log directory
         log_dir = (
             config.execution.fmripost_aroma_dir
-            / f"sub-{subject_id}"
-            / "log"
+            / f'sub-{subject_id}'
+            / 'log'
             / config.execution.run_uuid
         )
         log_dir.mkdir(exist_ok=True, parents=True)
-        config.to_filename(log_dir / "fmripost_aroma.toml")
+        config.to_filename(log_dir / 'fmripost_aroma.toml')
 
     return fmripost_aroma_wf
 
@@ -183,7 +183,7 @@ def init_single_subject_wf(subject_id: str):
     from fmripost_aroma.utils.bids import collect_derivatives
     from fmripost_aroma.workflows.aroma import init_ica_aroma_wf
 
-    workflow = Workflow(name=f"sub_{subject_id}_wf")
+    workflow = Workflow(name=f'sub_{subject_id}_wf')
     workflow.__desc__ = f"""
 Results included in this manuscript come from preprocessing
 performed using *fMRIPost-AROMA* {config.environment.version}
@@ -222,14 +222,14 @@ It is released under the [CC0]\
         bids_filters=config.execution.bids_filters,
     )
 
-    if "flair" in config.workflow.ignore:
-        subject_data["flair"] = []
-    if "t2w" in config.workflow.ignore:
-        subject_data["t2w"] = []
+    if 'flair' in config.workflow.ignore:
+        subject_data['flair'] = []
+    if 't2w' in config.workflow.ignore:
+        subject_data['t2w'] = []
 
     anat_only = config.workflow.anat_only
     # Make sure we always go through these two checks
-    if not anat_only and not subject_data["bold"]:
+    if not anat_only and not subject_data['bold']:
         task_id = config.execution.task_id
         raise RuntimeError(
             f"No BOLD images found for participant {subject_id} and "
@@ -237,7 +237,7 @@ It is released under the [CC0]\
             "All workflows require BOLD images."
         )
 
-    if subject_data["roi"]:
+    if subject_data['roi']:
         warnings.warn(
             f"Lesion mask {subject_data['roi']} found. "
             "Future versions of fMRIPost-AROMA will use alternative conventions. "
@@ -245,7 +245,7 @@ It is released under the [CC0]\
             FutureWarning,
         )
 
-    inputnode = pe.Node(niu.IdentityInterface(fields=["subjects_dir"]), name="inputnode")
+    inputnode = pe.Node(niu.IdentityInterface(fields=['subjects_dir']), name='inputnode')
 
     bidssrc = pe.Node(
         BIDSDataGrabber(
@@ -253,47 +253,47 @@ It is released under the [CC0]\
             anat_only=config.workflow.anat_only,
             subject_id=subject_id,
         ),
-        name="bidssrc",
+        name='bidssrc',
     )
 
     bids_info = pe.Node(
-        BIDSInfo(bids_dir=config.execution.bids_dir, bids_validate=False), name="bids_info"
+        BIDSInfo(bids_dir=config.execution.bids_dir, bids_validate=False), name='bids_info'
     )
 
     summary = pe.Node(
         SubjectSummary(
-            std_spaces=["MNI152NLin6Asym"],
+            std_spaces=['MNI152NLin6Asym'],
             nstd_spaces=None,
         ),
-        name="summary",
+        name='summary',
         run_without_submitting=True,
     )
 
     about = pe.Node(
-        AboutSummary(version=config.environment.version, command=" ".join(sys.argv)),
-        name="about",
+        AboutSummary(version=config.environment.version, command=' '.join(sys.argv)),
+        name='about',
         run_without_submitting=True,
     )
 
     ds_report_summary = pe.Node(
         DerivativesDataSink(
             base_directory=config.execution.fmripost_aroma_dir,
-            desc="summary",
-            datatype="figures",
-            dismiss_entities=("echo",),
+            desc='summary',
+            datatype='figures',
+            dismiss_entities=('echo',),
         ),
-        name="ds_report_summary",
+        name='ds_report_summary',
         run_without_submitting=True,
     )
 
     ds_report_about = pe.Node(
         DerivativesDataSink(
             base_directory=config.execution.fmripost_aroma_dir,
-            desc="about",
-            datatype="figures",
-            dismiss_entities=("echo",),
+            desc='about',
+            datatype='figures',
+            dismiss_entities=('echo',),
         ),
-        name="ds_report_about",
+        name='ds_report_about',
         run_without_submitting=True,
     )
 
@@ -318,7 +318,7 @@ Functional data postprocessing
 (across all tasks and sessions), the following postprocessing was performed.
 """
 
-    for bold_file in subject_data["bold"]:
+    for bold_file in subject_data['bold']:
         functional_cache = {}
         if config.execution.derivatives:
             # Collect native-space derivatives and warp them to MNI152NLin6Asym
@@ -343,17 +343,17 @@ Functional data postprocessing
             bold_file=bold_file,
             precomputed=functional_cache,
         )
-        ica_aroma_wf.__desc__ = func_pre_desc + (ica_aroma_wf.__desc__ or "")
+        ica_aroma_wf.__desc__ = func_pre_desc + (ica_aroma_wf.__desc__ or '')
 
         # fmt:off
         workflow.connect([
             (inputnode, ica_aroma_wf, [
                 ('bold_std', 'inputnode.bold_std'),
-                ("bold_mask_std", "inputnode.bold_mask_std"),
-                ("movpar_file", "inputnode.movpar_file"),
-                ("name_source", "inputnode.name_source"),
-                ("skip_vols", "inputnode.skip_vols"),
-                ("spatial_reference", "inputnode.spatial_reference"),
+                ('bold_mask_std', 'inputnode.bold_mask_std'),
+                ('movpar_file', 'inputnode.movpar_file'),
+                ('name_source', 'inputnode.name_source'),
+                ('skip_vols', 'inputnode.skip_vols'),
+                ('spatial_reference', 'inputnode.spatial_reference'),
             ]),
         ])
         # fmt:on
@@ -362,12 +362,12 @@ Functional data postprocessing
 
 
 def _prefix(subid):
-    return subid if subid.startswith("sub-") else f"sub-{subid}"
+    return subid if subid.startswith('sub-') else f'sub-{subid}'
 
 
 def clean_datasinks(workflow: pe.Workflow) -> pe.Workflow:
     """Overwrite ``out_path_base`` of smriprep's DataSinks."""
     for node in workflow.list_node_names():
-        if node.split(".")[-1].startswith("ds_"):
-            workflow.get_node(node).interface.out_path_base = ""
+        if node.split('.')[-1].startswith('ds_'):
+            workflow.get_node(node).interface.out_path_base = ''
     return workflow

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import sys
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     from .cli import fmripost_aroma
 
     sys.exit(fmripost_aroma())
