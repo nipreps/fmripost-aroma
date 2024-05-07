@@ -239,7 +239,7 @@ in the corresponding confounds file.
     # Run the ICA-AROMA classifier
     ica_aroma = pe.Node(AROMAClassifier(TR=metadata["RepetitionTime"]))
     workflow.connect([
-        (inputnode, ica_aroma, [("confounds", "motion_parameters")]),
+        (inputnode, ica_aroma, [("confounds", "motpars")]),
         (select_melodic_files, ica_aroma, [
             ("mixing", "mixing"),
             ("component_maps", "component_maps"),
