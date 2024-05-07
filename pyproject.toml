@@ -20,6 +20,7 @@ classifiers = [
 ]
 dependencies = [
   "fmriprep",
+  "matplotlib <= 3.8",
   "nipype >= 1.8.5",
   "nireports",
   "niworkflows",
