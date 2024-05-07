@@ -9,7 +9,7 @@ from pathlib import Path
 
 from bids.layout import BIDSLayout
 
-from fmripost_aroma.data import load_data
+from fmripost_aroma.data import load as load_data
 
 
 def collect_derivatives(
@@ -76,8 +76,7 @@ def collect_derivatives_old(
     """Collect preprocessing derivatives."""
     subj_data = {
         "bold_raw": "",
-        ""
-        "bold_boldref": "",
+        "" "bold_boldref": "",
         "bold_MNI152NLin6": "",
     }
     query = {

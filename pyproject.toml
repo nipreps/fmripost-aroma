@@ -29,6 +29,14 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[project.optional-dependencies]
+test = [
+  "coverage",
+  "pytest",
+  "pytest-cov",
+  "pytest-env",
+]
+
 [project.urls]
 Documentation = "https://github.com/nipreps/fmripost-aroma#readme"
 Issues = "https://github.com/nipreps/fmripost-aroma/issues"
