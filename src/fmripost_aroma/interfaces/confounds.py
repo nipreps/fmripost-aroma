@@ -140,6 +140,7 @@ class _ICADenoiseOutputSpec(TraitedSpec):
 
 
 class ICADenoise(SimpleInterface):
+    """Denoise data using ICA components."""
 
     input_spec = _ICADenoiseInputSpec
     output_spec = _ICADenoiseOutputSpec
