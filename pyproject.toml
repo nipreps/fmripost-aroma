@@ -116,12 +116,51 @@ exclude_lines = [
   "if TYPE_CHECKING:",
 ]
 
+# Disable black
 [tool.black]
-line-length = 99
-target-version = ['py39']
-
-[tool.isort]
-profile = 'black'
+exclude = ".*"
 
 [tool.ruff]
 line-length = 99
+
+[tool.ruff.lint]
+extend-select = [
+  "F",
+  "E",
+  "W",
+  "I",
+  "UP",
+  "YTT",
+  "S",
+  "BLE",
+  "B",
+  "A",
+  # "CPY",
+  "C4",
+  "DTZ",
+  "T10",
+  # "EM",
+  "EXE",
+  "FA",
+  "ISC",
+  "ICN",
+  "PT",
+  "Q",
+]
+ignore = [
+  "S311",  # We are not using random for cryptographic purposes
+  "ISC001",
+  "S603",
+]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
+
+[tool.ruff.lint.extend-per-file-ignores]
+"*/test_*.py" = ["S101"]
+"fmriprep/utils/debug.py" = ["A002", "T100"]
+"docs/conf.py" = ["A001"]
+"docs/sphinxext/github_link.py" = ["BLE001"]
+
+[tool.ruff.format]
+quote-style = "single"
