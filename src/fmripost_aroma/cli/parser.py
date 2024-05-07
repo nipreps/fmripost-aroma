@@ -147,7 +147,7 @@ def _build_parser(**kwargs):
         choices=['participant'],
         help=(
             "Processing stage to be run, only 'participant' in the case of "
-            "fMRIPost-AROMA (see BIDS-Apps specification)."
+            'fMRIPost-AROMA (see BIDS-Apps specification).'
         ),
     )
 
@@ -275,8 +275,8 @@ def _build_parser(**kwargs):
         default=False,
         help=(
             "Only generate reports, don't run workflows. "
-            "This will only rerun report aggregation, not reportlet generation for specific "
-            "nodes."
+            'This will only rerun report aggregation, not reportlet generation for specific '
+            'nodes.'
         ),
     )
 
