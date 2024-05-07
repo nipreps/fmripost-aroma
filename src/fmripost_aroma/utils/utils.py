@@ -289,9 +289,7 @@ def motpars_spm2fsl(motpars):
         raise ValueError('Input must be an existing file or a numpy array.')
 
     if motpars.shape[1] != 6:
-        raise ValueError(
-            f'Motion parameters must have exactly 6 columns, not {motpars.shape[1]}.'
-        )
+        raise ValueError(f'Motion parameters must have exactly 6 columns, not {motpars.shape[1]}.')
 
     # Split translations from rotations
     trans, rot = motpars[:, :3], motpars[:, 3:]
@@ -325,9 +323,7 @@ def motpars_afni2fsl(motpars):
         raise ValueError('Input must be an existing file or a numpy array.')
 
     if motpars.shape[1] != 6:
-        raise ValueError(
-            f'Motion parameters must have exactly 6 columns, not {motpars.shape[1]}.'
-        )
+        raise ValueError(f'Motion parameters must have exactly 6 columns, not {motpars.shape[1]}.')
 
     # Split translations from rotations
     trans, rot = motpars[:, :3], motpars[:, 3:]

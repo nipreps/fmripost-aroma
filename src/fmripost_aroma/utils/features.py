@@ -231,12 +231,12 @@ def feature_spatial(component_maps):
             'LongName': 'CSF content fraction',
             'Description': (
                 "The fraction of thresholded component z-values in the brain's cerebrospinal "
-                "fluid. "
-                "This is calculated by "
-                "(1) taking the absolute value of the thresholded Z map for each component, "
-                "(2) summing z-statistics from the whole brain, "
-                "(3) summing z-statistics from voxels in CSF compartments, and "
-                "(4) dividing the CSF z-statistic sum by the whole brain z-statistic sum."
+                'fluid. '
+                'This is calculated by '
+                '(1) taking the absolute value of the thresholded Z map for each component, '
+                '(2) summing z-statistics from the whole brain, '
+                '(3) summing z-statistics from voxels in CSF compartments, and '
+                '(4) dividing the CSF z-statistic sum by the whole brain z-statistic sum.'
             ),
             'Units': 'arbitrary',
         },
