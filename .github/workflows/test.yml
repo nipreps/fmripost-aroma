@@ -36,10 +36,10 @@ jobs:
         os: ['ubuntu-latest']
         python-version: ['3.10', '3.11', '3.12']
         dependencies: ['full', 'pre']
-      include:
-        - os: ubuntu-latest
-          python-version: '3.10'
-          dependencies: 'min'
+        include:
+          - os: ubuntu-latest
+            python-version: '3.10'
+            dependencies: 'min'
 
     env:
       DEPENDS: ${{ matrix.dependencies }}
