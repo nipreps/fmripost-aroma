@@ -312,10 +312,7 @@ def parse_combined_hdf5(h5_fn, to_ras=True):
     xform = ITKCompositeH5.from_h5obj(h)
     affine = xform[0].to_ras()
     # Confirm these transformations are applicable
-    if (
-        h['TransformGroup']['2']['TransformType'][:][0]
-        != b'DisplacementFieldTransform_float_3_3'
-    ):
+    if h['TransformGroup']['2']['TransformType'][:][0] != b'DisplacementFieldTransform_float_3_3':
         raise ValueError('Unsupported transform type')
 
     if not np.array_equal(
@@ -404,9 +401,7 @@ def as_affine(xfm: nt.base.TransformBase) -> nt.Affine | None:
     if isinstance(xfm, nt.Affine):
         return xfm
 
-    if isinstance(xfm, nt.TransformChain) and all(
-        isinstance(x, nt.Affine) for x in xfm
-    ):
+    if isinstance(xfm, nt.TransformChain) and all(isinstance(x, nt.Affine) for x in xfm):
         return xfm.asaffine()
 
     return None
@@ -466,9 +461,7 @@ def resample_fieldmap(
         )
     else:
         if not aligned(fmap_reference.affine, coefficients[-1].affine):
-            raise ValueError(
-                'Reference passed is not aligned with spline grids'
-            )
+            raise ValueError('Reference passed is not aligned with spline grids')
         reference, _ = ensure_positive_cosines(fmap_reference)
 
     # Generate tensor-product B-Spline weights
@@ -476,10 +469,7 @@ def resample_fieldmap(
         [grid_bspline_weights(reference, level) for level in coefficients]
     ).tocsr()
     coefficients = np.hstack(
-        [
-            level.get_fdata(dtype='float32').reshape(-1)
-            for level in coefficients
-        ]
+        [level.get_fdata(dtype='float32').reshape(-1) for level in coefficients]
     )
 
     # Reconstruct the fieldmap (in Hz) from coefficients
@@ -493,9 +483,7 @@ def resample_fieldmap(
 
     fmap_img.header.set_intent('estimate', name='fieldmap Hz')
     fmap_img.header.set_data_dtype('float32')
-    fmap_img.header['cal_max'] = max(
-        (abs(fmap_img.dataobj.min()), fmap_img.dataobj.max())
-    )
+    fmap_img.header['cal_max'] = max((abs(fmap_img.dataobj.min()), fmap_img.dataobj.max()))
     fmap_img.header['cal_min'] = -fmap_img.header['cal_max']
 
     return fmap_img
@@ -541,9 +529,7 @@ def resample_bold(
         raise ValueError('Last transform must be a linear mapping')
 
     # Retrieve the RAS coordinates of the target space
-    coordinates = (
-        nt.base.SpatialReference.factory(target).ndcoords.astype('f4').T
-    )
+    coordinates = nt.base.SpatialReference.factory(target).ndcoords.astype('f4').T
 
     # We will operate in voxel space, so get the source affine
     vox2ras = source.affine
@@ -559,9 +545,7 @@ def resample_bold(
 
     # Some identities to reduce special casing downstream
     if fieldmap is None:
-        fieldmap = nb.Nifti1Image(
-            np.zeros(target.shape[:3], dtype='f4'), target.affine
-        )
+        fieldmap = nb.Nifti1Image(np.zeros(target.shape[:3], dtype='f4'), target.affine)
     if pe_info is None:
         pe_info = [[0, 0] for _ in range(source.shape[-1])]
 
@@ -574,9 +558,7 @@ def resample_bold(
         output_dtype='f4',
         nthreads=nthreads,
     )
-    resampled_img = nb.Nifti1Image(
-        resampled_data, target.affine, target.header
-    )
+    resampled_img = nb.Nifti1Image(resampled_data, target.affine, target.header)
     resampled_img.set_data_dtype('f4')
 
     return resampled_img
@@ -647,23 +629,17 @@ def main(
     fmap_xfms = []
 
     try:
-        hmc = derivs.get(
-            extension='.txt', **mkents('orig', 'boldref', **entities)
-        )[0]
+        hmc = derivs.get(extension='.txt', **mkents('orig', 'boldref', **entities))[0]
     except IndexError as err:
         raise ValueError('Could not find HMC transforms') from err
 
     bold_xfms.append(hmc)
 
     if space == 'boldref':
-        reference = derivs.get(
-            desc='coreg', suffix='boldref', extension='.nii.gz', **entities
-        )[0]
+        reference = derivs.get(desc='coreg', suffix='boldref', extension='.nii.gz', **entities)[0]
     else:
         try:
-            coreg = derivs.get(
-                extension='.txt', **mkents('boldref', 'T1w', **entities)
-            )[0]
+            coreg = derivs.get(extension='.txt', **mkents('boldref', 'T1w', **entities))[0]
         except IndexError as err:
             raise ValueError('Could not find coregistration transform') from err
 
@@ -687,7 +663,7 @@ def main(
                 subject=entities['subject'],
                 **mkents('T1w', space),
             )[0]
-        except IndexError as err :
+        except IndexError as err:
             raise ValueError(f'Could not find template registration for {space}') from err
 
         bold_xfms.append(template_reg)
@@ -712,15 +688,11 @@ def main(
             )
             ref_img = genref(nb.load(reference), zooms)
 
-    fmapregs = derivs.get(
-        extension='.txt', **mkents('boldref', derivs.get_fmapids(), **entities)
-    )
+    fmapregs = derivs.get(extension='.txt', **mkents('boldref', derivs.get_fmapids(), **entities))
     if not fmapregs:
         print('No fieldmap registrations found')
     elif len(fmapregs) > 1:
-        raise ValueError(
-            f'Found fieldmap registrations: {fmapregs}\nPass one as an argument.'
-        )
+        raise ValueError(f'Found fieldmap registrations: {fmapregs}\nPass one as an argument.')
 
     fieldmap = None
     if fmapregs:
