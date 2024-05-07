@@ -9,7 +9,7 @@ from pathlib import Path
 
 from bids.layout import BIDSLayout
 
-from fmripost_aroma.data import load_data
+from fmripost_aroma.data import load as load_data
 
 
 def collect_derivatives(
