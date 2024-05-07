@@ -154,17 +154,17 @@ def write_metrics(features_df, out_dir, metric_metadata=None):
     motion_ICs = features_df["classification"][features_df["classification"] == "rejected"].index
     motion_ICs = motion_ICs.values
 
-    with open(op.join(out_dir, "AROMAnoiseICs.csv"), "w") as fo:
+    with open(op.join(out_dir, "AROMAnoiseICs.csv"), "w") as file_obj:
         out_str = ",".join(motion_ICs.astype(str))
-        fo.write(out_str)
+        file_obj.write(out_str)
 
     # Create a summary overview of the classification
     out_file = op.join(out_dir, "desc-AROMA_metrics.tsv")
     features_df.to_csv(out_file, sep="\t", index_label="IC")
 
     if isinstance(metric_metadata, dict):
-        with open(op.join(out_dir, "desc-AROMA_metrics.json"), "w") as fo:
-            json.dump(metric_metadata, fo, sort_keys=True, indent=4)
+        with open(op.join(out_dir, "desc-AROMA_metrics.json"), "w") as file_obj:
+            json.dump(metric_metadata, file_obj, sort_keys=True, indent=4)
 
     return motion_ICs
 
