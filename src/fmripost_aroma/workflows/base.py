@@ -219,8 +219,7 @@ It is released under the [CC0]\
     subject_data = collect_derivatives(
         config.execution.layout,
         subject_id,
-        task=config.execution.task_id,
-        bids_filters=config.execution.bids_filters,
+        entities=config.execution.bids_filters,
     )
 
     if "flair" in config.workflow.ignore:
