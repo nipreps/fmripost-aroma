@@ -243,6 +243,7 @@ It is released under the [CC0]\
             "Future versions of fMRIPost-AROMA will use alternative conventions. "
             "Please refer to the documentation before upgrading.",
             FutureWarning,
+            stacklevel=1,
         )
 
     inputnode = pe.Node(niu.IdentityInterface(fields=['subjects_dir']), name='inputnode')

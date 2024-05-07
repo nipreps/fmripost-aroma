@@ -103,8 +103,8 @@ def _build_parser(**kwargs):
             if Path(value).exists():
                 try:
                     return loads(Path(value).read_text(), object_hook=_filter_pybids_none_any)
-                except JSONDecodeError:
-                    raise parser.error(f'JSON syntax error in: <{value}>.')
+                except JSONDecodeError as e:
+                    raise parser.error(f'JSON syntax error in: <{value}>.') from e
             else:
                 raise parser.error(f'Path does not exist: <{value}>.')
 
@@ -441,7 +441,8 @@ https://fmriprep.readthedocs.io/en/%s/spaces.html"""
     if latest is not None and currentv < latest:
         print(
             f"""\
-You are using fMRIPost-AROMA-{currentv}, and a newer version of fMRIPost-AROMA is available: {latest}.
+You are using fMRIPost-AROMA-{currentv},
+and a newer version of fMRIPost-AROMA is available: {latest}.
 Please check out our documentation about how and when to upgrade:
 https://fmriprep.readthedocs.io/en/latest/faq.html#upgrading""",
             file=sys.stderr,
@@ -498,7 +499,7 @@ def parse_args(args=None, namespace=None):
         import yaml
 
         with open(opts.use_plugin) as f:
-            plugin_settings = yaml.load(f, Loader=yaml.FullLoader)
+            plugin_settings = yaml.safe_load(f)
         _plugin = plugin_settings.get('plugin')
         if _plugin:
             config.nipype.plugin = _plugin

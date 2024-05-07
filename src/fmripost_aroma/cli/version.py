@@ -22,7 +22,8 @@
 #
 """Version CLI helpers."""
 
-from datetime import datetime
+from contextlib import suppress
+from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
@@ -40,6 +41,7 @@ def check_latest():
     latest = None
     date = None
     outdated = None
+    now = datetime.now(tz=timezone.utc)
     cachefile = Path.home() / '.cache' / 'fmripost_aroma' / 'latest'
     try:
         cachefile.parent.mkdir(parents=True, exist_ok=True)
@@ -49,23 +51,22 @@ def check_latest():
     if cachefile and cachefile.exists():
         try:
             latest, date = cachefile.read_text().split('|')
-        except Exception:
+        except Exception:  # noqa: S110, BLE001
             pass
         else:
             try:
                 latest = Version(latest)
-                date = datetime.strptime(date, DATE_FMT)
+                date = datetime.strptime(date, DATE_FMT).astimezone(timezone.utc)
             except (InvalidVersion, ValueError):
                 latest = None
             else:
-                if abs((datetime.now() - date).days) > RELEASE_EXPIRY_DAYS:
+                if abs((now - date).days) > RELEASE_EXPIRY_DAYS:
                     outdated = True
 
     if latest is None or outdated is True:
-        try:
+        response = None
+        with suppress(Exception):
             response = requests.get(url='https://pypi.org/pypi/fmripost_aroma/json', timeout=1.0)
-        except Exception:
-            response = None
 
         if response and response.status_code == 200:
             versions = [Version(rel) for rel in response.json()['releases'].keys()]
@@ -76,10 +77,8 @@ def check_latest():
             latest = None
 
     if cachefile is not None and latest is not None:
-        try:
-            cachefile.write_text('|'.join(('%s' % latest, datetime.now().strftime(DATE_FMT))))
-        except Exception:
-            pass
+        with suppress(OSError):
+            cachefile.write_text(f'{latest}|{now.strftime(DATE_FMT)}')
 
     return latest
 
@@ -88,14 +87,13 @@ def is_flagged():
     """Check whether current version is flagged."""
     # https://raw.githubusercontent.com/nipreps/fmripost_aroma/main/.versions.json
     flagged = ()
-    try:
+    response = None
+    with suppress(Exception):
         response = requests.get(
             url="""\
 https://raw.githubusercontent.com/nipreps/fmripost_aroma/main/.versions.json""",
             timeout=1.0,
         )
-    except Exception:
-        response = None
 
     if response and response.status_code == 200:
         flagged = response.json().get('flagged', {}) or {}

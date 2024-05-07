@@ -16,15 +16,9 @@ from __future__ import annotations
 import atexit
 import os
 from contextlib import AbstractContextManager, ExitStack
-from functools import cached_property
+from functools import cache, cached_property
 from pathlib import Path
 from types import ModuleType
-from typing import Union
-
-try:
-    from functools import cache
-except ImportError:  # PY38
-    from functools import lru_cache as cache
 
 try:  # Prefer backport to leave consistency to dependency spec
     from importlib_resources import as_file, files
@@ -164,7 +158,7 @@ class Loader:
         """
         return as_file(self.files.joinpath(*segments))
 
-    @cache
+    @cache  # noqa: B019
     def cached(self, *segments) -> Path:
         """Ensure data is available as a :class:`~pathlib.Path`.
 
