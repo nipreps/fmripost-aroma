@@ -127,6 +127,7 @@ RUN apt-get update && \
                     bc \
                     ca-certificates \
                     curl \
+                    gcc \
                     git \
                     gnupg \
                     lsb-release \
