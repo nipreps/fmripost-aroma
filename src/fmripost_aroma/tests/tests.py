@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Utilities and mocks for testing and documentation building."""
+
 import os
 import shutil
 from contextlib import contextmanager
@@ -35,7 +36,7 @@ from fmripost_aroma.data import load as load_data
 @contextmanager
 def mock_config():
     """Create a mock config for documentation and testing purposes."""
-    from xcp_d import config
+    from fmripost_aroma import config
 
     _old_fs = os.getenv('FREESURFER_HOME')
     if not _old_fs:

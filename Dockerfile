@@ -130,6 +130,7 @@ RUN apt-get update && \
                     gcc \
                     git \
                     gnupg \
+                    libc-dev \
                     lsb-release \
                     netbase \
                     xvfb && \
