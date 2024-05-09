@@ -109,9 +109,9 @@ def init_ica_aroma_wf(
 
     from nipype.interfaces import fsl
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-    from niworkflows.interfaces.utility import TSV2JSON
 
     from fmripost_aroma.interfaces.confounds import ICAConfounds
+    from fmripost_aroma.interfaces.nilearn import MeanImage, MedianValue
     from fmripost_aroma.interfaces.reportlets import ICAAROMARPT
 
     workflow = Workflow(name=_get_wf_name(bold_file, 'aroma'))
@@ -161,19 +161,22 @@ in the corresponding confounds file.
     ])  # fmt:skip
 
     calc_median_val = pe.Node(
-        fsl.ImageStats(op_string='-k %s -p 50'),
+        MedianValue(),
         name='calc_median_val',
     )
     workflow.connect([
         (inputnode, calc_median_val, [('bold_mask_std', 'mask_file')]),
-        (rm_non_steady_state, calc_median_val, [('bold_cut', 'in_file')]),
+        (rm_non_steady_state, calc_median_val, [('bold_cut', 'bold_file')]),
     ])  # fmt:skip
 
     calc_bold_mean = pe.Node(
-        fsl.MeanImage(),
+        MeanImage(),
         name='calc_bold_mean',
     )
-    workflow.connect([(rm_non_steady_state, calc_bold_mean, [('bold_cut', 'in_file')])])
+    workflow.connect([
+        (inputnode, calc_bold_mean, [('bold_mask_std', 'mask_file')]),
+        (rm_non_steady_state, calc_bold_mean, [('bold_cut', 'bold_file')]),
+    ])  # fmt:skip
 
     getusans = pe.Node(
         niu.Function(function=_getusans_func, output_names=['usans']),
@@ -181,7 +184,7 @@ in the corresponding confounds file.
         mem_gb=0.01,
     )
     workflow.connect([
-        (calc_median_val, getusans, [('out_stat', 'thresh')]),
+        (calc_median_val, getusans, [('median_value', 'thresh')]),
         (calc_bold_mean, getusans, [('out_file', 'image')]),
     ])  # fmt:skip
 
@@ -195,7 +198,7 @@ in the corresponding confounds file.
     workflow.connect([
         (rm_non_steady_state, smooth, [('bold_cut', 'in_file')]),
         (getusans, smooth, [('usans', 'usans')]),
-        (calc_median_val, smooth, [(('out_stat', _getbtthresh), 'brightness_threshold')]),
+        (calc_median_val, smooth, [(('median_value', _getbtthresh), 'brightness_threshold')]),
     ])  # fmt:skip
 
     # ICA with MELODIC
@@ -230,7 +233,10 @@ in the corresponding confounds file.
         name='ica_aroma',
     )
     workflow.connect([
-        (inputnode, ica_aroma, [('confounds', 'motpars')]),
+        (inputnode, ica_aroma, [
+            ('confounds', 'motpars'),
+            ('skip_vols', 'skip_vols'),
+        ]),
         (select_melodic_files, ica_aroma, [
             ('mixing', 'mixing'),
             ('component_maps', 'component_maps'),
@@ -242,8 +248,7 @@ in the corresponding confounds file.
         ]),
     ])  # fmt:skip
 
-    # Generate the ICA-AROMA report
-    # What steps does this entail?
+    # Generate reportlet
     aroma_rpt = pe.Node(
         ICAAROMARPT(),
         name='aroma_rpt',
@@ -252,7 +257,21 @@ in the corresponding confounds file.
         (inputnode, aroma_rpt, [('bold_mask_std', 'report_mask')]),
         (smooth, aroma_rpt, [('smoothed_file', 'in_file')]),
         (melodic, aroma_rpt, [('out_dir', 'melodic_dir')]),
+        (ica_aroma, aroma_rpt, [('aroma_noise_ics', 'aroma_noise_ics')]),
     ])  # fmt:skip
+
+    ds_report_ica_aroma = pe.Node(
+        DerivativesDataSink(
+            source_file=bold_file,
+            desc='aroma',
+            datatype='figures',
+            dismiss_entities=('echo', 'den', 'res'),
+        ),
+        name='ds_report_ica_aroma',
+        run_without_submitting=True,
+        mem_gb=config.DEFAULT_MEMORY_MIN_GB,
+    )
+    workflow.connect([(aroma_rpt, ds_report_ica_aroma, [('out_report', 'in_file')])])
 
     # extract the confound ICs from the results
     ica_aroma_confound_extraction = pe.Node(
@@ -271,21 +290,15 @@ in the corresponding confounds file.
         ]),
     ])  # fmt:skip
 
-    ds_report_ica_aroma = pe.Node(
-        DerivativesDataSink(desc='aroma', datatype='figures', dismiss_entities=('echo',)),
-        name='ds_report_ica_aroma',
-        run_without_submitting=True,
-        mem_gb=config.DEFAULT_MEMORY_MIN_GB,
-    )
-    workflow.connect([(aroma_rpt, ds_report_ica_aroma, [('out_report', 'in_file')])])
-
     ds_components = pe.Node(
         DerivativesDataSink(
+            source_file=bold_file,
             stat='dunno',
             thresh='0p5',
             desc='melodic',
             datatype='func',
             name_source=bold_file,
+            dismiss_entities=('echo', 'den', 'res'),
         ),
         name='ds_components',
         run_without_submitting=True,
@@ -295,9 +308,11 @@ in the corresponding confounds file.
 
     ds_mixing = pe.Node(
         DerivativesDataSink(
+            source_file=bold_file,
             desc='melodic',
             datatype='func',
             name_source=bold_file,
+            dismiss_entities=('echo', 'den', 'res'),
         ),
         name='ds_mixing',
         run_without_submitting=True,
@@ -307,9 +322,11 @@ in the corresponding confounds file.
 
     ds_aroma_features = pe.Node(
         DerivativesDataSink(
+            source_file=bold_file,
             desc='melodic',
             datatype='func',
             name_source=bold_file,
+            dismiss_entities=('echo', 'den', 'res'),
         ),
         name='ds_aroma_features',
         run_without_submitting=True,
@@ -324,9 +341,11 @@ in the corresponding confounds file.
 
     ds_aroma_confounds = pe.Node(
         DerivativesDataSink(
+            source_file=bold_file,
             desc='melodic',
             datatype='func',
             name_source=bold_file,
+            dismiss_entities=('echo', 'den', 'res'),
         ),
         name='ds_aroma_confounds',
         run_without_submitting=True,
@@ -402,6 +421,7 @@ def init_denoise_wf(bold_file):
 
         ds_denoised = pe.Node(
             DerivativesDataSink(
+                source_file=bold_file,
                 desc=f'{denoise_method}Denoised',
                 datatype='func',
                 name_source=bold_file,
@@ -425,13 +445,15 @@ def _getusans_func(image, thresh):
 
 def _remove_volumes(bold_file, skip_vols):
     """Remove skip_vols from bold_file."""
+    import os
+
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
 
     if skip_vols == 0:
         return bold_file
 
-    out = fname_presuffix(bold_file, suffix='_cut')
+    out = fname_presuffix(bold_file, suffix='_cut', newpath=os.getcwd())
     bold_img = nb.load(bold_file)
     bold_img.__class__(
         bold_img.dataobj[..., skip_vols:], bold_img.affine, bold_img.header

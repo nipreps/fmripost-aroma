@@ -26,7 +26,6 @@ class _ICAConfoundsOutputSpec(TraitedSpec):
     aroma_confounds = traits.Either(
         None, File(exists=True, desc='output confounds file extracted from ICA-AROMA')
     )
-    aroma_noise_ics = File(exists=True, desc='ICA-AROMA noise components')
     mixing = File(exists=True, desc='melodic mix file with skip_vols added back')
 
 
@@ -37,7 +36,7 @@ class ICAConfounds(SimpleInterface):
     output_spec = _ICAConfoundsOutputSpec
 
     def _run_interface(self, runtime):
-        aroma_confounds, motion_ics_out, mixing = _get_ica_confounds(
+        aroma_confounds, mixing = _get_ica_confounds(
             mixing=self.inputs.mixing,
             aroma_features=self.inputs.aroma_features,
             skip_vols=self.inputs.skip_vols,
@@ -48,7 +47,6 @@ class ICAConfounds(SimpleInterface):
             raise RuntimeError('ICA-AROMA failed')
 
         self._results['aroma_confounds'] = aroma_confounds
-        self._results['aroma_noise_ics'] = motion_ics_out
         self._results['mixing'] = mixing
         return runtime
 
@@ -73,7 +71,6 @@ def _get_ica_confounds(mixing, aroma_features, skip_vols, newpath=None):
 
     # Prepare output paths
     mixing_out = os.path.join(newpath, 'mixing.tsv')
-    motion_ics_out = os.path.join(newpath, 'AROMAnoiseICs.csv')
     aroma_confounds = os.path.join(newpath, 'AROMAAggrCompAROMAConfounds.tsv')
 
     # pad mixing_arr with rows of zeros corresponding to number non steady-state volumes
@@ -87,13 +84,13 @@ def _get_ica_confounds(mixing, aroma_features, skip_vols, newpath=None):
     # Return dummy list of ones if no noise components were found
     if motion_ics.size == 0:
         config.loggers.interfaces.warning('No noise components were classified')
-        return None, motion_ics_out, mixing_out
+        return None, mixing_out
 
     # return dummy lists of zeros if no signal components were found
     good_ic_arr = np.delete(mixing_arr, motion_ics, 1).T
     if good_ic_arr.size == 0:
         config.loggers.interfaces.warning('No signal components were classified')
-        return None, motion_ics_out, mixing_out
+        return None, mixing_out
 
     # Select the mixing matrix rows corresponding to the motion ICs
     aggr_mixing_arr = mixing_arr[motion_ics, :].T
@@ -104,7 +101,7 @@ def _get_ica_confounds(mixing, aroma_features, skip_vols, newpath=None):
         columns=[f'aroma_motion_{x + 1:02d}' for x in motion_ics],
     ).to_csv(aroma_confounds, sep='\t', index=None)
 
-    return aroma_confounds, motion_ics_out, mixing_out
+    return aroma_confounds, mixing_out
 
 
 class _ICADenoiseInputSpec(BaseInterfaceInputSpec):

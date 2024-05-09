@@ -23,11 +23,13 @@ class _AROMAClassifierInputSpec(BaseInterfaceInputSpec):
     component_maps = File(exists=True, desc='thresholded z-statistic component maps')
     component_stats = File(exists=True, desc='melodic component statistics file')
     TR = traits.Float(desc='repetition time in seconds')
+    skip_vols = traits.Int(desc='number of volumes to skip at the beginning of the timeseries')
 
 
 class _AROMAClassifierOutputSpec(TraitedSpec):
     aroma_features = File(exists=True, desc='output confounds file extracted from ICA-AROMA')
     aroma_metadata = traits.Dict(desc='metadata for the ICA-AROMA confounds')
+    aroma_noise_ics = File(exists=True, desc='output noise components from ICA-AROMA')
 
 
 class AROMAClassifier(SimpleInterface):
@@ -39,6 +41,7 @@ class AROMAClassifier(SimpleInterface):
     def _run_interface(self, runtime):
         TR = self.inputs.TR
         motion_params = utils.load_motpars(self.inputs.motpars, source='fmriprep')
+        motion_params = motion_params[self.inputs.skip_vols:, :]
         mixing = np.loadtxt(self.inputs.mixing)  # T x C
         component_maps = nb.load(self.inputs.component_maps)  # X x Y x Z x C
         if mixing.shape[1] != component_maps.shape[3]:
@@ -56,7 +59,7 @@ class AROMAClassifier(SimpleInterface):
         config.loggers.interface.info('  - extracting the CSF & Edge fraction features')
         metric_metadata = {}
         features_df = pd.DataFrame()
-        spatial_df, spatial_metadata = features.feature_spatial(component_maps)
+        spatial_df, spatial_metadata = features.feature_spatial(self.inputs.component_maps)
         features_df = pd.concat([features_df, spatial_df], axis=1)
         metric_metadata.update(spatial_metadata)
 
@@ -78,7 +81,7 @@ class AROMAClassifier(SimpleInterface):
         metric_metadata.update(clf_metadata)
 
         # Add MELODIC component statistics to the AROMA features
-        component_stats = pd.read_csv(component_stats, header=None, sep='  ')[[0, 1]] / 100
+        component_stats = pd.read_csv(self.inputs.component_stats, header=None, sep='  ')[[0, 1]] / 100
         component_stats.columns = ['model_variance_explained', 'total_variance_explained']
         features_df = pd.concat([features_df, component_stats], axis=1)
         metric_metadata.update(
@@ -95,6 +98,13 @@ class AROMAClassifier(SimpleInterface):
         features_file = os.path.abspath('aroma_features.tsv')
         features_df.to_csv(features_file, sep='\t', index=False)
 
+        # Noise components
+        noise_ics = clf_df[clf_df['classification'] == 'rejected'].index.values + 1
+        noise_ics_file = os.path.abspath('aroma_noise_ics.csv')
+        with open(noise_ics_file, 'w') as f:
+            f.write(','.join(map(str, noise_ics)))
+
         self._results['aroma_features'] = features_file
         self._results['aroma_metadata'] = metric_metadata
+        self._results['aroma_noise_ics'] = noise_ics_file
         return runtime

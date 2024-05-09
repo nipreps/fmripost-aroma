@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from nilearn import image, masking
 
-from fmripost_aroma import data as load_data
+from fmripost_aroma.data import load as load_data
 from fmripost_aroma.utils import utils
 
 LGR = logging.getLogger(__name__)
@@ -246,9 +246,9 @@ def feature_spatial(component_maps):
     components_img = nb.load(component_maps)
     n_components = components_img.shape[3]
 
-    csf_mask = load_data('mask_csf.nii.gz')
-    edge_mask = load_data('mask_edge.nii.gz')
-    out_mask = load_data('mask_out.nii.gz')
+    csf_mask = image.resample_to_img(load_data('mask_csf.nii.gz'), components_img, interpolation='nearest')
+    edge_mask = image.resample_to_img(load_data('mask_edge.nii.gz'), components_img, interpolation='nearest')
+    out_mask = image.resample_to_img(load_data('mask_out.nii.gz'), components_img, interpolation='nearest')
 
     # Loop over ICs
     metric_df = pd.DataFrame(columns=['edge_fract', 'csf_fract'], data=np.zeros((n_components, 2)))
