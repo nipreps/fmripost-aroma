@@ -22,8 +22,6 @@
 #
 """fMRIPost-AROMA workflows to run ICA-AROMA."""
 
-import os
-
 from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
 
@@ -99,20 +97,14 @@ def init_ica_aroma_wf(
 
     Outputs
     -------
-    melodic_mix
+    mixing
         FSL MELODIC mixing matrix
     aroma_features
-        TSV of feature values used to classify components in ``melodic_mix``.
+        TSV of feature values used to classify components in ``mixing``.
     features_metadata
         Dictionary describing the ICA-AROMA run
     aroma_confounds
         TSV of confounds identified as noise by ICA-AROMA
-    confounds_metadata
-        Dictionary describing the ICA-AROMA-based confounds file
-    aroma_noise_ics
-        CSV of noise components identified by ICA-AROMA
-    nonaggr_denoised_file
-        BOLD series with non-aggressive ICA-AROMA denoising applied
     """
 
     from nipype.interfaces import fsl
@@ -148,13 +140,10 @@ in the corresponding confounds file.
     outputnode = pe.Node(
         niu.IdentityInterface(
             fields=[
-                'melodic_mix',
+                'mixing',
                 'aroma_features',
                 'features_metadata',
                 'aroma_confounds',
-                'confounds_metadata',
-                'aroma_noise_ics',
-                'nonaggr_denoised_file',
             ],
         ),
         name='outputnode',
@@ -229,19 +218,23 @@ in the corresponding confounds file.
         niu.Function(
             function=_select_melodic_files,
             input_names=['melodic_dir'],
-            output_names=['mixing', 'component_maps'],
+            output_names=['mixing', 'component_maps', 'component_stats'],
         ),
         name='select_melodic_files',
     )
     workflow.connect([(melodic, select_melodic_files, [('out_dir', 'melodic_dir')])])
 
     # Run the ICA-AROMA classifier
-    ica_aroma = pe.Node(AROMAClassifier(TR=metadata['RepetitionTime']))
+    ica_aroma = pe.Node(
+        AROMAClassifier(TR=metadata['RepetitionTime']),
+        name='ica_aroma',
+    )
     workflow.connect([
         (inputnode, ica_aroma, [('confounds', 'motpars')]),
         (select_melodic_files, ica_aroma, [
             ('mixing', 'mixing'),
             ('component_maps', 'component_maps'),
+            ('component_stats', 'component_stats'),
         ]),
         (ica_aroma, outputnode, [
             ('aroma_features', 'aroma_features'),
@@ -252,69 +245,30 @@ in the corresponding confounds file.
     # Generate the ICA-AROMA report
     # What steps does this entail?
     aroma_rpt = pe.Node(
-        ICAAROMARPT(TR=metadata['RepetitionTime']),
+        ICAAROMARPT(),
         name='aroma_rpt',
     )
     workflow.connect([
         (inputnode, aroma_rpt, [('bold_mask_std', 'report_mask')]),
         (smooth, aroma_rpt, [('smoothed_file', 'in_file')]),
         (melodic, aroma_rpt, [('out_dir', 'melodic_dir')]),
-        (ica_aroma, aroma_rpt, [('aroma_noise_ics', 'aroma_noise_ics')]),
-    ])  # fmt:skip
-
-    add_non_steady_state = pe.Node(
-        niu.Function(function=_add_volumes, output_names=['bold_add']),
-        name='add_non_steady_state',
-    )
-    workflow.connect([
-        (inputnode, add_non_steady_state, [
-            ('bold_std', 'bold_file'),
-            ('skip_vols', 'skip_vols'),
-        ]),
-        (aroma_rpt, add_non_steady_state, [('nonaggr_denoised_file', 'bold_cut_file')]),
-        (add_non_steady_state, outputnode, [('bold_add', 'nonaggr_denoised_file')]),
     ])  # fmt:skip
 
     # extract the confound ICs from the results
     ica_aroma_confound_extraction = pe.Node(
         ICAConfounds(
             err_on_aroma_warn=config.workflow.err_on_warn,
-            orthogonalize=config.workflow.orthogonalize,
         ),
         name='ica_aroma_confound_extraction',
     )
     workflow.connect([
         (inputnode, ica_aroma_confound_extraction, [('skip_vols', 'skip_vols')]),
-        (melodic, ica_aroma_confound_extraction, [('out_dir', 'melodic_dir')]),
-        (ica_aroma, ica_aroma_confound_extraction, [
-            ('aroma_features', 'aroma_features'),
-            ('aroma_noise_ics', 'aroma_noise_ics'),
-            ('aroma_metadata', 'aroma_metadata'),
-        ]),
+        (select_melodic_files, ica_aroma_confound_extraction, [('mixing', 'mixing')]),
+        (ica_aroma, ica_aroma_confound_extraction, [('aroma_features', 'aroma_features')]),
         (ica_aroma_confound_extraction, outputnode, [
             ('aroma_confounds', 'aroma_confounds'),
-            ('aroma_noise_ics', 'aroma_noise_ics'),
-            ('melodic_mix', 'melodic_mix'),
+            ('mixing', 'mixing'),
         ]),
-    ])  # fmt:skip
-
-    ica_aroma_metadata_fmt = pe.Node(
-        TSV2JSON(
-            index_column='IC',
-            output=None,
-            enforce_case=True,
-            additional_metadata={
-                'Method': {
-                    'Name': 'ICA-AROMA',
-                    'Version': os.getenv('AROMA_VERSION', 'n/a'),
-                },
-            },
-        ),
-        name='ica_aroma_metadata_fmt',
-    )
-    workflow.connect([
-        (ica_aroma_confound_extraction, ica_aroma_metadata_fmt, [('aroma_metadata', 'in_file')]),
-        (ica_aroma_metadata_fmt, outputnode, [('output', 'confounds_metadata')]),
     ])  # fmt:skip
 
     ds_report_ica_aroma = pe.Node(
@@ -379,10 +333,7 @@ in the corresponding confounds file.
         mem_gb=config.DEFAULT_MEMORY_MIN_GB,
     )
     workflow.connect([
-        (ica_aroma_confound_extraction, ds_aroma_confounds, [
-            ('aroma_confounds', 'in_file'),
-            ('aroma_metadata', 'meta_dict'),
-        ]),
+        (ica_aroma_confound_extraction, ds_aroma_confounds, [('aroma_confounds', 'in_file')]),
     ])  # fmt:skip
 
     return workflow
@@ -539,4 +490,8 @@ def _select_melodic_files(melodic_dir):
     if not os.path.isfile(component_maps):
         raise FileNotFoundError(f'Missing MELODIC ICs: {component_maps}')
 
-    return mixing, component_maps
+    component_stats = os.path.join(melodic_dir, 'melodic_ICstats')
+    if not os.path.isfile(component_stats):
+        raise FileNotFoundError(f'Missing MELODIC IC stats: {component_stats}')
+
+    return mixing, component_maps, component_stats

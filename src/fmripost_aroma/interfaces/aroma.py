@@ -21,12 +21,12 @@ class _AROMAClassifierInputSpec(BaseInterfaceInputSpec):
     motpars = File(exists=True, desc='motion parameters or general confounds file')
     mixing = File(exists=True, desc='mixing matrix')
     component_maps = File(exists=True, desc='thresholded z-statistic component maps')
+    component_stats = File(exists=True, desc='melodic component statistics file')
     TR = traits.Float(desc='repetition time in seconds')
 
 
 class _AROMAClassifierOutputSpec(TraitedSpec):
     aroma_features = File(exists=True, desc='output confounds file extracted from ICA-AROMA')
-    aroma_noise_ics = File(exists=True, desc='ICA-AROMA noise components')
     aroma_metadata = traits.Dict(desc='metadata for the ICA-AROMA confounds')
 
 
@@ -77,19 +77,24 @@ class AROMAClassifier(SimpleInterface):
         features_df = pd.concat([features_df, clf_df], axis=1)
         metric_metadata.update(clf_metadata)
 
-        # Split out the motion components
-        motion_components = features_df.loc[
-            features_df['classification'] == 'rejected',
-            'classification',
-        ].index
-        motion_components = motion_components.values
-        motion_components_file = os.path.abspath('aroma_motion_components.txt')
-        np.savetxt(motion_components_file, motion_components, fmt='%s')
+        # Add MELODIC component statistics to the AROMA features
+        component_stats = pd.read_csv(component_stats, header=None, sep='  ')[[0, 1]] / 100
+        component_stats.columns = ['model_variance_explained', 'total_variance_explained']
+        features_df = pd.concat([features_df, component_stats], axis=1)
+        metric_metadata.update(
+            {
+                'model_variance_explained': {
+                    'Description': 'Model variance explained by the component',
+                },
+                'total_variance_explained': {
+                    'Description': 'Total variance explained by the component',
+                },
+            },
+        )
 
         features_file = os.path.abspath('aroma_features.tsv')
         features_df.to_csv(features_file, sep='\t', index=False)
 
         self._results['aroma_features'] = features_file
         self._results['aroma_metadata'] = metric_metadata
-        self._results['aroma_noise_ics'] = motion_components_file
         return runtime

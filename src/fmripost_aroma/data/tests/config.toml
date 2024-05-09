@@ -30,8 +30,8 @@ write_graph = false
 
 [workflow]
 anat_only = false
-aroma_err_on_warn = false
-aroma_melodic_dim = -200
+err_on_warn = false
+melodic_dim = -200
 bold2anat_dof = 6
 fmap_bspline = false
 force_syn = false

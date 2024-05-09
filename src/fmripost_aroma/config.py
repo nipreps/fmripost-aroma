@@ -396,6 +396,8 @@ class execution(_Config):
     """Debug mode(s)."""
     fmripost_aroma_dir = None
     """Root of fMRIPost-AROMA BIDS Derivatives dataset. Depends on output_layout."""
+    fs_license_file = _fs_license
+    """An existing file containing a FreeSurfer license."""
     layout = None
     """A :py:class:`~bids.layout.BIDSLayout` object, see :py:func:`init`."""
     log_dir = None
@@ -441,6 +443,7 @@ class execution(_Config):
         'derivatives',
         'bids_database_dir',
         'fmripost_aroma_dir',
+        'fs_license_file',
         'layout',
         'log_dir',
         'output_dir',
