@@ -17,25 +17,25 @@ class _MeanImageInputSpec(BaseInterfaceInputSpec):
     bold_file = File(
         exists=True,
         mandatory=True,
-        desc="A 4D BOLD file to process.",
+        desc='A 4D BOLD file to process.',
     )
     mask_file = File(
         exists=True,
         mandatory=True,
-        desc="A binary brain mask.",
+        desc='A binary brain mask.',
     )
     out_file = File(
-        "mean.nii.gz",
+        'mean.nii.gz',
         usedefault=True,
         exists=False,
-        desc="The name of the mean file to write out. mean.nii.gz by default.",
+        desc='The name of the mean file to write out. mean.nii.gz by default.',
     )
 
 
 class _MeanImageOutputSpec(TraitedSpec):
     out_file = File(
         exists=True,
-        desc="Mean output file.",
+        desc='Mean output file.',
     )
 
 
@@ -51,8 +51,8 @@ class MeanImage(NilearnBaseInterface, SimpleInterface):
         data = apply_mask(self.inputs.bold_file, self.inputs.mask_file)
         mean_data = data.mean(axis=0)
         mean_img = unmask(mean_data, self.inputs.mask_file)
-        self._results["out_file"] = os.path.join(runtime.cwd, self.inputs.out_file)
-        mean_img.to_filename(self._results["out_file"])
+        self._results['out_file'] = os.path.join(runtime.cwd, self.inputs.out_file)
+        mean_img.to_filename(self._results['out_file'])
 
         return runtime
 
@@ -61,12 +61,12 @@ class _MedianValueInputSpec(BaseInterfaceInputSpec):
     bold_file = File(
         exists=True,
         mandatory=True,
-        desc="A 4D BOLD file to process.",
+        desc='A 4D BOLD file to process.',
     )
     mask_file = File(
         exists=True,
         mandatory=True,
-        desc="A binary brain mask.",
+        desc='A binary brain mask.',
     )
 
 
@@ -84,6 +84,6 @@ class MedianValue(NilearnBaseInterface, SimpleInterface):
         from nilearn.masking import apply_mask
 
         data = apply_mask(self.inputs.bold_file, self.inputs.mask_file)
-        self._results["median_value"] = np.median(data)
+        self._results['median_value'] = np.median(data)
 
         return runtime
