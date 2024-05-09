@@ -538,17 +538,12 @@ class workflow(_Config):
     melodic_dim = None
     """Number of ICA components to be estimated by MELODIC
     (positive = exact, negative = maximum)."""
-    denoising_method = None
+    denoise_method = None
     """Denoising strategy to be used."""
-    orthogonalize = False
-    """Orthogonalize the AROMA-flagged components w.r.t. the non-flagged components."""
     cifti_output = None
     """Generate HCP Grayordinates, accepts either ``'91k'`` (default) or ``'170k'``."""
     dummy_scans = None
     """Set a number of initial scans to be considered nonsteady states."""
-    spaces = None
-    """Keeps the :py:class:`~niworkflows.utils.spaces.SpatialReferences`
-    instance keeping standard and nonstandard spaces."""
 
 
 class loggers:

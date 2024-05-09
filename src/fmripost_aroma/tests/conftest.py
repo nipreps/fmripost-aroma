@@ -9,28 +9,19 @@ import pytest
 def pytest_addoption(parser):
     """Collect pytest parameters for running tests."""
     parser.addoption(
-        '--working_dir',
-        action='store',
-        default=(
-            '/usr/local/miniconda/lib/python3.11/site-packages/fmripost_aroma/fmripost_aroma/'
-            'tests/data/test_data/run_pytests/work'
-        ),
-    )
-    parser.addoption(
         '--data_dir',
         action='store',
-        default=(
-            '/usr/local/miniconda/lib/python3.11/site-packages/fmripost_aroma/fmripost_aroma/'
-            'tests/data/test_data'
-        ),
+        default='/home/runner/work/fmripost-aroma/fmripost-aroma/src/fmripost_aroma/tests/data',
     )
     parser.addoption(
         '--output_dir',
         action='store',
-        default=(
-            '/usr/local/miniconda/lib/python3.11/site-packages/fmripost_aroma/fmripost_aroma/'
-            'tests/data/test_data/run_pytests/out'
-        ),
+        default='/home/runner/work/pytests/out',
+    )
+    parser.addoption(
+        '--working_dir',
+        action='store',
+        default='/home/runner/work/pytests/work',
     )
 
 
@@ -58,7 +49,7 @@ def output_dir(request):
 
 
 @pytest.fixture(scope='session', autouse=True)
-def fslicense(working_dir):
+def _fslicense(working_dir):
     """Set the FreeSurfer license as an environment variable."""
     FS_LICENSE = os.path.join(working_dir, 'license.txt')
     os.environ['FS_LICENSE'] = FS_LICENSE

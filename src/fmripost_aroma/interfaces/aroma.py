@@ -41,7 +41,7 @@ class AROMAClassifier(SimpleInterface):
     def _run_interface(self, runtime):
         TR = self.inputs.TR
         motion_params = utils.load_motpars(self.inputs.motpars, source='fmriprep')
-        motion_params = motion_params[self.inputs.skip_vols:, :]
+        motion_params = motion_params[self.inputs.skip_vols :, :]
         mixing = np.loadtxt(self.inputs.mixing)  # T x C
         component_maps = nb.load(self.inputs.component_maps)  # X x Y x Z x C
         if mixing.shape[1] != component_maps.shape[3]:
@@ -81,7 +81,9 @@ class AROMAClassifier(SimpleInterface):
         metric_metadata.update(clf_metadata)
 
         # Add MELODIC component statistics to the AROMA features
-        component_stats = pd.read_csv(self.inputs.component_stats, header=None, sep='  ')[[0, 1]] / 100
+        component_stats = (
+            pd.read_csv(self.inputs.component_stats, header=None, sep='  ')[[0, 1]] / 100
+        )
         component_stats.columns = ['model_variance_explained', 'total_variance_explained']
         features_df = pd.concat([features_df, component_stats], axis=1)
         metric_metadata.update(

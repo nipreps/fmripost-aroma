@@ -246,9 +246,15 @@ def feature_spatial(component_maps):
     components_img = nb.load(component_maps)
     n_components = components_img.shape[3]
 
-    csf_mask = image.resample_to_img(load_data('mask_csf.nii.gz'), components_img, interpolation='nearest')
-    edge_mask = image.resample_to_img(load_data('mask_edge.nii.gz'), components_img, interpolation='nearest')
-    out_mask = image.resample_to_img(load_data('mask_out.nii.gz'), components_img, interpolation='nearest')
+    csf_mask = image.resample_to_img(
+        load_data('mask_csf.nii.gz'), components_img, interpolation='nearest'
+    )
+    edge_mask = image.resample_to_img(
+        load_data('mask_edge.nii.gz'), components_img, interpolation='nearest'
+    )
+    out_mask = image.resample_to_img(
+        load_data('mask_out.nii.gz'), components_img, interpolation='nearest'
+    )
 
     # Loop over ICs
     metric_df = pd.DataFrame(columns=['edge_fract', 'csf_fract'], data=np.zeros((n_components, 2)))

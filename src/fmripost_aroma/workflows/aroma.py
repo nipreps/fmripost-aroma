@@ -263,8 +263,8 @@ in the corresponding confounds file.
     ds_report_ica_aroma = pe.Node(
         DerivativesDataSink(
             source_file=bold_file,
-            desc='aroma',
             datatype='figures',
+            desc='aroma',
             dismiss_entities=('echo', 'den', 'res'),
         ),
         name='ds_report_ica_aroma',
@@ -293,11 +293,10 @@ in the corresponding confounds file.
     ds_components = pe.Node(
         DerivativesDataSink(
             source_file=bold_file,
-            stat='dunno',
-            thresh='0p5',
-            desc='melodic',
             datatype='func',
-            name_source=bold_file,
+            desc='melodic',
+            suffix='components',
+            extension='nii.gz',
             dismiss_entities=('echo', 'den', 'res'),
         ),
         name='ds_components',
@@ -309,9 +308,10 @@ in the corresponding confounds file.
     ds_mixing = pe.Node(
         DerivativesDataSink(
             source_file=bold_file,
-            desc='melodic',
             datatype='func',
-            name_source=bold_file,
+            desc='melodic',
+            suffix='mixing',
+            extension='tsv',
             dismiss_entities=('echo', 'den', 'res'),
         ),
         name='ds_mixing',
@@ -323,9 +323,10 @@ in the corresponding confounds file.
     ds_aroma_features = pe.Node(
         DerivativesDataSink(
             source_file=bold_file,
-            desc='melodic',
             datatype='func',
-            name_source=bold_file,
+            desc='aroma',
+            suffix='metrics',
+            extension='tsv',
             dismiss_entities=('echo', 'den', 'res'),
         ),
         name='ds_aroma_features',
@@ -342,9 +343,10 @@ in the corresponding confounds file.
     ds_aroma_confounds = pe.Node(
         DerivativesDataSink(
             source_file=bold_file,
-            desc='melodic',
             datatype='func',
-            name_source=bold_file,
+            desc='melodic',
+            suffix='timeseries',
+            extension='tsv',
             dismiss_entities=('echo', 'den', 'res'),
         ),
         name='ds_aroma_confounds',
@@ -400,8 +402,7 @@ def init_denoise_wf(bold_file):
         )
         workflow.connect([
             (inputnode, denoise, [
-                ('confounds', 'confounds_file'),
-                ('skip_vols', 'skip_vols'),
+                ('confounds', 'confounds'),
                 ('bold_mask_std', 'mask_file'),
             ]),
             (rm_non_steady_state, denoise, [('bold_cut', 'bold_file')]),
@@ -409,7 +410,7 @@ def init_denoise_wf(bold_file):
 
         add_non_steady_state = pe.Node(
             niu.Function(function=_add_volumes, output_names=['bold_add']),
-            name='add_non_steady_state',
+            name=f'add_non_steady_state_{denoise_method}',
         )
         workflow.connect([
             (inputnode, add_non_steady_state, [
@@ -423,8 +424,6 @@ def init_denoise_wf(bold_file):
             DerivativesDataSink(
                 source_file=bold_file,
                 desc=f'{denoise_method}Denoised',
-                datatype='func',
-                name_source=bold_file,
             ),
             name=f'ds_denoised_{denoise_method}',
             run_without_submitting=True,

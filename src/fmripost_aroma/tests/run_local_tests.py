@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
 """Run tests locally by calling Docker."""
+
 import argparse
 import os
 import subprocess
@@ -47,7 +47,7 @@ def run_command(command, env=None):
         command,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        shell=True,
+        shell=False,
         env=merged_env,
     )
     while True:
