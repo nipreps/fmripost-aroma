@@ -51,7 +51,7 @@ test = [
 ]
 
 # Aliases
-all = ["fmripost_aroma[doc,tests]"]
+all = ["fmripost_aroma[doc,test]"]
 
 [project.urls]
 Documentation = "https://github.com/nipreps/fmripost-aroma#readme"
