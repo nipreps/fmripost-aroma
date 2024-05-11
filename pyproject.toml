@@ -50,6 +50,9 @@ test = [
   "pytest-env",
 ]
 
+# Aliases
+all = ["fmripost_aroma[doc,tests]"]
+
 [project.urls]
 Documentation = "https://github.com/nipreps/fmripost-aroma#readme"
 Issues = "https://github.com/nipreps/fmripost-aroma/issues"
