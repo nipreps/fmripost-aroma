@@ -29,12 +29,28 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
+doc = [
+    "doctest-ignore-unicode",
+    "pydot >=1.2.3",
+    "pydotplus",
+    "recommonmark",
+    "sphinx >= 4.2.0",
+    "sphinx-argparse",
+    "sphinx-markdown-tables",
+    "sphinx_rtd_theme",
+    "sphinxcontrib-apidoc",
+    "sphinxcontrib-bibtex",
+    "svgutils",
+]
 test = [
   "coverage",
   "pytest",
   "pytest-cov",
   "pytest-env",
 ]
+
+# Aliases
+all = ["fmripost_aroma[doc,test]"]
 
 [project.urls]
 Documentation = "https://github.com/nipreps/fmripost-aroma#readme"

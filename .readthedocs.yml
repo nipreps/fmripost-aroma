@@ -6,6 +6,10 @@ build:
     - graphviz
   tools:
     python: "3.11"
+  jobs:
+    post_checkout:
+      # Fetch full history, but don't fail if we already have it
+      - git fetch --unshallow || true
 
 sphinx:
   configuration: docs/conf.py
