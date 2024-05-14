@@ -4,8 +4,20 @@ from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
 
 
-def init_resample_raw_wf(bold_file, functional_cache):
-    """Resample raw BOLD data to MNI152NLin6Asym:res-2mm space."""
+def init_resample_volumetric_wf(bold_file, functional_cache, space, run_stc):
+    """Resample raw BOLD data to requested volumetric space space.
+
+    Parameters
+    ----------
+    bold_file : str
+        Path to BOLD file.
+    functional_cache : dict
+        Dictionary with paths to functional data.
+    space : niworkflows.utils.spaces.Reference
+        Spatial reference.
+    run_stc : bool
+        Whether to run STC.
+    """
     from fmriprep.workflows.bold.stc import init_bold_stc_wf
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
@@ -25,20 +37,28 @@ def init_resample_raw_wf(bold_file, functional_cache):
         name='outputnode',
     )
 
-    stc_wf = init_bold_stc_wf(name='resample_stc_wf')
-    workflow.connect([
-        (inputnode, stc_wf, [
-            ('bold_file', 'inputnode.bold_file'),
-            ('mask_file', 'inputnode.mask_file'),
-        ]),
-    ])  # fmt:skip
+    stc_buffer = pe.Node(
+        niu.IdentityInterface(fields=['bold_file']),
+        name='stc_buffer',
+    )
+    if run_stc:
+        stc_wf = init_bold_stc_wf(name='resample_stc_wf')
+        workflow.connect([
+            (inputnode, stc_wf, [
+                ('bold_file', 'inputnode.bold_file'),
+                ('mask_file', 'inputnode.mask_file'),
+            ]),
+            (stc_wf, stc_buffer, [('outputnode.bold_file', 'bold_file')]),
+        ])  # fmt:skip
+    else:
+        workflow.connect([(inputnode, stc_buffer, [('bold_file', 'bold_file')])])
 
     resample_bold = pe.Node(
-        Resampler(space='MNI152NLin6Asym', resolution='2'),
+        Resampler(space=space.space, **space.spec),
         name='resample_bold',
     )
     workflow.connect([
-        (stc_wf, resample_bold, [('outputnode.bold_file', 'bold_file')]),
+        (stc_buffer, resample_bold, [('outputnode.bold_file', 'bold_file')]),
         (resample_bold, outputnode, [('output_file', 'bold_std')]),
     ])  # fmt:skip
 
