@@ -11,6 +11,7 @@ from nipype.interfaces.base import (
     TraitedSpec,
     traits,
 )
+from scipy import stats
 
 from fmripost_aroma import config
 
@@ -140,12 +141,15 @@ class ICADenoise(SimpleInterface):
         accepted_columns = metrics_df.loc[metrics_df['classification'] == 'accepted', 'Component']
         rejected_components = confounds_df[rejected_columns].to_numpy()
         accepted_components = confounds_df[accepted_columns].to_numpy()
+        # Z-score all of the components
+        rejected_components = stats.zscore(rejected_components, axis=0)
+        accepted_components = stats.zscore(accepted_components, axis=0)
 
         if method == 'aggr':
             # Denoise the data with the motion components
             masker = NiftiMasker(
                 mask_img=self.inputs.mask_file,
-                standardize_confounds=True,
+                standardize_confounds=False,
                 standardize=False,
                 smoothing_fwhm=None,
                 detrend=False,
@@ -169,7 +173,7 @@ class ICADenoise(SimpleInterface):
             # Once you have these "pure evil" components, you can denoise the data
             masker = NiftiMasker(
                 mask_img=self.inputs.mask_file,
-                standardize_confounds=True,
+                standardize_confounds=False,
                 standardize=False,
                 smoothing_fwhm=None,
                 detrend=False,
@@ -185,11 +189,11 @@ class ICADenoise(SimpleInterface):
             # Transform denoised data back into 4D space
             denoised_img = masker.inverse_transform(denoised_img_2d)
         else:
+            # Non-aggressive denoising
             # Apply the mask to the data image to get a 2d array
             data = apply_mask(bold_file, self.inputs.mask_file)
 
-            # Fit GLM to accepted components and rejected components
-            # (after adding a constant term)
+            # Fit GLM to accepted components and rejected components (after adding a constant term)
             regressors = np.hstack(
                 (
                     rejected_components,
