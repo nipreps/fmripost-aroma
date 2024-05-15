@@ -1,7 +1,7 @@
 """Tests for fmripost_aroma.workflows."""
 
 from fmripost_aroma import config
-from fmripost_aroma.tests.tests import mock_config
+from fmriprep.workflows.tests import mock_config
 
 
 def test_init_ica_aroma_wf(tmp_path_factory):
@@ -12,6 +12,9 @@ def test_init_ica_aroma_wf(tmp_path_factory):
     with mock_config():
         config.workflow.fmripost_aroma_dir = tempdir / 'out'
         config.workflow.work_dir = tempdir / 'work'
+        config.workflow.denoise_method = ['nonaggr', 'orthaggr']
+        config.workflow.melodic_dim = -200
+        config.workflow.err_on_warn = False
 
         wf = init_ica_aroma_wf(
             bold_file='sub-01_task-rest_bold.nii.gz',
