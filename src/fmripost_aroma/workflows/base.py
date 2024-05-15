@@ -394,6 +394,8 @@ Functional data postprocessing
             workflow.connect([
                 (denoise_native_wf, resample_to_space_wf, [
                     ('outputnode.denoised_file', 'inputnode.bold_file'),
+                ])
+            ])
 
         if config.workflow.denoise_method:
             # Warp the BOLD series to requested output spaces
