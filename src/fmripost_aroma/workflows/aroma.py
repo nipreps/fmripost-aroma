@@ -22,12 +22,11 @@
 #
 """fMRIPost-AROMA workflows to run ICA-AROMA."""
 
-import os
-
 from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
 
 from fmripost_aroma import config
+from fmripost_aroma.interfaces.aroma import AROMAClassifier
 from fmripost_aroma.interfaces.bids import DerivativesDataSink
 
 
@@ -35,8 +34,6 @@ def init_ica_aroma_wf(
     *,
     bold_file: str,
     metadata: dict,
-    aroma_melodic_dim: int = -200,
-    err_on_aroma_warn: bool = False,
     susan_fwhm: float = 6.0,
 ):
     """Build a workflow that runs `ICA-AROMA`_.
@@ -56,12 +53,9 @@ def init_ica_aroma_wf(
     #. Calculate ICA-AROMA-identified noise components
        (columns named ``AROMAAggrCompXX``)
 
-    Additionally, non-aggressive denoising is performed on the BOLD series
-    resampled into MNI space.
-
     There is a current discussion on whether other confounds should be extracted
     before or after denoising `here
-    <http://nbviewer.jupyter.org/github/nipreps/fmripost_aroma-notebooks/blob/
+    <http://nbviewer.jupyter.org/github/nipreps/fmriprep-notebooks/blob/
     922e436429b879271fa13e76767a6e73443e74d9/issue-817_aroma_confounds.ipynb>`__.
 
     .. _ICA-AROMA: https://github.com/maartenmennes/ICA-AROMA
@@ -76,72 +70,58 @@ def init_ica_aroma_wf(
             wf = init_ica_aroma_wf(
                 bold_file="fake.nii.gz",
                 metadata={"RepetitionTime": 1.0},
+                susan_fwhm=6.0,
             )
 
     Parameters
     ----------
     bold_file
+        BOLD series used as name source for derivatives
     metadata : :obj:`dict`
         BIDS metadata for BOLD file
     susan_fwhm : :obj:`float`
         Kernel width (FWHM in mm) for the smoothing step with
         FSL ``susan`` (default: 6.0mm)
-    err_on_aroma_warn : :obj:`bool`
-        Do not fail on ICA-AROMA errors
-    aroma_melodic_dim : :obj:`int`
-        Set the dimensionality of the MELODIC ICA decomposition.
-        Negative numbers set a maximum on automatic dimensionality estimation.
-        Positive numbers set an exact number of components to extract.
-        (default: -200, i.e., estimate <=200 components)
 
     Inputs
     ------
-    itk_bold_to_t1
-        Affine transform from ``ref_bold_brain`` to T1 space (ITK format)
-    anat2std_xfm
-        ANTs-compatible affine-and-warp transform file
-    name_source
-        BOLD series NIfTI file
-        Used to recover original information lost during processing
+    bold_std
+        BOLD series in template space
+    bold_mask_std
+        BOLD series mask in template space
+    confounds
+        fMRIPrep-formatted confounds file, which must include the following columns:
+        "trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z".
     skip_vols
         number of non steady state volumes
-    bold_split
-        Individual 3D BOLD volumes, not motion corrected
-    bold_mask
-        BOLD series mask in template space
-    hmc_xforms
-        List of affine transforms aligning each volume to ``ref_image`` in ITK format
-    movpar_file
-        SPM-formatted motion parameters file
 
     Outputs
     -------
+    mixing
+        FSL MELODIC mixing matrix
+    aroma_features
+        TSV of feature values used to classify components in ``mixing``.
+    features_metadata
+        Dictionary describing the ICA-AROMA run
     aroma_confounds
         TSV of confounds identified as noise by ICA-AROMA
-    aroma_noise_ics
-        CSV of noise components identified by ICA-AROMA
-    melodic_mix
-        FSL MELODIC mixing matrix
-    nonaggr_denoised_file
-        BOLD series with non-aggressive ICA-AROMA denoising applied
     """
 
     from nipype.interfaces import fsl
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-    from niworkflows.interfaces.utility import TSV2JSON
 
     from fmripost_aroma.interfaces.confounds import ICAConfounds
+    from fmripost_aroma.interfaces.nilearn import MeanImage, MedianValue
     from fmripost_aroma.interfaces.reportlets import ICAAROMARPT
 
     workflow = Workflow(name=_get_wf_name(bold_file, 'aroma'))
-    workflow.__postdesc__ = """\
+    workflow.__postdesc__ = f"""\
 Automatic removal of motion artifacts using independent component analysis
-[ICA-AROMA, @aroma] was performed on the *preprocessed BOLD on MNI space*
+[ICA-AROMA, @aroma] was performed on the *preprocessed BOLD on MNI152NLin6Asym space*
 time-series after removal of non-steady state volumes and spatial smoothing
-with an isotropic, Gaussian kernel of 6mm FWHM (full-width half-maximum).
-Corresponding "non-aggressively" denoised runs were produced after such
-smoothing.
-Additionally, the "aggressive" noise-regressors were collected and placed
+with a nonlinear filter that preserves underlying structure [SUSAN, @susan],
+using a FWHM of {susan_fwhm} mm.
+Additionally, the component time-series classified as "noise" were collected and placed
 in the corresponding confounds file.
 """
 
@@ -151,9 +131,7 @@ in the corresponding confounds file.
                 'bold_std',
                 'bold_mask_std',
                 'confounds',
-                'name_source',
                 'skip_vols',
-                'spatial_reference',
             ],
         ),
         name='inputnode',
@@ -162,46 +140,53 @@ in the corresponding confounds file.
     outputnode = pe.Node(
         niu.IdentityInterface(
             fields=[
+                'mixing',
+                'aroma_features',
+                'features_metadata',
                 'aroma_confounds',
-                'aroma_noise_ics',
-                'melodic_mix',
-                'nonaggr_denoised_file',
-                'aroma_metadata',
             ],
         ),
         name='outputnode',
     )
 
-    # Convert confounds to FSL motpars file.
-    ...
-
     rm_non_steady_state = pe.Node(
         niu.Function(function=_remove_volumes, output_names=['bold_cut']),
         name='rm_nonsteady',
     )
-    # fmt:off
     workflow.connect([
         (inputnode, rm_non_steady_state, [
             ('skip_vols', 'skip_vols'),
             ('bold_std', 'bold_file'),
         ]),
-    ])
-    # fmt:on
+    ])  # fmt:skip
 
     calc_median_val = pe.Node(
-        fsl.ImageStats(op_string='-k %s -p 50'),
+        MedianValue(),
         name='calc_median_val',
     )
+    workflow.connect([
+        (inputnode, calc_median_val, [('bold_mask_std', 'mask_file')]),
+        (rm_non_steady_state, calc_median_val, [('bold_cut', 'bold_file')]),
+    ])  # fmt:skip
+
     calc_bold_mean = pe.Node(
-        fsl.MeanImage(),
+        MeanImage(),
         name='calc_bold_mean',
     )
+    workflow.connect([
+        (inputnode, calc_bold_mean, [('bold_mask_std', 'mask_file')]),
+        (rm_non_steady_state, calc_bold_mean, [('bold_cut', 'bold_file')]),
+    ])  # fmt:skip
 
     getusans = pe.Node(
         niu.Function(function=_getusans_func, output_names=['usans']),
         name='getusans',
         mem_gb=0.01,
     )
+    workflow.connect([
+        (calc_median_val, getusans, [('median_value', 'thresh')]),
+        (calc_bold_mean, getusans, [('out_file', 'image')]),
+    ])  # fmt:skip
 
     smooth = pe.Node(
         fsl.SUSAN(
@@ -210,104 +195,242 @@ in the corresponding confounds file.
         ),
         name='smooth',
     )
+    workflow.connect([
+        (rm_non_steady_state, smooth, [('bold_cut', 'in_file')]),
+        (getusans, smooth, [('usans', 'usans')]),
+        (calc_median_val, smooth, [(('median_value', _getbtthresh), 'brightness_threshold')]),
+    ])  # fmt:skip
 
-    # melodic node
+    # ICA with MELODIC
     melodic = pe.Node(
         fsl.MELODIC(
             no_bet=True,
             tr_sec=float(metadata['RepetitionTime']),
             mm_thresh=0.5,
             out_stats=True,
-            dim=aroma_melodic_dim,
+            dim=config.workflow.melodic_dim,
         ),
         name='melodic',
     )
+    workflow.connect([
+        (inputnode, melodic, [('bold_mask_std', 'mask')]),
+        (smooth, melodic, [('smoothed_file', 'in_files')]),
+    ])  # fmt:skip
 
-    # ica_aroma node
-    ica_aroma = pe.Node(
-        ICAAROMARPT(
-            denoise_type='nonaggr',
-            generate_report=True,
-            TR=metadata['RepetitionTime'],
-            args='-np',
+    select_melodic_files = pe.Node(
+        niu.Function(
+            function=_select_melodic_files,
+            input_names=['melodic_dir'],
+            output_names=['mixing', 'component_maps', 'component_stats'],
         ),
+        name='select_melodic_files',
+    )
+    workflow.connect([(melodic, select_melodic_files, [('out_dir', 'melodic_dir')])])
+
+    # Run the ICA-AROMA classifier
+    ica_aroma = pe.Node(
+        AROMAClassifier(TR=metadata['RepetitionTime']),
         name='ica_aroma',
     )
+    workflow.connect([
+        (inputnode, ica_aroma, [
+            ('confounds', 'motpars'),
+            ('skip_vols', 'skip_vols'),
+        ]),
+        (select_melodic_files, ica_aroma, [
+            ('mixing', 'mixing'),
+            ('component_maps', 'component_maps'),
+            ('component_stats', 'component_stats'),
+        ]),
+        (ica_aroma, outputnode, [
+            ('aroma_features', 'aroma_features'),
+            ('aroma_metadata', 'features_metadata'),
+        ]),
+    ])  # fmt:skip
 
-    add_non_steady_state = pe.Node(
-        niu.Function(function=_add_volumes, output_names=['bold_add']),
-        name='add_nonsteady',
+    # Generate reportlet
+    aroma_rpt = pe.Node(
+        ICAAROMARPT(),
+        name='aroma_rpt',
     )
-
-    # extract the confound ICs from the results
-    ica_aroma_confound_extraction = pe.Node(
-        ICAConfounds(err_on_aroma_warn=err_on_aroma_warn),
-        name='ica_aroma_confound_extraction',
-    )
-
-    ica_aroma_metadata_fmt = pe.Node(
-        TSV2JSON(
-            index_column='IC',
-            output=None,
-            enforce_case=True,
-            additional_metadata={
-                'Method': {
-                    'Name': 'ICA-AROMA',
-                    'Version': os.getenv('AROMA_VERSION', 'n/a'),
-                },
-            },
-        ),
-        name='ica_aroma_metadata_fmt',
-    )
+    workflow.connect([
+        (inputnode, aroma_rpt, [('bold_mask_std', 'report_mask')]),
+        (smooth, aroma_rpt, [('smoothed_file', 'in_file')]),
+        (melodic, aroma_rpt, [('out_dir', 'melodic_dir')]),
+        (ica_aroma, aroma_rpt, [('aroma_noise_ics', 'aroma_noise_ics')]),
+    ])  # fmt:skip
 
     ds_report_ica_aroma = pe.Node(
-        DerivativesDataSink(desc='aroma', datatype='figures', dismiss_entities=('echo',)),
+        DerivativesDataSink(
+            source_file=bold_file,
+            datatype='figures',
+            desc='aroma',
+            dismiss_entities=('echo', 'den', 'res'),
+        ),
         name='ds_report_ica_aroma',
         run_without_submitting=True,
         mem_gb=config.DEFAULT_MEMORY_MIN_GB,
     )
+    workflow.connect([(aroma_rpt, ds_report_ica_aroma, [('out_report', 'in_file')])])
 
-    # fmt:off
+    # extract the confound ICs from the results
+    ica_aroma_confound_extraction = pe.Node(
+        ICAConfounds(
+            err_on_aroma_warn=config.workflow.err_on_warn,
+        ),
+        name='ica_aroma_confound_extraction',
+    )
     workflow.connect([
-        (inputnode, ica_aroma, [('movpar_file', 'motion_parameters')]),
-        (inputnode, calc_median_val, [('bold_mask_std', 'mask_file')]),
-        (rm_non_steady_state, calc_median_val, [('bold_cut', 'in_file')]),
-        (rm_non_steady_state, calc_bold_mean, [('bold_cut', 'in_file')]),
-        (calc_bold_mean, getusans, [('out_file', 'image')]),
-        (calc_median_val, getusans, [('out_stat', 'thresh')]),
-        # Connect input nodes to complete smoothing
-        (rm_non_steady_state, smooth, [('bold_cut', 'in_file')]),
-        (getusans, smooth, [('usans', 'usans')]),
-        (calc_median_val, smooth, [(('out_stat', _getbtthresh), 'brightness_threshold')]),
-        # connect smooth to melodic
-        (smooth, melodic, [('smoothed_file', 'in_files')]),
-        (inputnode, melodic, [('bold_mask_std', 'mask')]),
-        # connect nodes to ICA-AROMA
-        (smooth, ica_aroma, [('smoothed_file', 'in_file')]),
-        (inputnode, ica_aroma, [
-            ('bold_mask_std', 'report_mask'),
-            ('bold_mask_std', 'mask')]),
-        (melodic, ica_aroma, [('out_dir', 'melodic_dir')]),
-        # generate tsvs from ICA-AROMA
-        (ica_aroma, ica_aroma_confound_extraction, [('out_dir', 'in_directory')]),
         (inputnode, ica_aroma_confound_extraction, [('skip_vols', 'skip_vols')]),
-        (ica_aroma_confound_extraction, ica_aroma_metadata_fmt, [('aroma_metadata', 'in_file')]),
-        # output for processing and reporting
+        (select_melodic_files, ica_aroma_confound_extraction, [('mixing', 'mixing')]),
+        (ica_aroma, ica_aroma_confound_extraction, [('aroma_features', 'aroma_features')]),
         (ica_aroma_confound_extraction, outputnode, [
             ('aroma_confounds', 'aroma_confounds'),
-            ('aroma_noise_ics', 'aroma_noise_ics'),
-            ('melodic_mix', 'melodic_mix'),
+            ('mixing', 'mixing'),
         ]),
-        (ica_aroma_metadata_fmt, outputnode, [('output', 'aroma_metadata')]),
-        (ica_aroma, add_non_steady_state, [('nonaggr_denoised_file', 'bold_cut_file')]),
-        (inputnode, add_non_steady_state, [
-            ('bold_std', 'bold_file'),
+    ])  # fmt:skip
+
+    ds_components = pe.Node(
+        DerivativesDataSink(
+            source_file=bold_file,
+            datatype='func',
+            desc='melodic',
+            suffix='components',
+            extension='nii.gz',
+            dismiss_entities=('echo', 'den', 'res'),
+        ),
+        name='ds_components',
+        run_without_submitting=True,
+        mem_gb=config.DEFAULT_MEMORY_MIN_GB,
+    )
+    workflow.connect([(select_melodic_files, ds_components, [('component_maps', 'in_file')])])
+
+    ds_mixing = pe.Node(
+        DerivativesDataSink(
+            source_file=bold_file,
+            datatype='func',
+            desc='melodic',
+            suffix='mixing',
+            extension='tsv',
+            dismiss_entities=('echo', 'den', 'res'),
+        ),
+        name='ds_mixing',
+        run_without_submitting=True,
+        mem_gb=config.DEFAULT_MEMORY_MIN_GB,
+    )
+    workflow.connect([(select_melodic_files, ds_mixing, [('mixing', 'in_file')])])
+
+    ds_aroma_features = pe.Node(
+        DerivativesDataSink(
+            source_file=bold_file,
+            datatype='func',
+            desc='aroma',
+            suffix='metrics',
+            extension='tsv',
+            dismiss_entities=('echo', 'den', 'res'),
+        ),
+        name='ds_aroma_features',
+        run_without_submitting=True,
+        mem_gb=config.DEFAULT_MEMORY_MIN_GB,
+    )
+    workflow.connect([
+        (ica_aroma, ds_aroma_features, [
+            ('aroma_features', 'in_file'),
+            ('aroma_metadata', 'meta_dict'),
+        ]),
+    ])  # fmt:skip
+
+    ds_aroma_confounds = pe.Node(
+        DerivativesDataSink(
+            source_file=bold_file,
+            datatype='func',
+            desc='melodic',
+            suffix='timeseries',
+            extension='tsv',
+            dismiss_entities=('echo', 'den', 'res'),
+        ),
+        name='ds_aroma_confounds',
+        run_without_submitting=True,
+        mem_gb=config.DEFAULT_MEMORY_MIN_GB,
+    )
+    workflow.connect([
+        (ica_aroma_confound_extraction, ds_aroma_confounds, [('aroma_confounds', 'in_file')]),
+    ])  # fmt:skip
+
+    return workflow
+
+
+def init_denoise_wf(bold_file):
+    """Build a workflow that denoises a BOLD series using AROMA confounds.
+
+    This workflow performs the denoising in the requested output space(s).
+    It doesn't currently work on CIFTIs.
+    """
+    from niworkflows.engine.workflows import LiterateWorkflow as Workflow
+
+    from fmripost_aroma.interfaces.confounds import ICADenoise
+
+    workflow = Workflow(name=_get_wf_name(bold_file, 'denoise'))
+
+    inputnode = pe.Node(
+        niu.IdentityInterface(
+            fields=[
+                'bold_file',
+                'bold_mask_std',
+                'confounds',
+                'skip_vols',
+            ],
+        ),
+        name='inputnode',
+    )
+
+    rm_non_steady_state = pe.Node(
+        niu.Function(function=_remove_volumes, output_names=['bold_cut']),
+        name='rm_nonsteady',
+    )
+    workflow.connect([
+        (inputnode, rm_non_steady_state, [
             ('skip_vols', 'skip_vols'),
+            ('bold_file', 'bold_file'),
         ]),
-        (add_non_steady_state, outputnode, [('bold_add', 'nonaggr_denoised_file')]),
-        (ica_aroma, ds_report_ica_aroma, [('out_report', 'in_file')]),
-    ])
-    # fmt:on
+    ])  # fmt:skip
+
+    for denoise_method in config.workflow.denoise_method:
+        denoise = pe.Node(
+            ICADenoise(method=denoise_method),
+            name=f'denoise_{denoise_method}',
+        )
+        workflow.connect([
+            (inputnode, denoise, [
+                ('confounds', 'confounds'),
+                ('bold_mask_std', 'mask_file'),
+            ]),
+            (rm_non_steady_state, denoise, [('bold_cut', 'bold_file')]),
+        ])  # fmt:skip
+
+        add_non_steady_state = pe.Node(
+            niu.Function(function=_add_volumes, output_names=['bold_add']),
+            name=f'add_non_steady_state_{denoise_method}',
+        )
+        workflow.connect([
+            (inputnode, add_non_steady_state, [
+                ('bold_file', 'bold_file'),
+                ('skip_vols', 'skip_vols'),
+            ]),
+            (denoise, add_non_steady_state, [('denoised_file', 'bold_cut_file')]),
+        ])  # fmt:skip
+
+        ds_denoised = pe.Node(
+            DerivativesDataSink(
+                source_file=bold_file,
+                desc=f'{denoise_method}Denoised',
+            ),
+            name=f'ds_denoised_{denoise_method}',
+            run_without_submitting=True,
+            mem_gb=config.DEFAULT_MEMORY_MIN_GB,
+        )
+        workflow.connect([(add_non_steady_state, ds_denoised, [('bold_add', 'denoised_file')])])
+
     return workflow
 
 
@@ -321,13 +444,15 @@ def _getusans_func(image, thresh):
 
 def _remove_volumes(bold_file, skip_vols):
     """Remove skip_vols from bold_file."""
+    import os
+
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
 
     if skip_vols == 0:
         return bold_file
 
-    out = fname_presuffix(bold_file, suffix='_cut')
+    out = fname_presuffix(bold_file, suffix='_cut', newpath=os.getcwd())
     bold_img = nb.load(bold_file)
     bold_img.__class__(
         bold_img.dataobj[..., skip_vols:], bold_img.affine, bold_img.header
@@ -372,3 +497,22 @@ def _get_wf_name(bold_fname, prefix):
     fname = split_filename(bold_fname)[1]
     fname_nosub = '_'.join(fname.split('_')[1:-1])
     return f"{prefix}_{fname_nosub.replace('-', '_')}_wf"
+
+
+def _select_melodic_files(melodic_dir):
+    """Select the mixing and component maps from the Melodic output."""
+    import os
+
+    mixing = os.path.join(melodic_dir, 'melodic_mix')
+    if not os.path.isfile(mixing):
+        raise FileNotFoundError(f'Missing MELODIC mixing matrix: {mixing}')
+
+    component_maps = os.path.join(melodic_dir, 'melodic_IC.nii.gz')
+    if not os.path.isfile(component_maps):
+        raise FileNotFoundError(f'Missing MELODIC ICs: {component_maps}')
+
+    component_stats = os.path.join(melodic_dir, 'melodic_ICstats')
+    if not os.path.isfile(component_stats):
+        raise FileNotFoundError(f'Missing MELODIC IC stats: {component_stats}')
+
+    return mixing, component_maps, component_stats

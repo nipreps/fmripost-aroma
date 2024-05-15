@@ -1,0 +1,20 @@
+{
+    "Name": "fMRIPrep - fMRI PREProcessing workflow",
+    "BIDSVersion": "1.4.0",
+    "DatasetType": "derivative",
+    "GeneratedBy": [
+        {
+            "Name": "fMRIPrep",
+            "Version": "22.0.0",
+            "CodeURL": "https://github.com/nipreps/fmriprep/archive/22.0.0.tar.gz"
+        }
+    ],
+    "HowToAcknowledge": "",
+    "SourceDatasets": [
+        {
+            "URL": "https://doi.org/10.18112/openneuro.ds001419.v1.0.1",
+            "DOI": "10.18112/openneuro.ds001419.v1.0.1"
+        }
+    ],
+    "License": "CC0"
+}

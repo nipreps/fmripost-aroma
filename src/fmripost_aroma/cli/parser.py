@@ -355,6 +355,14 @@ https://fmriprep.readthedocs.io/en/%s/spaces.html"""
             '(e.g., if all the components are classified as signal or noise)'
         ),
     )
+    g_aroma.add_argument(
+        '--denoising-method',
+        action='store',
+        nargs='+',
+        choices=['aggr', 'nonaggr', 'orthaggr'],
+        default=None,
+        help='Denoising method to apply, if any.',
+    )
 
     g_carbon = parser.add_argument_group('Options for carbon usage tracking')
     g_carbon.add_argument(

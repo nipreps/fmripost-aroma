@@ -58,6 +58,18 @@ Derivative data are written to
 ``<output dir>/sub-<subject_label>/``.
 The `BIDS Derivatives`_ specification describes the naming and metadata conventions we follow.
 
+ICA derivatives
+~~~~~~~~~~~~~~~
+
+ICA outputs are stored in the ``func/`` subfolder::
+
+  sub-<subject_label>/
+    func/
+      sub-<subject_label>_space-<space_label>_desc-melodic_mixing.tsv
+      sub-<subject_label>_space-<space_label>_desc-melodic_mixing.json
+      sub-<subject_label>_space-<space_label>_desc-melodic_components.nii.gz
+      sub-<subject_label>_space-<space_label>_desc-melodic_components.json
+
 Functional derivatives
 ~~~~~~~~~~~~~~~~~~~~~~
 Functional derivatives are stored in the ``func/`` subfolder.
@@ -67,7 +79,9 @@ these will be indicated with ``[specifiers]``::
   sub-<subject_label>/
     func/
       sub-<subject_label>_[specifiers]_space-<space_label>_desc-brain_mask.nii.gz
-      sub-<subject_label>_[specifiers]_space-<space_label>_desc-smoothAROMAnonaggr_bold.nii.gz
+      sub-<subject_label>_[specifiers]_space-<space_label>_desc-aggrDenoised_bold.nii.gz
+      sub-<subject_label>_[specifiers]_space-<space_label>_desc-nonaggrDenoised_bold.nii.gz
+      sub-<subject_label>_[specifiers]_space-<space_label>_desc-orthaggrDenoised_bold.nii.gz
 
 **Regularly gridded outputs (images)**.
 Volumetric output spaces labels (``<space_label>`` above, and in the following) include
@@ -80,6 +94,8 @@ Confounds_ are saved as a :abbr:`TSV (tab-separated value)` file::
 
   sub-<subject_label>/
     func/
+      sub-<subject_label>_[specifiers]_desc-aroma_metrics.tsv
+      sub-<subject_label>_[specifiers]_desc-aroma_metrics.json
       sub-<subject_label>_[specifiers]_desc-confounds_timeseries.tsv
       sub-<subject_label>_[specifiers]_desc-confounds_timeseries.json
 

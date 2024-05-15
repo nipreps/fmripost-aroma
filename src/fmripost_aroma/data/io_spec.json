@@ -68,10 +68,37 @@
             }
         }
     },
+    "entities": [
+        {
+            "name": "datatype",
+            "pattern": "[/\\\\]+(anat|func)[/\\\\]+"
+        },
+        {
+            "name": "cohort",
+            "pattern": "(?:^|_)cohort-([0-9]+)",
+            "dtype": "int"
+        },
+        {
+            "name": "segmentation",
+            "pattern": "seg-([a-zA-Z0-9]+)"
+        },
+        {
+            "name": "statistic",
+            "pattern": "(?:^|_)stat-([a-zA-Z0-9]+)"
+        },
+        {
+            "name": "threshold",
+            "pattern": "(?:^|_)thresh-([a-zA-Z0-9]+)"
+        }
+      ],
     "patterns": [
-        "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_res-{res}][_label-{label}][_echo-{echo}][_space-{space}][_desc-{desc}]_{suffix<bold|boldref|dseg|mask>}.{extension<nii|nii.gz|json>|nii.gz}",
-        "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}]_from-{from}_to-{to}_mode-{mode<image|points>|image}_{suffix<xfm>|xfm}.{extension<txt|h5>}",
+        "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_res-{res}][_echo-{echo}][_part-{part}][_space-{space}][_desc-{desc}]_{suffix<bold|boldref|dseg|mask>}.{extension<nii|nii.gz|json>|nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_res-{res}][_echo-{echo}][_part-{part}][_space-{space}][_stat-{statistic}][_desc-{desc}]_{suffix<components|mixing>}.{extension<nii|nii.gz|json>|nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_res-{res}][_echo-{echo}][_part-{part}][_space-{space}][_stat-{statistic}][_desc-{desc}]_{suffix<components|mixing>}.{extension<tsv|json>|tsv}",
+        "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_part-{part}][_desc-{desc}]_{suffix<metrics>}.{extension<tsv|json>|tsv}",
         "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}][_part-{part}][_desc-{desc}]_{suffix<timeseries>}.{extension<tsv|json>}",
-        "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_space-{space}][_res-{res}][_den-{den}][_hemi-{hemi}[_label-{label}][_desc-{desc}]_{suffix<|boldref|dseg|mask>}.{extension<dtseries.nii|dtseries.json>}"
+        "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_space-{space}][_res-{res}][_den-{den}][_hemi-{hemi}][_label-{label}][_desc-{desc}]_{suffix<|boldref|dseg|mask>}.{extension<dtseries.nii|dtseries.json>}",
+        "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}]_from-{from}_to-{to}_mode-{mode<image|points>|image}_{suffix<xfm>|xfm}.{extension<txt|h5>}",
+        "sub-{subject}[/ses-{session}]/{datatype<func|figures>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_res-{res}][_echo-{echo}][_part-{part}][_space-{space}][_stat-{statistic}][_desc-{desc}]_{suffix<components|mixing|bold>}.{extension<svg>|svg}"
     ]
 }
