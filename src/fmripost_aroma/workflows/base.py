@@ -327,7 +327,10 @@ Functional data postprocessing
             ica_aroma_wf.inputs.inputnode.bold_mask_std = functional_cache['bold_mask_std']
             workflow.add_nodes([ica_aroma_wf])
 
-        ica_aroma_wf.inputs.inputnode.movpar_file = functional_cache['movpar_file']
+        functional_cache['skip_vols'] = (
+            config.workflow.dummy_scans or functional_cache['skip_vols']
+        )
+        ica_aroma_wf.inputs.inputnode.confounds = functional_cache['confounds']
         ica_aroma_wf.inputs.inputnode.skip_vols = functional_cache['skip_vols']
         ica_aroma_wf.inputs.inputnode.spatial_reference = functional_cache['spatial_reference']
 
