@@ -345,6 +345,7 @@ Functional data postprocessing
 
                 # Now denoise the output-space BOLD data using ICA-AROMA
                 denoise_wf = init_denoise_wf(bold_file=bold_file)
+                denoise_wf.inputs.inputnode.bold_mask = functional_cache['bold_mask']
                 denoise_wf.inputs.inputnode.skip_vols = functional_cache['skip_vols']
                 workflow.connect([
                     (resample_to_space_wf, denoise_wf, [
