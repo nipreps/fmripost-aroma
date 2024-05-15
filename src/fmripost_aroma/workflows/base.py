@@ -304,7 +304,7 @@ Functional data postprocessing
             resample_raw_wf = init_resample_volumetric_wf(
                 bold_file=bold_file,
                 precomputed=functional_cache,
-                space=Reference.from_string("MNI152NLin6Asym:res-2")[0],
+                space=Reference.from_string('MNI152NLin6Asym:res-2')[0],
                 name=_get_wf_name(bold_file, 'resample_raw'),
             )
             resample_raw_wf.inputs.inputnode.bold_file = bold_file
