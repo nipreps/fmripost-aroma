@@ -41,6 +41,7 @@ from packaging.version import Version
 from fmripost_aroma import config
 from fmripost_aroma.interfaces.bids import DerivativesDataSink
 from fmripost_aroma.interfaces.reportlets import AboutSummary, SubjectSummary
+from fmripost_aroma.workflows.resampling import init_resample_volumetric_wf
 
 
 def init_fmripost_aroma_wf():
@@ -179,9 +180,12 @@ def init_single_subject_wf(subject_id: str):
     from niworkflows.interfaces.bids import BIDSDataGrabber, BIDSInfo
     from niworkflows.interfaces.nilearn import NILEARN_VERSION
     from niworkflows.utils.misc import fix_multi_T1w_source_name
+    from niworkflows.utils.spaces import Reference
 
     from fmripost_aroma.utils.bids import collect_derivatives
     from fmripost_aroma.workflows.aroma import init_denoise_wf, init_ica_aroma_wf
+
+    spaces = config.workflow.spaces
 
     workflow = Workflow(name=f'sub_{subject_id}_wf')
     workflow.__desc__ = f"""
@@ -216,16 +220,9 @@ It is released under the [CC0]\
 """
 
     subject_data = collect_derivatives(
-        config.execution.layout,
-        subject_id,
-        task=config.execution.task_id,
-        bids_filters=config.execution.bids_filters,
+        raw_dir=config.execution.layout,
+        entities=config.execution.bids_filters,
     )
-
-    if 'flair' in config.workflow.ignore:
-        subject_data['flair'] = []
-    if 't2w' in config.workflow.ignore:
-        subject_data['t2w'] = []
 
     anat_only = config.workflow.anat_only
     # Make sure we always go through these two checks
@@ -258,7 +255,8 @@ It is released under the [CC0]\
     )
 
     bids_info = pe.Node(
-        BIDSInfo(bids_dir=config.execution.bids_dir, bids_validate=False), name='bids_info'
+        BIDSInfo(bids_dir=config.execution.bids_dir, bids_validate=False),
+        name='bids_info',
     )
 
     summary = pe.Node(
@@ -320,6 +318,9 @@ Functional data postprocessing
 """
 
     for bold_file in subject_data['bold']:
+        ica_aroma_wf = init_ica_aroma_wf(bold_file=bold_file)
+        ica_aroma_wf.__desc__ = func_pre_desc + (ica_aroma_wf.__desc__ or '')
+
         functional_cache = {}
         if config.execution.derivatives:
             # Collect native-space derivatives and transforms
@@ -334,11 +335,40 @@ Functional data postprocessing
                         entities=entities,
                     )
                 )
+
+            # Resample to MNI152NLin6Asym:res-2, for ICA-AROMA classification
+            resample_raw_wf = init_resample_volumetric_wf(
+                bold_file=bold_file,
+                precomputed=functional_cache,
+                space=Reference.from_string("MNI152NLin6Asym:res-2")[0],
+            )
+            workflow.connect([
+                (resample_raw_wf, ica_aroma_wf, [
+                    ('outputnode.bold_std', 'inputnode.bold_std'),
+                    ('outputnode.bold_mask_std', 'inputnode.bold_mask_std'),
+                ]),
+            ])  # fmt:skip
         else:
+            # Collect MNI152NLin6Asym:res-2 derivatives
             # Only derivatives dataset was passed in, so we expected standard-space derivatives
             from fmripost_aroma.utils.bids import collect_derivatives
 
-            ...
+            functional_cache.update(
+                collect_derivatives(
+                    derivatives_dir=deriv_dir,
+                    entities=entities,
+                )
+            )
+            ica_aroma_wf.inputs.inputnode.bold_std = functional_cache['bold_std']
+            ica_aroma_wf.inputs.inputnode.bold_mask_std = functional_cache['bold_mask_std']
+            workflow.add_nodes([ica_aroma_wf])
+
+        ica_aroma_wf.inputs.inputnode.movpar_file = functional_cache['movpar_file']
+        ica_aroma_wf.inputs.inputnode.skip_vols = functional_cache['skip_vols']
+        ica_aroma_wf.inputs.inputnode.spatial_reference = functional_cache['spatial_reference']
+
+        # Now denoise the native-space BOLD data using ICA-AROMA
+        denoise_native_wf = init_denoise_wf(bold_file=bold_file)
 
         # Resample the BOLD series to MNI152NLin6Asym-2mm
 
@@ -350,15 +380,20 @@ Functional data postprocessing
         ica_aroma_wf.__desc__ = func_pre_desc + (ica_aroma_wf.__desc__ or '')
 
         workflow.connect([
-            (inputnode, ica_aroma_wf, [
-                ('bold_std', 'inputnode.bold_std'),
-                ('bold_mask_std', 'inputnode.bold_mask_std'),
-                ('movpar_file', 'inputnode.movpar_file'),
-                ('name_source', 'inputnode.name_source'),
-                ('skip_vols', 'inputnode.skip_vols'),
-                ('spatial_reference', 'inputnode.spatial_reference'),
+            (ica_aroma_wf, denoise_native_wf, [
+                ('outputnode.aroma_noise_ics', 'inputnode.aroma_noise_ics'),
             ]),
         ])  # fmt:skip
+
+        for space in spaces:
+            resample_to_space_wf = init_resample_volumetric_wf(
+                bold_file=bold_file,
+                functional_cache=functional_cache,
+                space=space,
+            )
+            workflow.connect([
+                (denoise_native_wf, resample_to_space_wf, [
+                    ('outputnode.denoised_file', 'inputnode.bold_file'),
 
         if config.workflow.denoise_method:
             # Warp the BOLD series to requested output spaces
