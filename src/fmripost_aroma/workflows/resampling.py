@@ -4,7 +4,13 @@ from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
 
 
-def init_resample_volumetric_wf(bold_file, functional_cache, space, run_stc):
+def init_resample_volumetric_wf(
+    bold_file,
+    functional_cache,
+    space,
+    run_stc,
+    name='resample_volumetric_wf',
+):
     """Resample raw BOLD data to requested volumetric space space.
 
     Parameters
@@ -17,13 +23,15 @@ def init_resample_volumetric_wf(bold_file, functional_cache, space, run_stc):
         Spatial reference.
     run_stc : bool
         Whether to run STC.
+    name : str
+        Workflow name.
     """
     from fmriprep.workflows.bold.stc import init_bold_stc_wf
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
     from fmripost_aroma.interfaces.resampler import Resampler
 
-    workflow = Workflow(name='resample_raw_wf')
+    workflow = Workflow(name=name)
 
     inputnode = pe.Node(
         niu.IdentityInterface(fields=['bold_file', 'mask_file']),
