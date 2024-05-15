@@ -287,10 +287,10 @@ def _build_parser(**kwargs):
         action='store',
         nargs='+',
         default=[],
-        choices=['fieldmaps', 'slicetiming', 'sbref', 't2w', 'flair'],
+        choices=['fieldmaps', 'slicetiming'],
         help=(
             'Ignore selected aspects of the input dataset to disable corresponding '
-            'parts of the workflow (a space delimited list)'
+            'parts of the resampling workflow (a space delimited list)'
         ),
     )
     g_conf.add_argument(
