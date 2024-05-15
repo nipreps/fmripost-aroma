@@ -28,6 +28,7 @@ from nipype.pipeline import engine as pe
 from fmripost_aroma import config
 from fmripost_aroma.interfaces.aroma import AROMAClassifier
 from fmripost_aroma.interfaces.bids import DerivativesDataSink
+from fmripost_aroma.utils.utils import _get_wf_name
 
 
 def init_ica_aroma_wf(
@@ -47,11 +48,7 @@ def init_ica_aroma_wf(
     #. Smooth data using FSL `susan`, with a kernel width FWHM=6.0mm.
     #. Run FSL `melodic` outside of ICA-AROMA to generate the report
     #. Run ICA-AROMA
-    #. Aggregate identified motion components (aggressive) to TSV
-    #. Return ``classified_motion_ICs`` and ``melodic_mix`` for user to complete
-       non-aggressive denoising in T1w space
-    #. Calculate ICA-AROMA-identified noise components
-       (columns named ``AROMAAggrCompXX``)
+    #. Aggregate components and classifications to TSVs
 
     There is a current discussion on whether other confounds should be extracted
     before or after denoising `here
@@ -376,9 +373,10 @@ def init_denoise_wf(bold_file):
         niu.IdentityInterface(
             fields=[
                 'bold_file',
-                'bold_mask_std',
+                'bold_mask',
                 'confounds',
                 'skip_vols',
+                'spatial_reference',
             ],
         ),
         name='inputnode',
@@ -403,7 +401,7 @@ def init_denoise_wf(bold_file):
         workflow.connect([
             (inputnode, denoise, [
                 ('confounds', 'confounds'),
-                ('bold_mask_std', 'mask_file'),
+                ('bold_mask', 'mask_file'),
             ]),
             (rm_non_steady_state, denoise, [('bold_cut', 'bold_file')]),
         ])  # fmt:skip
@@ -429,7 +427,11 @@ def init_denoise_wf(bold_file):
             run_without_submitting=True,
             mem_gb=config.DEFAULT_MEMORY_MIN_GB,
         )
-        workflow.connect([(add_non_steady_state, ds_denoised, [('bold_add', 'denoised_file')])])
+        workflow.connect([
+            # spatial_reference needs to be parsed into space, cohort, res, den, etc.
+            (inputnode, ds_denoised, [('spatial_reference', 'space')]),
+            (add_non_steady_state, ds_denoised, [('bold_add', 'denoised_file')]),
+        ])  # fmt:skip
 
     return workflow
 
@@ -477,26 +479,6 @@ def _add_volumes(bold_file, bold_cut_file, skip_vols):
     out = fname_presuffix(bold_cut_file, suffix='_addnonsteady')
     bold_img.__class__(bold_data, bold_img.affine, bold_img.header).to_filename(out)
     return out
-
-
-def _get_wf_name(bold_fname, prefix):
-    """
-    Derive the workflow name for supplied BOLD file.
-
-    >>> _get_wf_name("/completely/made/up/path/sub-01_task-nback_bold.nii.gz", "aroma")
-    'aroma_task_nback_wf'
-    >>> _get_wf_name(
-    ...     "/completely/made/up/path/sub-01_task-nback_run-01_echo-1_bold.nii.gz",
-    ...     "preproc",
-    ... )
-    'preproc_task_nback_run_01_echo_1_wf'
-
-    """
-    from nipype.utils.filemanip import split_filename
-
-    fname = split_filename(bold_fname)[1]
-    fname_nosub = '_'.join(fname.split('_')[1:-1])
-    return f"{prefix}_{fname_nosub.replace('-', '_')}_wf"
 
 
 def _select_melodic_files(melodic_dir):
