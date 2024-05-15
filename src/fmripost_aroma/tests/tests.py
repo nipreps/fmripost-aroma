@@ -1,7 +1,7 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 #
-# Copyright The NiPreps Developers <nipreps@gmail.com>
+# Copyright 2023 The NiPreps Developers <nipreps@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,35 +28,33 @@ from contextlib import contextmanager
 from pathlib import Path
 from tempfile import mkdtemp
 
+from fmripost_aroma.data import load as load_data
 from toml import loads
-
-from ... import data
 
 
 @contextmanager
-def mock_config(bids_dir=None):
+def mock_config():
     """Create a mock config for documentation and testing purposes."""
-    from ... import config
+    from fmripost_aroma import config
 
     _old_fs = os.getenv('FREESURFER_HOME')
     if not _old_fs:
         os.environ['FREESURFER_HOME'] = mkdtemp()
 
-    settings = loads(data.load.readable('tests/config.toml').read_text())
+    filename = load_data('tests/config.toml').resolve()
+    settings = loads(filename.read_text())
     for sectionname, configs in settings.items():
         if sectionname != 'environment':
             section = getattr(config, sectionname)
             section.load(configs, init=False)
+
     config.nipype.omp_nthreads = 1
     config.nipype.init()
     config.loggers.init()
-    config.init_spaces()
-
-    bids_dir = bids_dir or data.load('tests/ds000005').absolute()
 
     config.execution.work_dir = Path(mkdtemp())
-    config.execution.bids_dir = bids_dir
-    config.execution.fmriprep_dir = Path(mkdtemp())
+    # config.execution.fmri_dir = Path(doc.download_example_data(out_dir=mkdtemp()))
+    config.execution.output_dir = Path(mkdtemp())
     config.execution.bids_database_dir = None
     config.execution._layout = None
     config.execution.init()
@@ -64,7 +62,7 @@ def mock_config(bids_dir=None):
     yield
 
     shutil.rmtree(config.execution.work_dir)
-    shutil.rmtree(config.execution.fmriprep_dir)
+    shutil.rmtree(config.execution.fmripost_aroma_dir)
 
     if not _old_fs:
         del os.environ['FREESURFER_HOME']

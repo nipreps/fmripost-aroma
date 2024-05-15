@@ -13,10 +13,9 @@ authors = [{name = "The NiPreps Developers", email = "nipreps@gmail.com"}]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Programming Language :: Python",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
   "fmriprep",
@@ -104,14 +103,14 @@ dependencies = [
 
 [tool.hatch.envs.style.scripts]
 fix = [
-  "black src/ tests/",
-  "isort src/ tests/",
-  "ruff check --fix src/ tests/",
+  "black src/",
+  "isort src/",
+  "ruff check --fix src/",
 ]
 check = [
-  "black --check --diff src/ tests/",
-  "isort --check --diff src/ tests/",
-  "ruff check --diff src/ tests/",
+  "black --check --diff src/",
+  "isort --check --diff src/",
+  "ruff check --diff src/",
 ]
 
 [[tool.hatch.envs.test.matrix]]

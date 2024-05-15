@@ -181,7 +181,7 @@ def init_single_subject_wf(subject_id: str):
     from niworkflows.utils.misc import fix_multi_T1w_source_name
 
     from fmripost_aroma.utils.bids import collect_derivatives
-    from fmripost_aroma.workflows.aroma import init_ica_aroma_wf
+    from fmripost_aroma.workflows.aroma import init_denoise_wf, init_ica_aroma_wf
 
     workflow = Workflow(name=f'sub_{subject_id}_wf')
     workflow.__desc__ = f"""
@@ -322,7 +322,7 @@ Functional data postprocessing
     for bold_file in subject_data['bold']:
         functional_cache = {}
         if config.execution.derivatives:
-            # Collect native-space derivatives and warp them to MNI152NLin6Asym
+            # Collect native-space derivatives and transforms
             from fmripost_aroma.utils.bids import collect_derivatives, extract_entities
 
             entities = extract_entities(bold_file)
@@ -335,18 +335,20 @@ Functional data postprocessing
                     )
                 )
         else:
-            # Collect standard-space derivatives
+            # Only derivatives dataset was passed in, so we expected standard-space derivatives
             from fmripost_aroma.utils.bids import collect_derivatives
 
             ...
 
+        # Resample the BOLD series to MNI152NLin6Asym-2mm
+
+        # Run ICA-AROMA using MNI152NLin6Asym-2mm BOLD data
         ica_aroma_wf = init_ica_aroma_wf(
             bold_file=bold_file,
             precomputed=functional_cache,
         )
         ica_aroma_wf.__desc__ = func_pre_desc + (ica_aroma_wf.__desc__ or '')
 
-        # fmt:off
         workflow.connect([
             (inputnode, ica_aroma_wf, [
                 ('bold_std', 'inputnode.bold_std'),
@@ -356,8 +358,25 @@ Functional data postprocessing
                 ('skip_vols', 'inputnode.skip_vols'),
                 ('spatial_reference', 'inputnode.spatial_reference'),
             ]),
-        ])
-        # fmt:on
+        ])  # fmt:skip
+
+        if config.workflow.denoise_method:
+            # Warp the BOLD series to requested output spaces
+            # XXX: Probably should just grab the MNI152NLin6Asym-2mm file if that
+            # space+resolution is requested.
+
+            # Run the denoising workflow on each requested BOLD series
+            denoise_wf = init_denoise_wf(bold_file=bold_file)
+            workflow.connect([
+                (inputnode, denoise_wf, [
+                    ('bold_std', 'inputnode.bold_std'),
+                    ('bold_mask_std', 'inputnode.bold_mask_std'),
+                    ('spatial_reference', 'inputnode.spatial_reference'),
+                ]),
+                (ica_aroma_wf, denoise_wf, [
+                    ('outputnode.aroma_confounds', 'inputnode.confounds'),
+                ]),
+            ])  # fmt:skip
 
     return clean_datasinks(workflow)
 
