@@ -30,7 +30,6 @@ fMRIPost AROMA workflows
 """
 
 import os
-import sys
 from copy import deepcopy
 
 import yaml
@@ -38,8 +37,6 @@ from nipype.pipeline import engine as pe
 from packaging.version import Version
 
 from fmripost_aroma import config
-from fmripost_aroma.interfaces.bids import DerivativesDataSink
-from fmripost_aroma.interfaces.reportlets import AboutSummary, SubjectSummary
 from fmripost_aroma.utils.utils import _get_wf_name, update_dict
 from fmripost_aroma.workflows.resampling import init_resample_volumetric_wf
 
@@ -143,9 +140,7 @@ def init_single_subject_wf(subject_id: str):
     """
     from bids.utils import listify
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-    from niworkflows.interfaces.bids import BIDSDataGrabber, BIDSInfo
     from niworkflows.interfaces.nilearn import NILEARN_VERSION
-    from niworkflows.utils.misc import fix_multi_T1w_source_name
     from niworkflows.utils.spaces import Reference
 
     from fmripost_aroma.utils.bids import collect_derivatives, extract_entities
@@ -216,68 +211,6 @@ It is released under the [CC0]\
             "All workflows require BOLD images. "
             f"Please check your BIDS filters: {config.execution.bids_filters}."
         )
-
-    bidssrc = pe.Node(
-        BIDSDataGrabber(
-            subject_data=subject_data,
-            subject_id=subject_id,
-            anat_only=False,
-        ),
-        name='bidssrc',
-    )
-
-    bids_info = pe.Node(
-        BIDSInfo(bids_dir=config.execution.bids_dir, bids_validate=False),
-        name='bids_info',
-    )
-
-    summary = pe.Node(
-        SubjectSummary(
-            std_spaces=['MNI152NLin6Asym'],
-            nstd_spaces=[],
-        ),
-        name='summary',
-        run_without_submitting=True,
-    )
-
-    about = pe.Node(
-        AboutSummary(version=config.environment.version, command=' '.join(sys.argv)),
-        name='about',
-        run_without_submitting=True,
-    )
-
-    ds_report_summary = pe.Node(
-        DerivativesDataSink(
-            base_directory=config.execution.fmripost_aroma_dir,
-            desc='summary',
-            datatype='figures',
-            dismiss_entities=('echo',),
-        ),
-        name='ds_report_summary',
-        run_without_submitting=True,
-    )
-
-    ds_report_about = pe.Node(
-        DerivativesDataSink(
-            base_directory=config.execution.fmripost_aroma_dir,
-            desc='about',
-            datatype='figures',
-            dismiss_entities=('echo',),
-        ),
-        name='ds_report_about',
-        run_without_submitting=True,
-    )
-
-    workflow.connect([
-        (bidssrc, bids_info, [(('t1w', fix_multi_T1w_source_name), 'in_file')]),
-        # Reporting connections
-        (bidssrc, summary, [('t1w', 't1w'), ('t2w', 't2w'), ('bold', 'bold')]),
-        (bids_info, summary, [('subject', 'subject_id')]),
-        (bidssrc, ds_report_summary, [(('t1w', fix_multi_T1w_source_name), 'source_file')]),
-        (bidssrc, ds_report_about, [(('t1w', fix_multi_T1w_source_name), 'source_file')]),
-        (summary, ds_report_summary, [('out_report', 'in_file')]),
-        (about, ds_report_about, [('out_report', 'in_file')]),
-    ])  # fmt:skip
 
     # Append the functional section to the existing anatomical excerpt
     # That way we do not need to stream down the number of bold datasets
@@ -353,8 +286,8 @@ Functional data postprocessing
 
         config.loggers.workflow.info(
             (
-                f"Collected run data for {os.path.basename(bold_file)}:\n"
-                f"{yaml.dump(functional_cache, default_flow_style=False, indent=4)}"
+                f'Collected run data for {os.path.basename(bold_file)}:\n'
+                f'{yaml.dump(functional_cache, default_flow_style=False, indent=4)}'
             ),
         )
 
@@ -419,7 +352,7 @@ def get_nss(confounds_file):
 
     df = pd.read_table(confounds_file)
 
-    nss_cols = [c for c in df.columns if c.startswith("non_steady_state_outlier")]
+    nss_cols = [c for c in df.columns if c.startswith('non_steady_state_outlier')]
 
     dummy_scans = 0
     if nss_cols:
