@@ -125,40 +125,115 @@ def minimal_ignore_list(base_ignore_list):
         # 'sub-01/func/sub-01_task-mixedgamblestask_run-01_desc-coreg_boldref.nii.gz',
         # 'sub-01/func/sub-01_task-mixedgamblestask_run-01_desc-hmc_boldref.json',
         # 'sub-01/func/sub-01_task-mixedgamblestask_run-01_desc-hmc_boldref.nii.gz',
-        # 'sub-01/func/sub-01_task-mixedgamblestask_run-01_from-boldref_to-T1w_mode-image_desc-coreg_xfm.json',
-        # 'sub-01/func/sub-01_task-mixedgamblestask_run-01_from-boldref_to-T1w_mode-image_desc-coreg_xfm.txt',
-        # 'sub-01/func/sub-01_task-mixedgamblestask_run-01_from-orig_to-boldref_mode-image_desc-hmc_xfm.json',
-        # 'sub-01/func/sub-01_task-mixedgamblestask_run-01_from-orig_to-boldref_mode-image_desc-hmc_xfm.txt',
-        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin2009cAsym_boldref.nii.gz',
-        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz',
-        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin2009cAsym_desc-preproc_bold.json',
-        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz',
+        # (
+        #     'sub-01/func/sub-01_task-mixedgamblestask_run-01_from-boldref_to-T1w_mode-image_'
+        #     'desc-coreg_xfm.json'
+        # ),
+        # (
+        #     'sub-01/func/sub-01_task-mixedgamblestask_run-01_from-boldref_to-T1w_mode-image_'
+        #     'desc-coreg_xfm.txt'
+        # ),
+        # (
+        #     'sub-01/func/sub-01_task-mixedgamblestask_run-01_from-orig_to-boldref_mode-image_'
+        #     'desc-hmc_xfm.json'
+        # ),
+        # (
+        #     'sub-01/func/sub-01_task-mixedgamblestask_run-01_from-orig_to-boldref_mode-image_'
+        #     'desc-hmc_xfm.txt'
+        # ),
+        (
+            'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin2009cAsym_'
+            'boldref.nii.gz'
+        ),
+        (
+            'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin2009cAsym_'
+            'desc-brain_mask.nii.gz'
+        ),
+        (
+            'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin2009cAsym_'
+            'desc-preproc_bold.json'
+        ),
+        (
+            'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin2009cAsym_'
+            'desc-preproc_bold.nii.gz'
+        ),
         'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_res-2_boldref.json',
-        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_res-2_boldref.nii.gz',
-        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_res-2_desc-brain_mask.json',
-        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_res-2_desc-brain_mask.nii.gz',
-        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_res-2_desc-preproc_bold.json',
-        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz',
+        (
+            'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_'
+            'res-2_boldref.nii.gz'
+        ),
+        (
+            'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_'
+            'res-2_desc-brain_mask.json'
+        ),
+        (
+            'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_'
+            'res-2_desc-brain_mask.nii.gz'
+        ),
+        (
+            'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_'
+            'res-2_desc-preproc_bold.json'
+        ),
+        (
+            'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_'
+            'res-2_desc-preproc_bold.nii.gz'
+        ),
         'sub-01/func/sub-01_task-mixedgamblestask_run-02_desc-confounds_timeseries.json',
         'sub-01/func/sub-01_task-mixedgamblestask_run-02_desc-confounds_timeseries.tsv',
         # 'sub-01/func/sub-01_task-mixedgamblestask_run-02_desc-coreg_boldref.json',
         # 'sub-01/func/sub-01_task-mixedgamblestask_run-02_desc-coreg_boldref.nii.gz',
         # 'sub-01/func/sub-01_task-mixedgamblestask_run-02_desc-hmc_boldref.json',
         # 'sub-01/func/sub-01_task-mixedgamblestask_run-02_desc-hmc_boldref.nii.gz',
-        # 'sub-01/func/sub-01_task-mixedgamblestask_run-02_from-boldref_to-T1w_mode-image_desc-coreg_xfm.json',
-        # 'sub-01/func/sub-01_task-mixedgamblestask_run-02_from-boldref_to-T1w_mode-image_desc-coreg_xfm.txt',
-        # 'sub-01/func/sub-01_task-mixedgamblestask_run-02_from-orig_to-boldref_mode-image_desc-hmc_xfm.json',
-        # 'sub-01/func/sub-01_task-mixedgamblestask_run-02_from-orig_to-boldref_mode-image_desc-hmc_xfm.txt',
+        # (
+        #     'sub-01/func/sub-01_task-mixedgamblestask_run-02_from-boldref_to-T1w_mode-image_'
+        #     'desc-coreg_xfm.json'
+        # ),
+        # (
+        #     'sub-01/func/sub-01_task-mixedgamblestask_run-02_from-boldref_to-T1w_mode-image_'
+        #     'desc-coreg_xfm.txt'
+        # ),
+        # (
+        #     'sub-01/func/sub-01_task-mixedgamblestask_run-02_from-orig_to-boldref_mode-image_'
+        #     'desc-hmc_xfm.json'
+        # ),
+        # (
+        #     'sub-01/func/sub-01_task-mixedgamblestask_run-02_from-orig_to-boldref_mode-image_'
+        #     'desc-hmc_xfm.txt'
+        # ),
         'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin2009cAsym_boldref.nii.gz',
-        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz',
-        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin2009cAsym_desc-preproc_bold.json',
-        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz',
+        (
+            'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin2009cAsym_'
+            'desc-brain_mask.nii.gz'
+        ),
+        (
+            'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin2009cAsym_'
+            'desc-preproc_bold.json'
+        ),
+        (
+            'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin2009cAsym_'
+            'desc-preproc_bold.nii.gz'
+        ),
         'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_res-2_boldref.json',
-        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_res-2_boldref.nii.gz',
-        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_res-2_desc-brain_mask.json',
-        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_res-2_desc-brain_mask.nii.gz',
-        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_res-2_desc-preproc_bold.json',
-        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz',
+        (
+            'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_'
+            'res-2_boldref.nii.gz'
+        ),
+        (
+            'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_'
+            'res-2_desc-brain_mask.json'
+        ),
+        (
+            'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_'
+            'res-2_desc-brain_mask.nii.gz'
+        ),
+        (
+            'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_'
+            'res-2_desc-preproc_bold.json'
+        ),
+        (
+            'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_'
+            'res-2_desc-preproc_bold.nii.gz'
+        ),
     ]
     regex = '|'.join(files_to_ignore)
     base_ignore_list.append(re.compile(regex))

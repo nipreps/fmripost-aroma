@@ -1,7 +1,6 @@
 """Lightweight tests for fmripost_aroma.utils.bids."""
 
 import os
-from pathlib import Path
 
 import pytest
 from bids.layout import BIDSLayout, BIDSLayoutIndexer
