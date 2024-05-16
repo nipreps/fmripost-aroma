@@ -118,11 +118,6 @@ def init_single_subject_wf(subject_id: str):
     subject_id : :obj:`str`
         Subject label for this single-subject workflow.
 
-    Inputs
-    ------
-    subjects_dir : :obj:`str`
-        FreeSurfer's ``$SUBJECTS_DIR``.
-
     Notes
     -----
     1.  Load fMRIPost-AROMA config file.
@@ -188,7 +183,7 @@ It is released under the [CC0]\
 """
 
     subject_data = collect_derivatives(
-        raw_dir=config.execution.layout,
+        derivatives_dataset=config.execution.layout,
         entities=config.execution.bids_filters,
     )
 
@@ -209,8 +204,6 @@ It is released under the [CC0]\
             FutureWarning,
             stacklevel=1,
         )
-
-    inputnode = pe.Node(niu.IdentityInterface(fields=['subjects_dir']), name='inputnode')
 
     bidssrc = pe.Node(
         BIDSDataGrabber(
@@ -265,7 +258,6 @@ It is released under the [CC0]\
     workflow.connect([
         (bidssrc, bids_info, [(('t1w', fix_multi_T1w_source_name), 'in_file')]),
         # Reporting connections
-        (inputnode, summary, [('subjects_dir', 'subjects_dir')]),
         (bidssrc, summary, [('t1w', 't1w'), ('t2w', 't2w'), ('bold', 'bold')]),
         (bids_info, summary, [('subject', 'subject_id')]),
         (bidssrc, ds_report_summary, [(('t1w', fix_multi_T1w_source_name), 'source_file')]),
@@ -292,13 +284,24 @@ Functional data postprocessing
         functional_cache = {}
         if config.execution.derivatives:
             # Collect native-space derivatives and transforms
-            for deriv_dir in config.execution.derivatives:
+            for deriv_dir in config.execution.derivatives.values():
                 functional_cache.update(
                     collect_derivatives(
-                        derivatives_dir=deriv_dir,
+                        derivatives_dataset=deriv_dir,
                         entities=entities,
                     ),
                 )
+
+            if not functional_cache['confounds']:
+                if config.workflow.dummy_scans is None:
+                    raise ValueError(
+                        'No confounds detected. '
+                        'Automatical dummy scan detection cannot be performed. '
+                        'Please set the `--dummy-scans` flag explicitly.'
+                    )
+
+                # TODO: Calculate motion parameters from motion correction transform
+                raise ValueError('Motion parameters cannot be extracted from transforms yet.')
 
             # Resample to MNI152NLin6Asym:res-2, for ICA-AROMA classification
             resample_raw_wf = init_resample_volumetric_wf(
@@ -319,7 +322,7 @@ Functional data postprocessing
             # Only derivatives dataset was passed in, so we expected standard-space derivatives
             functional_cache.update(
                 collect_derivatives(
-                    derivatives_dir=config.execution.layout,
+                    derivatives_dataset=config.execution.layout,
                     entities=entities,
                 ),
             )

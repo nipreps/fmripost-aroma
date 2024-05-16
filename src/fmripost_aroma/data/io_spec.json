@@ -3,6 +3,11 @@
         "raw": {
             "bold_raw": {
                 "datatype": "func",
+                "echo": null,
+                "part": [
+                    "mag",
+                    null
+                ],
                 "space": null,
                 "desc": null,
                 "suffix": "bold",
@@ -13,9 +18,14 @@
             }
         },
         "derivatives": {
-            "bold_boldref": {
+            "bold_std": {
                 "datatype": "func",
-                "space": null,
+                "echo": null,
+                "part": [
+                    "mag",
+                    null
+                ],
+                "space": "MNI152NLin6Asym",
                 "desc": "preproc",
                 "suffix": "bold",
                 "extension": [
@@ -23,14 +33,48 @@
                     ".nii"
                 ]
             },
-            "bold_MNI152NLin6Asym": {
+            "bold_mask_std": {
                 "datatype": "func",
+                "echo": null,
+                "part": [
+                    "mag",
+                    null
+                ],
                 "space": "MNI152NLin6Asym",
-                "desc": "preproc",
-                "suffix": "bold",
+                "desc": "brain",
+                "suffix": "mask",
                 "extension": [
                     ".nii.gz",
                     ".nii"
+                ]
+            },
+            "bold_mask": {
+                "datatype": "func",
+                "echo": null,
+                "part": [
+                    "mag",
+                    null
+                ],
+                "space": null,
+                "desc": "brain",
+                "suffix": "mask",
+                "extension": [
+                    ".nii.gz",
+                    ".nii"
+                ]
+            },
+            "confounds": {
+                "datatype": "func",
+                "echo": null,
+                "part": [
+                    "mag",
+                    null
+                ],
+                "space": null,
+                "desc": "confounds",
+                "suffix": "timeseries",
+                "extension": [
+                    ".tsv"
                 ]
             }
         },

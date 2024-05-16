@@ -12,8 +12,18 @@ from bids.utils import listify
 from fmripost_aroma.data import load as load_data
 
 
-def extract_entities(file_list):
+def extract_entities(file_list: str | list[str]) -> dict:
     """Return a dictionary of common entities given a list of files.
+
+    Parameters
+    ----------
+    file_list : str | list[str]
+        File path or list of file paths.
+
+    Returns
+    -------
+    entities : dict
+        Dictionary of entities.
 
     Examples
     --------
@@ -46,14 +56,36 @@ def extract_entities(file_list):
 
 
 def collect_derivatives(
-    raw_dir: Path | None,
-    derivatives_dir: Path,
+    raw_dataset: Path | BIDSLayout | None,
+    derivatives_dataset: Path | BIDSLayout | None,
     entities: dict,
     fieldmap_id: str | None,
     spec: dict | None = None,
     patterns: list[str] | None = None,
-):
-    """Gather existing derivatives and compose a cache."""
+) -> dict:
+    """Gather existing derivatives and compose a cache.
+
+    Parameters
+    ----------
+    raw_dataset : Path | BIDSLayout | None
+        Path to the raw dataset or a BIDSLayout instance.
+    derivatives_dataset : Path | BIDSLayout
+        Path to the derivatives dataset or a BIDSLayout instance.
+    entities : dict
+        Dictionary of entities to use for filtering.
+    fieldmap_id : str | None
+        Fieldmap ID to use for filtering.
+    spec : dict | None
+        Specification dictionary.
+    patterns : list[str] | None
+        List of patterns to use for filtering.
+
+    Returns
+    -------
+    derivs_cache : dict
+        Dictionary with keys corresponding to the derivatives and values
+        corresponding to the file paths.
+    """
     if spec is None or patterns is None:
         _spec, _patterns = tuple(
             json.loads(load_data.readable('io_spec.json').read_text()).values()
@@ -61,42 +93,58 @@ def collect_derivatives(
 
         if spec is None:
             spec = _spec
+
         if patterns is None:
             patterns = _patterns
 
+    # Search for derivatives data
     derivs_cache = defaultdict(list, {})
+    if derivatives_dataset is not None:
+        layout = derivatives_dataset
+        if isinstance(derivatives_dataset, Path):
+            derivatives_dataset = BIDSLayout(
+                derivatives_dataset,
+                config=['bids', 'derivatives'],
+                validate=False,
+            )
 
-    layout = BIDSLayout(derivatives_dir, config=['bids', 'derivatives'], validate=False)
-    derivatives_dir = Path(derivatives_dir)
+        for k, q in spec['queries']['derivatives'].items():
+            # Combine entities with query. Query values override file entities.
+            query = {**entities, **q}
+            item = layout.get(return_type='filename', **query)
+            if not item:
+                continue
 
-    # Search for preprocessed BOLD data
-    for k, q in spec['baseline']['derivatives'].items():
-        query = {**q, **entities}
-        item = layout.get(return_type='filename', **query)
-        if not item:
-            continue
-        derivs_cache[k] = item[0] if len(item) == 1 else item
+            derivs_cache[k] = item[0] if len(item) == 1 else item
 
     # Search for raw BOLD data
-    if not derivs_cache and raw_dir is not None:
-        raw_layout = BIDSLayout(raw_dir, config=['bids'], validate=False)
-        raw_dir = Path(raw_dir)
+    if not derivs_cache and raw_dataset is not None:
+        if isinstance(raw_dataset, Path):
+            raw_layout = BIDSLayout(raw_dataset, config=['bids'], validate=False)
+        else:
+            raw_layout = raw_dataset
 
-        for k, q in spec['baseline']['raw'].items():
-            query = {**q, **entities}
+        for k, q in spec['queries']['raw'].items():
+            # Combine entities with query. Query values override file entities.
+            query = {**entities, **q}
             item = raw_layout.get(return_type='filename', **query)
             if not item:
                 continue
+
             derivs_cache[k] = item[0] if len(item) == 1 else item
 
-    for xfm, q in spec['transforms'].items():
-        query = {**q, **entities}
+    for xfm, q in spec['queries']['transforms'].items():
+        # Combine entities with query. Query values override file entities.
+        query = {**entities, **q}
         if xfm == 'boldref2fmap':
             query['to'] = fieldmap_id
+
         item = layout.get(return_type='filename', **q)
         if not item:
             continue
+
         derivs_cache[xfm] = item[0] if len(item) == 1 else item
+
     return derivs_cache
 
 

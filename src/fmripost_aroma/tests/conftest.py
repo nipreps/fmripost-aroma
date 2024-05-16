@@ -3,6 +3,7 @@
 import base64
 import importlib.resources
 import os
+import re
 
 import pytest
 
@@ -44,3 +45,120 @@ def base_parser():
 
     parser = ArgumentParser(description='Test parser')
     return parser
+
+
+@pytest.fixture(scope='session')
+def base_ignore_list():
+    """Create the standard ignore list used by fMRIPost-AROMA."""
+    return [
+        'code',
+        'stimuli',
+        'sourcedata',
+        'models',
+        re.compile(r'^\.'),
+        re.compile(
+            r'sub-[a-zA-Z0-9]+(/ses-[a-zA-Z0-9]+)?/(beh|dwi|eeg|ieeg|meg|perf)'
+        ),
+    ]
+
+
+@pytest.fixture(scope='session')
+def minimal_ignore_list(base_ignore_list):
+    """Create an ignore list that ignores full derivative files from ds000005."""
+    files_to_ignore = [
+        'sub-01/anat/sub-01_desc-brain_mask.json',
+        'sub-01/anat/sub-01_desc-brain_mask.nii.gz',
+        'sub-01/anat/sub-01_desc-preproc_T1w.json',
+        'sub-01/anat/sub-01_desc-preproc_T1w.nii.gz',
+        'sub-01/anat/sub-01_desc-ribbon_mask.json',
+        'sub-01/anat/sub-01_desc-ribbon_mask.nii.gz',
+        'sub-01/anat/sub-01_dseg.nii.gz',
+        # 'sub-01/anat/sub-01_from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5',
+        # 'sub-01/anat/sub-01_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5',
+        # 'sub-01/anat/sub-01_from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5',
+        # 'sub-01/anat/sub-01_from-T1w_to-MNI152NLin6Asym_mode-image_xfm.h5',
+        # 'sub-01/anat/sub-01_from-T1w_to-fsnative_mode-image_xfm.txt',
+        # 'sub-01/anat/sub-01_from-fsnative_to-T1w_mode-image_xfm.txt',
+        'sub-01/anat/sub-01_hemi-L_desc-reg_sphere.surf.gii',
+        'sub-01/anat/sub-01_hemi-L_midthickness.surf.gii',
+        'sub-01/anat/sub-01_hemi-L_pial.surf.gii',
+        'sub-01/anat/sub-01_hemi-L_space-fsLR_desc-msmsulc_sphere.surf.gii',
+        'sub-01/anat/sub-01_hemi-L_space-fsLR_desc-reg_sphere.surf.gii',
+        'sub-01/anat/sub-01_hemi-L_sphere.surf.gii',
+        'sub-01/anat/sub-01_hemi-L_sulc.shape.gii',
+        'sub-01/anat/sub-01_hemi-L_thickness.shape.gii',
+        'sub-01/anat/sub-01_hemi-L_white.surf.gii',
+        'sub-01/anat/sub-01_hemi-R_desc-reg_sphere.surf.gii',
+        'sub-01/anat/sub-01_hemi-R_midthickness.surf.gii',
+        'sub-01/anat/sub-01_hemi-R_pial.surf.gii',
+        'sub-01/anat/sub-01_hemi-R_space-fsLR_desc-msmsulc_sphere.surf.gii',
+        'sub-01/anat/sub-01_hemi-R_space-fsLR_desc-reg_sphere.surf.gii',
+        'sub-01/anat/sub-01_hemi-R_sphere.surf.gii',
+        'sub-01/anat/sub-01_hemi-R_sulc.shape.gii',
+        'sub-01/anat/sub-01_hemi-R_thickness.shape.gii',
+        'sub-01/anat/sub-01_hemi-R_white.surf.gii',
+        'sub-01/anat/sub-01_label-CSF_probseg.nii.gz',
+        'sub-01/anat/sub-01_label-GM_probseg.nii.gz',
+        'sub-01/anat/sub-01_label-WM_probseg.nii.gz',
+        'sub-01/anat/sub-01_space-MNI152NLin2009cAsym_desc-brain_mask.json',
+        'sub-01/anat/sub-01_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz',
+        'sub-01/anat/sub-01_space-MNI152NLin2009cAsym_desc-preproc_T1w.json',
+        'sub-01/anat/sub-01_space-MNI152NLin2009cAsym_desc-preproc_T1w.nii.gz',
+        'sub-01/anat/sub-01_space-MNI152NLin2009cAsym_dseg.nii.gz',
+        'sub-01/anat/sub-01_space-MNI152NLin2009cAsym_label-CSF_probseg.nii.gz',
+        'sub-01/anat/sub-01_space-MNI152NLin2009cAsym_label-GM_probseg.nii.gz',
+        'sub-01/anat/sub-01_space-MNI152NLin2009cAsym_label-WM_probseg.nii.gz',
+        'sub-01/anat/sub-01_space-MNI152NLin6Asym_res-2_desc-brain_mask.json',
+        'sub-01/anat/sub-01_space-MNI152NLin6Asym_res-2_desc-brain_mask.nii.gz',
+        'sub-01/anat/sub-01_space-MNI152NLin6Asym_res-2_desc-preproc_T1w.json',
+        'sub-01/anat/sub-01_space-MNI152NLin6Asym_res-2_desc-preproc_T1w.nii.gz',
+        'sub-01/anat/sub-01_space-MNI152NLin6Asym_res-2_dseg.json',
+        'sub-01/anat/sub-01_space-MNI152NLin6Asym_res-2_dseg.nii.gz',
+        'sub-01/anat/sub-01_space-MNI152NLin6Asym_res-2_label-CSF_probseg.nii.gz',
+        'sub-01/anat/sub-01_space-MNI152NLin6Asym_res-2_label-GM_probseg.nii.gz',
+        'sub-01/anat/sub-01_space-MNI152NLin6Asym_res-2_label-WM_probseg.nii.gz',
+        'sub-01/figures/',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-01_desc-confounds_timeseries.json',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-01_desc-confounds_timeseries.tsv',
+        # 'sub-01/func/sub-01_task-mixedgamblestask_run-01_desc-coreg_boldref.json',
+        # 'sub-01/func/sub-01_task-mixedgamblestask_run-01_desc-coreg_boldref.nii.gz',
+        # 'sub-01/func/sub-01_task-mixedgamblestask_run-01_desc-hmc_boldref.json',
+        # 'sub-01/func/sub-01_task-mixedgamblestask_run-01_desc-hmc_boldref.nii.gz',
+        # 'sub-01/func/sub-01_task-mixedgamblestask_run-01_from-boldref_to-T1w_mode-image_desc-coreg_xfm.json',
+        # 'sub-01/func/sub-01_task-mixedgamblestask_run-01_from-boldref_to-T1w_mode-image_desc-coreg_xfm.txt',
+        # 'sub-01/func/sub-01_task-mixedgamblestask_run-01_from-orig_to-boldref_mode-image_desc-hmc_xfm.json',
+        # 'sub-01/func/sub-01_task-mixedgamblestask_run-01_from-orig_to-boldref_mode-image_desc-hmc_xfm.txt',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin2009cAsym_boldref.nii.gz',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin2009cAsym_desc-preproc_bold.json',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_res-2_boldref.json',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_res-2_boldref.nii.gz',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_res-2_desc-brain_mask.json',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_res-2_desc-brain_mask.nii.gz',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_res-2_desc-preproc_bold.json',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-02_desc-confounds_timeseries.json',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-02_desc-confounds_timeseries.tsv',
+        # 'sub-01/func/sub-01_task-mixedgamblestask_run-02_desc-coreg_boldref.json',
+        # 'sub-01/func/sub-01_task-mixedgamblestask_run-02_desc-coreg_boldref.nii.gz',
+        # 'sub-01/func/sub-01_task-mixedgamblestask_run-02_desc-hmc_boldref.json',
+        # 'sub-01/func/sub-01_task-mixedgamblestask_run-02_desc-hmc_boldref.nii.gz',
+        # 'sub-01/func/sub-01_task-mixedgamblestask_run-02_from-boldref_to-T1w_mode-image_desc-coreg_xfm.json',
+        # 'sub-01/func/sub-01_task-mixedgamblestask_run-02_from-boldref_to-T1w_mode-image_desc-coreg_xfm.txt',
+        # 'sub-01/func/sub-01_task-mixedgamblestask_run-02_from-orig_to-boldref_mode-image_desc-hmc_xfm.json',
+        # 'sub-01/func/sub-01_task-mixedgamblestask_run-02_from-orig_to-boldref_mode-image_desc-hmc_xfm.txt',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin2009cAsym_boldref.nii.gz',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin2009cAsym_desc-preproc_bold.json',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_res-2_boldref.json',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_res-2_boldref.nii.gz',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_res-2_desc-brain_mask.json',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_res-2_desc-brain_mask.nii.gz',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_res-2_desc-preproc_bold.json',
+        'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz',
+    ]
+    regex = '|'.join(files_to_ignore)
+    base_ignore_list.append(re.compile(regex))
+    return base_ignore_list
