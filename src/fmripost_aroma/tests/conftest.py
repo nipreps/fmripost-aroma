@@ -167,7 +167,10 @@ def minimal_ignore_list(base_ignore_list):
 
 @pytest.fixture(scope='session')
 def full_ignore_list(base_ignore_list):
-    """Create an ignore list that ignores minimal derivative files from ds000005."""
+    """Create an ignore list that ignores minimal derivative files from ds000005.
+
+    The 'full' run didn't include func-space outputs, so there's no func-space brain mask.
+    """
     base_ignore_list = base_ignore_list[:]
     files_to_ignore = [
         'sub-01/func/sub-01_task-mixedgamblestask_run-01_desc-brain_mask.nii.gz',
