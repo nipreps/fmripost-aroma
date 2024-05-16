@@ -111,23 +111,23 @@ def collect_derivatives(
             query = {**entities, **q}
             print(query)
             item = layout.get(return_type='filename', **query)
-            # if not item:
-            #     continue
+            if not item:
+                derivs_cache[k] = None
+            else:
+                derivs_cache[k] = item[0] if len(item) == 1 else item
 
-            derivs_cache[k] = item[0] if len(item) == 1 else item
-
-        for xfm, q in spec['transforms'].items():
+        for k, q in spec['transforms'].items():
             # Combine entities with query. Query values override file entities.
             # TODO: Drop functional entities (task, run, etc.) from anat transforms.
             query = {**entities, **q}
-            if xfm == 'boldref2fmap':
+            if k == 'boldref2fmap':
                 query['to'] = fieldmap_id
 
-            item = layout.get(return_type='filename', **q)
-            # if not item:
-            #     continue
-
-            derivs_cache[xfm] = item[0] if len(item) == 1 else item
+            item = layout.get(return_type='filename', **query)
+            if not item:
+                derivs_cache[k] = None
+            else:
+                derivs_cache[k] = item[0] if len(item) == 1 else item
 
     # Search for raw BOLD data
     if not derivs_cache and raw_dataset is not None:
@@ -141,10 +141,10 @@ def collect_derivatives(
             query = {**entities, **q}
             print(query)
             item = raw_layout.get(return_type='filename', **query)
-            # if not item:
-            #     continue
-
-            derivs_cache[k] = item[0] if len(item) == 1 else item
+            if not item:
+                derivs_cache[k] = None
+            else:
+                derivs_cache[k] = item[0] if len(item) == 1 else item
 
     return derivs_cache
 

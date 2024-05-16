@@ -88,7 +88,7 @@
             "boldref2anat": {
                 "datatype": "func",
                 "from": "boldref",
-                "to": "anat",
+                "to": ["anat", "T1w", "T2w"],
                 "mode": "image",
                 "suffix": "xfm",
                 "extension": ".txt"
@@ -102,11 +102,13 @@
             },
             "anat2mni152nlin6asym": {
                 "datatype": "anat",
-                "from": "anat",
+                "task": null,
+                "run": null,
+                "from": ["anat", "T1w", "T2w"],
                 "to": "MNI152NLin6Asym",
                 "mode": "image",
                 "suffix": "xfm",
-                "extension": ".txt"
+                "extension": ".h5"
             }
         }
     },

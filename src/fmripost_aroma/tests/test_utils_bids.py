@@ -28,12 +28,18 @@ def test_collect_derivatives_raw(base_ignore_list):
         spec=None,
         patterns=None,
     )
-    assert subject_data['bold'] == ''
+    assert subject_data['bold_std'] == []
+    assert subject_data['bold_mask_std'] == []
+    assert subject_data['bold_mask'] == []
+    assert subject_data['confounds'] == []
+    assert subject_data['hmc'] == []
+    assert subject_data['boldref2anat'] == []
+    assert subject_data['boldref2fmap'] == []
+    assert subject_data['anat2mni152nlin6asym'] == []
 
 
 def test_collect_derivatives_minimal(minimal_ignore_list):
     """Test collect_derivatives with a minimal-mode dataset."""
-    from pathlib import Path
 
     data_dir = get_test_data_path()
 
@@ -53,14 +59,18 @@ def test_collect_derivatives_minimal(minimal_ignore_list):
         spec=None,
         patterns=None,
     )
-    assert subject_data['bold_std'] == ''
-    assert subject_data['bold_mask_std'] == ''
-    assert subject_data['confounds'] is None
+    assert subject_data['bold_std'] == []
+    assert subject_data['bold_mask_std'] == []
+    assert subject_data['bold_mask'] == []
+    assert subject_data['confounds'] == []
+    assert subject_data['hmc'] == []
+    assert subject_data['boldref2anat'] == []
+    assert subject_data['boldref2fmap'] == []
+    assert subject_data['anat2mni152nlin6asym'] == []
 
 
 def test_collect_derivatives_full(base_ignore_list):
     """Test collect_derivatives with a full-mode dataset."""
-    from pathlib import Path
 
     data_dir = get_test_data_path()
 
@@ -80,6 +90,11 @@ def test_collect_derivatives_full(base_ignore_list):
         spec=None,
         patterns=None,
     )
-    assert subject_data['bold_std'] == ''
-    assert subject_data['bold_mask_std'] == ''
-    assert subject_data['confounds'] is None
+    assert subject_data['bold_std'] == []
+    assert subject_data['bold_mask_std'] == []
+    assert subject_data['bold_mask'] == []
+    assert subject_data['confounds'] == []
+    assert subject_data['hmc'] == []
+    assert subject_data['boldref2anat'] == []
+    assert subject_data['boldref2fmap'] == []
+    assert subject_data['anat2mni152nlin6asym'] == []

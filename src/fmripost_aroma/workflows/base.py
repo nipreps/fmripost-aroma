@@ -33,14 +33,13 @@ import sys
 import warnings
 from copy import deepcopy
 
-from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
 from packaging.version import Version
 
 from fmripost_aroma import config
 from fmripost_aroma.interfaces.bids import DerivativesDataSink
 from fmripost_aroma.interfaces.reportlets import AboutSummary, SubjectSummary
-from fmripost_aroma.utils.utils import _get_wf_name
+from fmripost_aroma.utils.utils import _get_wf_name, update_dict
 from fmripost_aroma.workflows.resampling import init_resample_volumetric_wf
 
 
@@ -285,7 +284,8 @@ Functional data postprocessing
         if config.execution.derivatives:
             # Collect native-space derivatives and transforms
             for deriv_dir in config.execution.derivatives.values():
-                functional_cache.update(
+                functional_cache = update_dict(
+                    functional_cache,
                     collect_derivatives(
                         derivatives_dataset=deriv_dir,
                         entities=entities,
