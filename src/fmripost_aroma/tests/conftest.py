@@ -65,6 +65,7 @@ def base_ignore_list():
 @pytest.fixture(scope='session')
 def minimal_ignore_list(base_ignore_list):
     """Create an ignore list that ignores full derivative files from ds000005."""
+    base_ignore_list = base_ignore_list[:]
     files_to_ignore = [
         'sub-01/anat/sub-01_desc-brain_mask.json',
         'sub-01/anat/sub-01_desc-brain_mask.nii.gz',
@@ -158,6 +159,18 @@ def minimal_ignore_list(base_ignore_list):
         'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_res-2_desc-brain_mask.nii.gz',
         'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_res-2_desc-preproc_bold.json',
         'sub-01/func/sub-01_task-mixedgamblestask_run-02_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz',
+    ]
+    regex = '|'.join(files_to_ignore)
+    base_ignore_list.append(re.compile(regex))
+    return base_ignore_list
+
+
+@pytest.fixture(scope='session')
+def full_ignore_list(base_ignore_list):
+    """Create an ignore list that ignores minimal derivative files from ds000005."""
+    base_ignore_list = base_ignore_list[:]
+    files_to_ignore = [
+        'sub-01/func/sub-01_task-mixedgamblestask_run-01_desc-brain_mask.nii.gz',
     ]
     regex = '|'.join(files_to_ignore)
     base_ignore_list.append(re.compile(regex))

@@ -192,16 +192,8 @@ It is released under the [CC0]\
         raise RuntimeError(
             f"No BOLD images found for participant {subject_id} and "
             f"task {task_id if task_id else '<all>'}. "
-            "All workflows require BOLD images."
-        )
-
-    if subject_data['roi']:
-        warnings.warn(
-            f"Lesion mask {subject_data['roi']} found. "
-            "Future versions of fMRIPost-AROMA will use alternative conventions. "
-            "Please refer to the documentation before upgrading.",
-            FutureWarning,
-            stacklevel=1,
+            "All workflows require BOLD images. "
+            f"Please check your BIDS filters: {config.execution.bids_filters}."
         )
 
     bidssrc = pe.Node(
