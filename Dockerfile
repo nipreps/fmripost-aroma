@@ -230,7 +230,7 @@ ENV IS_DOCKER_8395080871=1
 
 RUN ldconfig
 WORKDIR /tmp
-ENTRYPOINT ["/opt/conda/envs/fmripost_aroma/bin/fmripost_aroma"]
+ENTRYPOINT ["/opt/conda/envs/fmripost_aroma/bin/fmripost-aroma"]
 
 ARG BUILD_DATE
 ARG VCS_REF

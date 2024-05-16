@@ -204,8 +204,6 @@ def main():
             )
         errno = 0
     finally:
-        from pkg_resources import resource_filename as pkgrf
-
         # Code Carbon
         if config.execution.track_carbon:
             emissions: float = tracker.stop()
@@ -217,11 +215,9 @@ def main():
 
         # Generate reports phase
         failed_reports = generate_reports(
-            config.execution.participant_label,
-            config.execution.fmripost_aroma_dir,
-            config.execution.run_uuid,
-            config=pkgrf('fmripost_aroma', 'data/reports-spec.yml'),
-            packagename='fmripost_aroma',
+            subject_list=config.execution.participant_label,
+            output_dir=config.execution.fmripost_aroma_dir,
+            run_uuid=config.execution.run_uuid,
         )
         write_derivative_description(
             config.execution.bids_dir, config.execution.fmripost_aroma_dir
@@ -233,7 +229,7 @@ def main():
                 'Report generation failed for %d subjects' % failed_reports,
                 level='error',
             )
-        sys.exit(int((errno + failed_reports) > 0))
+        sys.exit(int((errno + len(failed_reports)) > 0))
 
 
 def migas_exit() -> None:

@@ -109,7 +109,14 @@ class _ICADenoiseInputSpec(BaseInterfaceInputSpec):
     method = traits.Enum('aggr', 'nonaggr', 'orthaggr', mandatory=True, desc='denoising method')
     bold_file = File(exists=True, mandatory=True, desc='input file to denoise')
     mask_file = File(exists=True, mandatory=True, desc='mask file')
-    confounds = File(exists=True, mandatory=True, desc='confounds file')
+    mixing = File(exists=True, mandatory=True, desc='mixing matrix file')
+    metrics = File(exists=True, mandatory=True, desc='metrics file')
+    skip_vols = traits.Int(
+        desc=(
+            'Number of non steady state volumes identified. '
+            'Will be removed from mixing, but not bold'
+        ),
+    )
 
 
 class _ICADenoiseOutputSpec(TraitedSpec):
@@ -130,17 +137,19 @@ class ICADenoise(SimpleInterface):
 
         method = self.inputs.method
         bold_file = self.inputs.bold_file
-        confounds_file = self.inputs.confounds
-        metrics_file = self.inputs.metrics_file
+        mixing_file = self.inputs.mixing
+        metrics_file = self.inputs.metrics
 
-        confounds_df = pd.read_table(confounds_file)
+        # Load the mixing matrix. It doesn't have a header row
+        mixing = np.loadtxt(mixing_file)
+        mixing = mixing[self.inputs.skip_vols :, :]
 
         # Split up component time series into accepted and rejected components
         metrics_df = pd.read_table(metrics_file)
-        rejected_columns = metrics_df.loc[metrics_df['classification'] == 'rejected', 'Component']
-        accepted_columns = metrics_df.loc[metrics_df['classification'] == 'accepted', 'Component']
-        rejected_components = confounds_df[rejected_columns].to_numpy()
-        accepted_components = confounds_df[accepted_columns].to_numpy()
+        rejected_idx = metrics_df.loc[metrics_df['classification'] == 'rejected'].index.values
+        accepted_idx = metrics_df.loc[metrics_df['classification'] == 'accepted'].index.values
+        rejected_components = mixing[:, rejected_idx]
+        accepted_components = mixing[:, accepted_idx]
         # Z-score all of the components
         rejected_components = stats.zscore(rejected_components, axis=0)
         accepted_components = stats.zscore(accepted_components, axis=0)
@@ -198,7 +207,7 @@ class ICADenoise(SimpleInterface):
                 (
                     rejected_components,
                     accepted_components,
-                    np.ones((confounds_df.shape[0], 1)),
+                    np.ones((mixing.shape[0], 1)),
                 ),
             )
             betas = np.linalg.lstsq(regressors, data, rcond=None)[0][:-1]

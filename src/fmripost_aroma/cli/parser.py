@@ -195,7 +195,6 @@ def _build_parser(**kwargs):
         '--derivatives',
         action=ToDict,
         metavar='PACKAGE=PATH',
-        type=str,
         nargs='+',
         help=(
             'Search PATH(s) for pre-computed derivatives. '
@@ -332,6 +331,17 @@ https://fmriprep.readthedocs.io/en/%s/spaces.html"""
         default=False,
         help='Skip generation of HTML and LaTeX formatted citation with pandoc',
     )
+    g_outputs.add_argument(
+        '--aggregate-session-reports',
+        dest='aggr_ses_reports',
+        action='store',
+        type=PositiveInt,
+        default=4,
+        help=(
+            "Maximum number of sessions aggregated in one subject's visual report. "
+            'If exceeded, visual reports are split by session.'
+        ),
+    )
 
     g_aroma = parser.add_argument_group('Options for running ICA_AROMA')
     g_aroma.add_argument(
@@ -347,7 +357,7 @@ https://fmriprep.readthedocs.io/en/%s/spaces.html"""
     )
     g_aroma.add_argument(
         '--error-on-warnings',
-        dest='error_on_aroma_warnings',
+        dest='err_on_warn',
         action='store_true',
         default=False,
         help=(
@@ -361,6 +371,7 @@ https://fmriprep.readthedocs.io/en/%s/spaces.html"""
         nargs='+',
         choices=['aggr', 'nonaggr', 'orthaggr'],
         default=None,
+        dest='denoise_method',
         help='Denoising method to apply, if any.',
     )
 
@@ -530,6 +541,9 @@ def parse_args(args=None, namespace=None):
     work_dir = config.execution.work_dir
     version = config.environment.version
 
+    if config.execution.fmripost_aroma_dir is None:
+        config.execution.fmripost_aroma_dir = output_dir
+
     # Wipe out existing work_dir
     if opts.clean_workdir and work_dir.exists():
         from niworkflows.utils.misc import clean_directory
@@ -569,7 +583,7 @@ def parse_args(args=None, namespace=None):
         validate_input_dir(config.environment.exec_env, opts.bids_dir, opts.participant_label)
 
     # Setup directories
-    config.execution.log_dir = config.execution.fmriprep_dir / 'logs'
+    config.execution.log_dir = config.execution.fmripost_aroma_dir / 'logs'
     # Check and create output and working directories
     config.execution.log_dir.mkdir(exist_ok=True, parents=True)
     work_dir.mkdir(exist_ok=True, parents=True)
