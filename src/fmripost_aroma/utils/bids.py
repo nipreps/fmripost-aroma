@@ -195,3 +195,78 @@ def collect_run_data(
         run_data[k] = layout.get_nearest(bold_file, **v)
 
     return run_data
+
+
+def write_bidsignore(deriv_dir):
+    bids_ignore = (
+        '*.html',
+        'logs/',
+        'figures/',  # Reports
+        '*_xfm.*',  # Unspecified transform files
+        '*.surf.gii',  # Unspecified structural outputs
+        # Unspecified functional outputs
+        '*_boldref.nii.gz',
+        '*_bold.func.gii',
+        '*_mixing.tsv',
+        '*_timeseries.tsv',
+    )
+    ignore_file = Path(deriv_dir) / '.bidsignore'
+
+    ignore_file.write_text('\n'.join(bids_ignore) + '\n')
+
+
+def write_derivative_description(bids_dir, deriv_dir, dataset_links=None):
+    import os
+
+    from fmripost_aroma import __version__
+
+    DOWNLOAD_URL = f'https://github.com/nipreps/fmripost_aroma/archive/{__version__}.tar.gz'
+
+    bids_dir = Path(bids_dir)
+    deriv_dir = Path(deriv_dir)
+    desc = {
+        'Name': 'fMRIPost-AROMA- ICA-AROMA Postprocessing Outputs',
+        'BIDSVersion': '1.9.0dev',
+        'DatasetType': 'derivative',
+        'GeneratedBy': [
+            {
+                'Name': 'fMRIPost-AROMA',
+                'Version': __version__,
+                'CodeURL': DOWNLOAD_URL,
+            }
+        ],
+        'HowToAcknowledge': 'Please cite fMRIPost-AROMA when using these results.',
+    }
+
+    # Keys that can only be set by environment
+    if 'FMRIPOST_AROMA_DOCKER_TAG' in os.environ:
+        desc['GeneratedBy'][0]['Container'] = {
+            'Type': 'docker',
+            'Tag': f"nipreps/fmriprep:{os.environ['FMRIPOST_AROMA__DOCKER_TAG']}",
+        }
+    if 'FMRIPOST_AROMA__SINGULARITY_URL' in os.environ:
+        desc['GeneratedBy'][0]['Container'] = {
+            'Type': 'singularity',
+            'URI': os.getenv('FMRIPOST_AROMA__SINGULARITY_URL'),
+        }
+
+    # Keys deriving from source dataset
+    orig_desc = {}
+    fname = bids_dir / 'dataset_description.json'
+    if fname.exists():
+        orig_desc = json.loads(fname.read_text())
+
+    if 'DatasetDOI' in orig_desc:
+        desc['SourceDatasets'] = [
+            {'URL': f'https://doi.org/{orig_desc["DatasetDOI"]}', 'DOI': orig_desc['DatasetDOI']}
+        ]
+    if 'License' in orig_desc:
+        desc['License'] = orig_desc['License']
+
+    # Add DatasetLinks
+    if dataset_links:
+        desc['DatasetLinks'] = {k: str(v) for k, v in dataset_links.items()}
+        if 'templateflow' in dataset_links:
+            desc['DatasetLinks']['templateflow'] = 'https://github.com/templateflow/templateflow'
+
+    Path.write_text(deriv_dir / 'dataset_description.json', json.dumps(desc, indent=4))

@@ -59,7 +59,7 @@ Issues = "https://github.com/nipreps/fmripost-aroma/issues"
 Source = "https://github.com/nipreps/fmripost-aroma"
 
 [project.scripts]
-fmripost-aroma = "fmripost_aroma.cli:aroma"
+fmripost-aroma = "fmripost_aroma.cli.run:main"
 
 [tool.hatch.metadata]
 allow-direct-references = true
