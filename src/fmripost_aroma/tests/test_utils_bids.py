@@ -13,7 +13,7 @@ def test_collect_derivatives_raw(base_ignore_list):
     """Test collect_derivatives with a raw dataset."""
     data_dir = get_test_data_path()
 
-    raw_dataset = Path(data_dir) / 'ds000005-fmriprep' / 'sourcedata'
+    raw_dataset = data_dir / 'ds000005-fmriprep' / 'sourcedata'
     raw_layout = BIDSLayout(
         raw_dataset,
         config=['bids'],
@@ -54,7 +54,7 @@ def test_collect_derivatives_minimal(minimal_ignore_list):
     """Test collect_derivatives with a minimal-mode dataset."""
     data_dir = get_test_data_path()
 
-    derivatives_dataset = Path(data_dir) / 'ds000005-fmriprep'
+    derivatives_dataset = data_dir / 'ds000005-fmriprep'
     derivatives_layout = BIDSLayout(
         derivatives_dataset,
         config=['bids', 'derivatives'],
@@ -91,7 +91,7 @@ def test_collect_derivatives_full(full_ignore_list):
     """Test collect_derivatives with a full-mode dataset."""
     data_dir = get_test_data_path()
 
-    derivatives_dataset = Path(data_dir) / 'ds000005-fmriprep'
+    derivatives_dataset = data_dir / 'ds000005-fmriprep'
     derivatives_layout = BIDSLayout(
         derivatives_dataset,
         config=['bids', 'derivatives'],

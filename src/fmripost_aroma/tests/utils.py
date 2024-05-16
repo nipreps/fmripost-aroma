@@ -1,6 +1,7 @@
 """Utility functions for tests."""
 
 import os
+from pathlib import Path
 
 
 def get_test_data_path():
@@ -9,4 +10,4 @@ def get_test_data_path():
     Test-related data are kept in tests folder in "data".
     Based on function by Yaroslav Halchenko used in Neurosynth Python package.
     """
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), 'data') + os.path.sep)
+    return Path(__file__).resolve().parent.parent.parent.parent / 'tests' / 'data')
