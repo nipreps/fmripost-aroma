@@ -146,8 +146,6 @@ def init_single_subject_wf(subject_id: str):
     from fmripost_aroma.utils.bids import collect_derivatives, extract_entities
     from fmripost_aroma.workflows.aroma import init_denoise_wf, init_ica_aroma_wf
 
-    spaces = config.workflow.spaces
-
     workflow = Workflow(name=f'sub_{subject_id}_wf')
     workflow.__desc__ = f"""
 Results included in this manuscript come from postprocessing
