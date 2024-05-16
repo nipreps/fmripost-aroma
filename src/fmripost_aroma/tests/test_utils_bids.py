@@ -12,12 +12,12 @@ def test_collect_derivatives_raw(base_ignore_list):
     """Test collect_derivatives with a raw dataset."""
     data_dir = get_test_data_path()
 
-    raw_dataset = data_dir / 'ds000005-fmriprep' / 'sourcedata'
+    raw_dataset = data_dir / 'ds000005-fmriprep' / 'sourcedata' / 'raw'
     raw_layout = BIDSLayout(
         raw_dataset,
         config=['bids'],
         validate=False,
-        indexer=BIDSLayoutIndexer(validate=False, ignore=base_ignore_list),
+        indexer=BIDSLayoutIndexer(validate=False, index_metadata=False, ignore=base_ignore_list),
     )
 
     subject_data = xbids.collect_derivatives(
@@ -58,7 +58,11 @@ def test_collect_derivatives_minimal(minimal_ignore_list):
         derivatives_dataset,
         config=['bids', 'derivatives'],
         validate=False,
-        indexer=BIDSLayoutIndexer(validate=False, ignore=minimal_ignore_list),
+        indexer=BIDSLayoutIndexer(
+            validate=False,
+            index_metadata=False,
+            ignore=minimal_ignore_list,
+        ),
     )
 
     subject_data = xbids.collect_derivatives(
@@ -95,7 +99,7 @@ def test_collect_derivatives_full(full_ignore_list):
         derivatives_dataset,
         config=['bids', 'derivatives'],
         validate=False,
-        indexer=BIDSLayoutIndexer(validate=False, ignore=full_ignore_list),
+        indexer=BIDSLayoutIndexer(validate=False, index_metadata=False, ignore=full_ignore_list),
     )
 
     subject_data = xbids.collect_derivatives(
