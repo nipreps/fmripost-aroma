@@ -331,6 +331,17 @@ https://fmriprep.readthedocs.io/en/%s/spaces.html"""
         default=False,
         help='Skip generation of HTML and LaTeX formatted citation with pandoc',
     )
+    g_outputs.add_argument(
+        '--aggregate-session-reports',
+        dest='aggr_ses_reports',
+        action='store',
+        type=PositiveInt,
+        default=4,
+        help=(
+            "Maximum number of sessions aggregated in one subject's visual report. "
+            'If exceeded, visual reports are split by session.'
+        ),
+    )
 
     g_aroma = parser.add_argument_group('Options for running ICA_AROMA')
     g_aroma.add_argument(
@@ -360,6 +371,7 @@ https://fmriprep.readthedocs.io/en/%s/spaces.html"""
         nargs='+',
         choices=['aggr', 'nonaggr', 'orthaggr'],
         default=None,
+        dest='denoise_method',
         help='Denoising method to apply, if any.',
     )
 

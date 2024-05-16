@@ -38,11 +38,11 @@ def build_workflow(config_file, retval):
 
     from fmriprep.utils.bids import check_pipeline_version
     from fmriprep.utils.misc import check_deps
-    from nireports.assembler.tools import generate_reports
     from niworkflows.utils.bids import collect_participants
     from pkg_resources import resource_filename as pkgrf
 
     from fmripost_aroma import config
+    from fmripost_aroma.reports.core import generate_reports
     from fmripost_aroma.workflows.base import init_fmripost_aroma_wf
 
     config.load(config_file)
@@ -91,11 +91,9 @@ def build_workflow(config_file, retval):
     if config.execution.reports_only:
         build_log.log(25, 'Running --reports-only on participants %s', ', '.join(subject_list))
         retval['return_code'] = generate_reports(
-            config.execution.participant_label,
-            config.execution.fmripost_aroma_dir,
-            config.execution.run_uuid,
-            config=pkgrf('fmripost_aroma', 'data/reports-spec.yml'),
-            packagename='fmripost_aroma',
+            subject_list=config.execution.participant_label,
+            output_dir=config.execution.fmripost_aroma_dir,
+            run_uuid=config.execution.run_uuid,
         )
         return retval
 

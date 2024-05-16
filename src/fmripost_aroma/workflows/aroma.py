@@ -114,7 +114,7 @@ def init_ica_aroma_wf(
     workflow = Workflow(name=_get_wf_name(bold_file, 'aroma'))
     workflow.__postdesc__ = f"""\
 Automatic removal of motion artifacts using independent component analysis
-[ICA-AROMA, @aroma] was performed on the *preprocessed BOLD on MNI152NLin6Asym space*
+[ICA-AROMA, @ica_aroma] was performed on the *preprocessed BOLD on MNI152NLin6Asym space*
 time-series after removal of non-steady state volumes and spatial smoothing
 with a nonlinear filter that preserves underlying structure [SUSAN, @susan],
 using a FWHM of {susan_fwhm} mm.
@@ -379,7 +379,8 @@ def init_denoise_wf(bold_file):
             fields=[
                 'bold_file',
                 'bold_mask',
-                'confounds',
+                'mixing',
+                'classifications',
                 'skip_vols',
                 'spatial_reference',
             ],
@@ -405,8 +406,10 @@ def init_denoise_wf(bold_file):
         )
         workflow.connect([
             (inputnode, denoise, [
-                ('confounds', 'confounds'),
+                ('mixing', 'mixing'),
+                ('classifications', 'metrics'),
                 ('bold_mask', 'mask_file'),
+                ('skip_vols', 'skip_vols'),
             ]),
             (rm_non_steady_state, denoise, [('bold_cut', 'bold_file')]),
         ])  # fmt:skip
@@ -436,7 +439,7 @@ def init_denoise_wf(bold_file):
         workflow.connect([
             # spatial_reference needs to be parsed into space, cohort, res, den, etc.
             (inputnode, ds_denoised, [('spatial_reference', 'space')]),
-            (add_non_steady_state, ds_denoised, [('bold_add', 'denoised_file')]),
+            (add_non_steady_state, ds_denoised, [('bold_add', 'in_file')]),
         ])  # fmt:skip
 
     return workflow

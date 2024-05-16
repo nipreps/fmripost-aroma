@@ -306,29 +306,32 @@ Functional data postprocessing
         ica_aroma_wf.inputs.inputnode.skip_vols = skip_vols
 
         if config.workflow.denoise_method:
-            for space in spaces:
-                # Warp each BOLD run to requested output spaces
-                resample_to_space_wf = init_resample_volumetric_wf(
-                    bold_file=bold_file,
-                    functional_cache=functional_cache,
-                    space=space,
-                    name=_get_wf_name(bold_file, f'resample_{space}'),
-                )
+            # for space in spaces:
+            #     # Warp each BOLD run to requested output spaces
+            #     resample_to_space_wf = init_resample_volumetric_wf(
+            #         bold_file=bold_file,
+            #         functional_cache=functional_cache,
+            #         space=space,
+            #         name=_get_wf_name(bold_file, f'resample_{space}'),
+            #     )
 
-                # Now denoise the output-space BOLD data using ICA-AROMA
-                denoise_wf = init_denoise_wf(bold_file=bold_file)
-                denoise_wf.inputs.inputnode.bold_mask = functional_cache['bold_mask']
-                denoise_wf.inputs.inputnode.skip_vols = functional_cache['skip_vols']
-                workflow.connect([
-                    (resample_to_space_wf, denoise_wf, [
-                        ('bold_std', 'inputnode.bold_file'),
-                        ('bold_mask_std', 'inputnode.bold_mask'),
-                        ('spatial_reference', 'inputnode.spatial_reference'),
-                    ]),
-                    (ica_aroma_wf, denoise_wf, [
-                        ('outputnode.aroma_confounds', 'inputnode.confounds'),
-                    ]),
-                ])  # fmt:skip
+            # Now denoise the output-space BOLD data using ICA-AROMA
+            denoise_wf = init_denoise_wf(bold_file=bold_file)
+            denoise_wf.inputs.inputnode.skip_vols = skip_vols
+            denoise_wf.inputs.inputnode.bold_file = functional_cache['bold_std']
+            denoise_wf.inputs.inputnode.bold_mask = functional_cache['bold_mask_std']
+            denoise_wf.inputs.inputnode.spatial_reference = 'MNI152NLin6Asym'
+            workflow.connect([
+                # (resample_to_space_wf, denoise_wf, [
+                #     ('bold_std', 'inputnode.bold_file'),
+                #     ('bold_mask_std', 'inputnode.bold_mask'),
+                #     ('spatial_reference', 'inputnode.spatial_reference'),
+                # ]),
+                (ica_aroma_wf, denoise_wf, [
+                    ('outputnode.mixing', 'inputnode.mixing'),
+                    ('outputnode.aroma_features', 'inputnode.classifications'),
+                ]),
+            ])  # fmt:skip
 
     return clean_datasinks(workflow)
 
