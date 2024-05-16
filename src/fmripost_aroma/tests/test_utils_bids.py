@@ -137,10 +137,10 @@ def check_expected(subject_data, expected):
     """Check expected values."""
     for key, value in expected.items():
         if isinstance(value, str):
-            assert subject_data[key] is not None, f"Key {key} is None."
+            assert subject_data[key] is not None, f'Key {key} is None.'
             assert os.path.basename(subject_data[key]) == value
         elif isinstance(value, list):
-            assert subject_data[key] is not None, f"Key {key} is None."
+            assert subject_data[key] is not None, f'Key {key} is None.'
             assert len(subject_data[key]) == len(value)
             for item, expected_item in zip(subject_data[key], value):
                 assert os.path.basename(item) == expected_item
