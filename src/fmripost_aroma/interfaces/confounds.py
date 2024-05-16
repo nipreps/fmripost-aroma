@@ -142,7 +142,7 @@ class ICADenoise(SimpleInterface):
 
         # Load the mixing matrix. It doesn't have a header row
         mixing = np.loadtxt(mixing_file)
-        mixing = mixing[self.inputs.skip_vols:, :]
+        mixing = mixing[self.inputs.skip_vols :, :]
 
         # Split up component time series into accepted and rejected components
         metrics_df = pd.read_table(metrics_file)
