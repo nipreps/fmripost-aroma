@@ -533,7 +533,7 @@ del _oc_policy
 class workflow(_Config):
     """Configure the particular execution graph of this workflow."""
 
-    err_on_warn = None
+    err_on_warn = False
     """Cast AROMA warnings to errors."""
     melodic_dim = None
     """Number of ICA components to be estimated by MELODIC

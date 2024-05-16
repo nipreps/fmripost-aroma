@@ -58,7 +58,7 @@ def extract_entities(file_list: str | list[str]) -> dict:
 def collect_derivatives(
     raw_dataset: Path | BIDSLayout | None,
     derivatives_dataset: Path | BIDSLayout | None,
-    entities: dict,
+    entities: dict | None,
     fieldmap_id: str | None,
     spec: dict | None = None,
     patterns: list[str] | None = None,
@@ -89,6 +89,9 @@ def collect_derivatives(
         Dictionary with keys corresponding to the derivatives and values
         corresponding to the file paths.
     """
+    if not entities:
+        entities = {}
+
     if spec is None or patterns is None:
         _spec = json.loads(load_data.readable('io_spec.json').read_text())
 

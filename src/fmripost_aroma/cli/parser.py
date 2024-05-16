@@ -195,7 +195,7 @@ def _build_parser(**kwargs):
         '--derivatives',
         action=ToDict,
         metavar='PACKAGE=PATH',
-        type=str,
+        default={},
         nargs='+',
         help=(
             'Search PATH(s) for pre-computed derivatives. '
@@ -347,7 +347,7 @@ https://fmriprep.readthedocs.io/en/%s/spaces.html"""
     )
     g_aroma.add_argument(
         '--error-on-warnings',
-        dest='error_on_aroma_warnings',
+        dest='err_on_warn',
         action='store_true',
         default=False,
         help=(
@@ -578,7 +578,9 @@ def parse_args(args=None, namespace=None):
     work_dir.mkdir(exist_ok=True, parents=True)
 
     # Force initialization of the BIDSLayout
+    print('Initializing BIDSLayout...')
     config.execution.init()
+    print('Done')
     all_subjects = config.execution.layout.get_subjects()
     if config.execution.participant_label is None:
         config.execution.participant_label = all_subjects
@@ -592,3 +594,4 @@ def parse_args(args=None, namespace=None):
         )
 
     config.execution.participant_label = sorted(participant_label)
+    print("parsed")
