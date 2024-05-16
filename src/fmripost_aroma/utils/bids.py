@@ -87,15 +87,13 @@ def collect_derivatives(
         corresponding to the file paths.
     """
     if spec is None or patterns is None:
-        _spec, _patterns = tuple(
-            json.loads(load_data.readable('io_spec.json').read_text()).values()
-        )
+        _spec = json.loads(load_data.readable('io_spec.json').read_text())
 
         if spec is None:
-            spec = _spec
+            spec = _spec['queries']
 
         if patterns is None:
-            patterns = _patterns
+            patterns = _spec['patterns']
 
     # Search for derivatives data
     derivs_cache = defaultdict(list, {})
@@ -108,14 +106,28 @@ def collect_derivatives(
                 validate=False,
             )
 
-        for k, q in spec['queries']['derivatives'].items():
+        for k, q in spec['derivatives'].items():
             # Combine entities with query. Query values override file entities.
             query = {**entities, **q}
+            print(query)
             item = layout.get(return_type='filename', **query)
-            if not item:
-                continue
+            # if not item:
+            #     continue
 
             derivs_cache[k] = item[0] if len(item) == 1 else item
+
+        for xfm, q in spec['transforms'].items():
+            # Combine entities with query. Query values override file entities.
+            # TODO: Drop functional entities (task, run, etc.) from anat transforms.
+            query = {**entities, **q}
+            if xfm == 'boldref2fmap':
+                query['to'] = fieldmap_id
+
+            item = layout.get(return_type='filename', **q)
+            # if not item:
+            #     continue
+
+            derivs_cache[xfm] = item[0] if len(item) == 1 else item
 
     # Search for raw BOLD data
     if not derivs_cache and raw_dataset is not None:
@@ -124,26 +136,15 @@ def collect_derivatives(
         else:
             raw_layout = raw_dataset
 
-        for k, q in spec['queries']['raw'].items():
+        for k, q in spec['raw'].items():
             # Combine entities with query. Query values override file entities.
             query = {**entities, **q}
+            print(query)
             item = raw_layout.get(return_type='filename', **query)
-            if not item:
-                continue
+            # if not item:
+            #     continue
 
             derivs_cache[k] = item[0] if len(item) == 1 else item
-
-    for xfm, q in spec['queries']['transforms'].items():
-        # Combine entities with query. Query values override file entities.
-        query = {**entities, **q}
-        if xfm == 'boldref2fmap':
-            query['to'] = fieldmap_id
-
-        item = layout.get(return_type='filename', **q)
-        if not item:
-            continue
-
-        derivs_cache[xfm] = item[0] if len(item) == 1 else item
 
     return derivs_cache
 
