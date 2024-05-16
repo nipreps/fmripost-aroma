@@ -139,6 +139,7 @@ def init_single_subject_wf(subject_id: str):
     8.  Warp BOLD to requested output spaces and denoise with ICA-AROMA.
 
     """
+    from bids.utils import listify
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
     from niworkflows.interfaces.bids import BIDSDataGrabber, BIDSInfo
     from niworkflows.interfaces.nilearn import NILEARN_VERSION
@@ -180,22 +181,29 @@ It is released under the [CC0]\
 
 """
 
-    if config.workflow.derivatives:
+    if config.execution.derivatives:
         # Raw dataset + derivatives dataset
+        config.loggers.workflow.info('Raw+derivatives workflow mode enabled')
         subject_data = collect_derivatives(
             raw_dataset=config.execution.layout,
+            derivatives_dataset=None,
             entities=config.execution.bids_filters,
+            fieldmap_id=None,
             allow_multiple=True,
         )
+        subject_data['bold'] = listify(subject_data['bold_raw'])
     else:
         # Derivatives dataset only
+        config.loggers.workflow.info('Derivatives-only workflow mode enabled')
         subject_data = collect_derivatives(
+            raw_dataset=None,
             derivatives_dataset=config.execution.layout,
             entities=config.execution.bids_filters,
+            fieldmap_id=None,
             allow_multiple=True,
         )
         # Patch standard-space BOLD files into 'bold' key
-        subject_data['bold'] = subject_data['bold_std']
+        subject_data['bold'] = listify(subject_data['bold_std'])
 
     # Make sure we always go through these two checks
     if not subject_data['bold']:
@@ -211,6 +219,7 @@ It is released under the [CC0]\
         BIDSDataGrabber(
             subject_data=subject_data,
             subject_id=subject_id,
+            anat_only=False,
         ),
         name='bidssrc',
     )
@@ -223,7 +232,7 @@ It is released under the [CC0]\
     summary = pe.Node(
         SubjectSummary(
             std_spaces=['MNI152NLin6Asym'],
-            nstd_spaces=None,
+            nstd_spaces=[],
         ),
         name='summary',
         run_without_submitting=True,
@@ -278,7 +287,8 @@ Functional data postprocessing
 """
 
     for bold_file in subject_data['bold']:
-        ica_aroma_wf = init_ica_aroma_wf(bold_file=bold_file)
+        bold_metadata = config.execution.layout.get_metadata(bold_file)
+        ica_aroma_wf = init_ica_aroma_wf(bold_file=bold_file, metadata=bold_metadata)
         ica_aroma_wf.__desc__ = func_pre_desc + (ica_aroma_wf.__desc__ or '')
 
         entities = extract_entities(bold_file)
@@ -290,8 +300,10 @@ Functional data postprocessing
                 functional_cache = update_dict(
                     functional_cache,
                     collect_derivatives(
+                        raw_dataset=None,
                         derivatives_dataset=deriv_dir,
                         entities=entities,
+                        fieldmap_id=None,
                         allow_multiple=False,
                     ),
                 )
@@ -326,8 +338,10 @@ Functional data postprocessing
             # Only derivatives dataset was passed in, so we expected standard-space derivatives
             functional_cache.update(
                 collect_derivatives(
+                    raw_dataset=None,
                     derivatives_dataset=config.execution.layout,
                     entities=entities,
+                    fieldmap_id=None,
                     allow_multiple=False,
                 ),
             )

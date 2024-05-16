@@ -36,14 +36,14 @@ def build_workflow(config_file, retval):
     """Create the Nipype Workflow that supports the whole execution graph."""
     from pathlib import Path
 
+    from fmriprep.utils.bids import check_pipeline_version
+    from fmriprep.utils.misc import check_deps
+    from nireports.assembler.tools import generate_reports
     from niworkflows.utils.bids import collect_participants
     from niworkflows.utils.misc import check_valid_fs_license
     from pkg_resources import resource_filename as pkgrf
 
     from fmripost_aroma import config
-    from fmripost_aroma.reports.core import generate_reports
-    from fmripost_aroma.utils.bids import check_pipeline_version
-    from fmripost_aroma.utils.misc import check_deps
     from fmripost_aroma.workflows.base import init_fmripost_aroma_wf
 
     config.load(config_file)
@@ -111,9 +111,6 @@ def build_workflow(config_file, retval):
 
     if config.execution.derivatives:
         init_msg += [f'Searching for derivatives: {config.execution.derivatives}.']
-
-    if config.execution.fs_subjects_dir:
-        init_msg += [f"Pre-run FreeSurfer's SUBJECTS_DIR: {config.execution.fs_subjects_dir}."]
 
     build_log.log(25, f"\n{' ' * 11}* ".join(init_msg))
 

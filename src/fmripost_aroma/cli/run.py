@@ -213,7 +213,7 @@ def main():
             config.loggers.workflow.log(25, f'Saving logs at: {config.execution.log_dir}')
             config.loggers.workflow.log(25, f'Carbon emissions: {emissions} kg')
 
-        from fmripost_aroma.reports.core import generate_reports
+        from nireports.assembler.tools import generate_reports
 
         # Generate reports phase
         failed_reports = generate_reports(
