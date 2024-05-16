@@ -52,7 +52,6 @@ def test_collect_derivatives_raw(base_ignore_list):
 
 def test_collect_derivatives_minimal(minimal_ignore_list):
     """Test collect_derivatives with a minimal-mode dataset."""
-
     data_dir = get_test_data_path()
 
     derivatives_dataset = Path(data_dir) / 'ds000005-fmriprep'
@@ -90,7 +89,6 @@ def test_collect_derivatives_minimal(minimal_ignore_list):
 
 def test_collect_derivatives_full(full_ignore_list):
     """Test collect_derivatives with a full-mode dataset."""
-
     data_dir = get_test_data_path()
 
     derivatives_dataset = Path(data_dir) / 'ds000005-fmriprep'
