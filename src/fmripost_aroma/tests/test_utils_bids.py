@@ -76,7 +76,9 @@ def test_collect_derivatives_minimal(minimal_ignore_list):
     expected = {
         'bold_std': None,
         'bold_mask_std': None,
-        'bold_mask': 'sub-01_task-mixedgamblestask_run-01_desc-brain_mask.nii.gz',
+        # TODO: Add bold_mask to the dataset
+        # 'bold_mask': 'sub-01_task-mixedgamblestask_run-01_desc-brain_mask.nii.gz',
+        'bold_mask': None,
         'confounds': None,
         'hmc': (
             'sub-01_task-mixedgamblestask_run-01_from-orig_to-boldref_mode-image_desc-hmc_xfm.txt'
