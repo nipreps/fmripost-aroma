@@ -62,6 +62,7 @@ def collect_derivatives(
     fieldmap_id: str | None,
     spec: dict | None = None,
     patterns: list[str] | None = None,
+    allow_multiple: bool = False,
 ) -> dict:
     """Gather existing derivatives and compose a cache.
 
@@ -79,6 +80,8 @@ def collect_derivatives(
         Specification dictionary.
     patterns : list[str] | None
         List of patterns to use for filtering.
+    allow_multiple : bool
+        Allow multiple files to be returned for a given query.
 
     Returns
     -------
@@ -113,6 +116,8 @@ def collect_derivatives(
             item = layout.get(return_type='filename', **query)
             if not item:
                 derivs_cache[k] = None
+            elif not allow_multiple and len(item) > 1:
+                raise ValueError(f'Multiple files found for {k}: {item}')
             else:
                 derivs_cache[k] = item[0] if len(item) == 1 else item
 
@@ -126,6 +131,8 @@ def collect_derivatives(
             item = layout.get(return_type='filename', **query)
             if not item:
                 derivs_cache[k] = None
+            elif not allow_multiple and len(item) > 1:
+                raise ValueError(f'Multiple files found for {k}: {item}')
             else:
                 derivs_cache[k] = item[0] if len(item) == 1 else item
 
@@ -139,10 +146,11 @@ def collect_derivatives(
         for k, q in spec['raw'].items():
             # Combine entities with query. Query values override file entities.
             query = {**entities, **q}
-            print(query)
             item = raw_layout.get(return_type='filename', **query)
             if not item:
                 derivs_cache[k] = None
+            elif not allow_multiple and len(item) > 1:
+                raise ValueError(f'Multiple files found for {k}: {item}')
             else:
                 derivs_cache[k] = item[0] if len(item) == 1 else item
 

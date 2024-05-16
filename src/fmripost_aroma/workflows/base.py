@@ -30,7 +30,6 @@ fMRIPost AROMA workflows
 """
 
 import sys
-import warnings
 from copy import deepcopy
 
 from nipype.pipeline import engine as pe
@@ -181,10 +180,22 @@ It is released under the [CC0]\
 
 """
 
-    subject_data = collect_derivatives(
-        derivatives_dataset=config.execution.layout,
-        entities=config.execution.bids_filters,
-    )
+    if config.workflow.derivatives:
+        # Raw dataset + derivatives dataset
+        subject_data = collect_derivatives(
+            raw_dataset=config.execution.layout,
+            entities=config.execution.bids_filters,
+            allow_multiple=True,
+        )
+    else:
+        # Derivatives dataset only
+        subject_data = collect_derivatives(
+            derivatives_dataset=config.execution.layout,
+            entities=config.execution.bids_filters,
+            allow_multiple=True,
+        )
+        # Patch standard-space BOLD files into 'bold' key
+        subject_data['bold'] = subject_data['bold_std']
 
     # Make sure we always go through these two checks
     if not subject_data['bold']:
@@ -281,6 +292,7 @@ Functional data postprocessing
                     collect_derivatives(
                         derivatives_dataset=deriv_dir,
                         entities=entities,
+                        allow_multiple=False,
                     ),
                 )
 
@@ -316,6 +328,7 @@ Functional data postprocessing
                 collect_derivatives(
                     derivatives_dataset=config.execution.layout,
                     entities=entities,
+                    allow_multiple=False,
                 ),
             )
             ica_aroma_wf.inputs.inputnode.bold_std = functional_cache['bold_std']

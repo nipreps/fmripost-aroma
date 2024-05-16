@@ -461,7 +461,7 @@ def update_dict(orig_dict, new_dict):
     updated_dict = orig_dict.copy()
     for key, value in new_dict.items():
         if (orig_dict.get(key) is not None) and (value is not None):
-            print(f"Updating {key} from {orig_dict[key]} to {value}")
+            print(f'Updating {key} from {orig_dict[key]} to {value}')
             updated_dict[key].update(value)
         elif value is not None:
             updated_dict[key] = value
