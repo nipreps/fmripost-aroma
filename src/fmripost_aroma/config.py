@@ -738,8 +738,8 @@ def init_spaces(checkpoint=True):
         spaces.checkpoint()
 
     # Add the default standard space if not already present (required by several sub-workflows)
-    if 'MNI152NLin2009cAsym' not in spaces.get_spaces(nonstandard=False, dim=(3,)):
-        spaces.add(Reference('MNI152NLin2009cAsym', {}))
+    if 'MNI152NLin6Asym' not in spaces.get_spaces(nonstandard=False, dim=(3,)):
+        spaces.add(Reference('MNI152NLin6Asym', {}))
 
     # Ensure user-defined spatial references for outputs are correctly parsed.
     # Certain options require normalization to a space not explicitly defined by users.
