@@ -29,9 +29,11 @@ fMRIPost AROMA workflows
 
 """
 
+import os
 import sys
 from copy import deepcopy
 
+import yaml
 from nipype.pipeline import engine as pe
 from packaging.version import Version
 
@@ -349,9 +351,22 @@ Functional data postprocessing
             ica_aroma_wf.inputs.inputnode.bold_mask_std = functional_cache['bold_mask_std']
             workflow.add_nodes([ica_aroma_wf])
 
+        config.loggers.workflow.info(
+            (
+                f"Collected run data for {os.path.basename(bold_file)}:\n"
+                f"{yaml.dump(functional_cache, default_flow_style=False, indent=4)}"
+            ),
+        )
+
         if config.workflow.dummy_scans is not None:
             skip_vols = config.workflow.dummy_scans
         else:
+            if not functional_cache['confounds']:
+                raise ValueError(
+                    'No confounds detected. '
+                    'Automatical dummy scan detection cannot be performed. '
+                    'Please set the `--dummy-scans` flag explicitly.'
+                )
             skip_vols = get_nss(functional_cache['confounds'])
 
         ica_aroma_wf.inputs.inputnode.confounds = functional_cache['confounds']

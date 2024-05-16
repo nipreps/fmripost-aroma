@@ -40,7 +40,6 @@ def build_workflow(config_file, retval):
     from fmriprep.utils.misc import check_deps
     from nireports.assembler.tools import generate_reports
     from niworkflows.utils.bids import collect_participants
-    from niworkflows.utils.misc import check_valid_fs_license
     from pkg_resources import resource_filename as pkgrf
 
     from fmripost_aroma import config
@@ -115,30 +114,6 @@ def build_workflow(config_file, retval):
     build_log.log(25, f"\n{' ' * 11}* ".join(init_msg))
 
     retval['workflow'] = init_fmripost_aroma_wf()
-
-    # Check for FS license after building the workflow
-    if not check_valid_fs_license():
-        from fmripost_aroma.utils.misc import fips_enabled
-
-        if fips_enabled():
-            build_log.critical(
-                """\
-ERROR: Federal Information Processing Standard (FIPS) mode is enabled on your system. \
-FreeSurfer (and thus fMRIPost-AROMA) cannot be used in FIPS mode. \
-Contact your system administrator for assistance."""
-            )
-        else:
-            build_log.critical(
-                """\
-ERROR: a valid license file is required for FreeSurfer to run. \
-fMRIPost-AROMA looked for an existing license file at several paths, in this order: \
-1) command line argument ``--fs-license-file``; \
-2) ``$FS_LICENSE`` environment variable; and \
-3) the ``$FREESURFER_HOME/license.txt`` path. \
-Get it (for free) by registering at https://surfer.nmr.mgh.harvard.edu/registration.html"""
-            )
-        retval['return_code'] = 126  # 126 == Command invoked cannot execute.
-        return retval
 
     # Check workflow for missing commands
     missing = check_deps(retval['workflow'])

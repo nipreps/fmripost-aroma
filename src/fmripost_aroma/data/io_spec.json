@@ -69,6 +69,8 @@
                     null
                 ],
                 "space": null,
+                "res": null,
+                "den": null,
                 "desc": "confounds",
                 "suffix": "timeseries",
                 "extension": [
