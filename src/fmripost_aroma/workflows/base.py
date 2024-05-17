@@ -143,7 +143,6 @@ def init_single_subject_wf(subject_id: str):
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
     from niworkflows.interfaces.bids import BIDSInfo
     from niworkflows.interfaces.nilearn import NILEARN_VERSION
-    from smriprep.workflows.outputs import init_template_iterator_wf
 
     from fmripost_aroma.interfaces.bids import DerivativesDataSink
     from fmripost_aroma.interfaces.reportlets import AboutSummary, SubjectSummary
@@ -277,19 +276,6 @@ Functional data postprocessing
 """
     workflow.__desc__ += func_pre_desc
 
-    template_iterator_wf = None
-    if config.workflow.denoise_method and spaces.cached.get_spaces(nonstandard=False, dim=(3,)):
-        template_iterator_wf = init_template_iterator_wf(
-            spaces=spaces,
-            sloppy=config.execution.sloppy,
-        )
-        workflow.connect([
-            (workflow, template_iterator_wf, [
-                ('outputnode.template', 'inputnode.template'),
-                ('outputnode.anat2std_xfm', 'inputnode.anat2std_xfm'),
-            ]),
-        ])  # fmt:skip
-
     for bold_file in subject_data['bold']:
         single_run_wf = init_single_run_wf(bold_file)
         workflow.add_nodes([single_run_wf])
@@ -301,7 +287,9 @@ def init_single_run_wf(bold_file):
     """Set up a single-run workflow for fMRIPost-AROMA."""
     from nipype.interfaces import utility as niu
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
+    from niworkflows.interfaces.utility import KeySelect
     from niworkflows.utils.spaces import Reference
+    from smriprep.workflows.outputs import init_template_iterator_wf
 
     from fmripost_aroma.utils.bids import collect_derivatives, extract_entities
     from fmripost_aroma.workflows.aroma import init_denoise_wf, init_ica_aroma_wf
@@ -408,55 +396,64 @@ def init_single_run_wf(bold_file):
     ica_aroma_wf.inputs.inputnode.confounds = functional_cache['confounds']
     ica_aroma_wf.inputs.inputnode.skip_vols = skip_vols
 
+    template_iterator_wf = None
     if config.workflow.denoise_method and spaces.get_spaces():
-        for space in spaces.get_nonstandard() + spaces.get_standard():
-            space_cache = niu.IdentityInterface(
-                fields=['bold', 'bold_mask'],
-                name=f'{str(space)}_cache',
+        template_iterator_wf = init_template_iterator_wf(
+            spaces=spaces,
+            sloppy=config.execution.sloppy,
+        )
+        template_iterator_wf.inputs.inputnode.anat2std_xfm = functional_cache[
+            'anat2outputspaces_xfm'
+        ]
+        if functional_cache['bold_outputspaces']:
+            # No transforms necessary
+            std_buffer = KeySelect(
+                bold=functional_cache['bold_outputspaces'],
+                bold_mask=functional_cache['bold_mask_outputspaces'],
+                keys=[str(space) for space in spaces.references],
             )
-            if f'bold_{str(space)}' in functional_cache:
-                space_cache.inputs['bold'] = functional_cache[f'bold_{str(space)}']
-                space_cache.inputs['bold_mask'] = functional_cache[f'bold_mask_{str(space)}']
-            else:
-                # Resample using available transforms
+        else:
+            # Warp native BOLD to requested output spaces
+            xfms = [
+                functional_cache['hmc'],
+                functional_cache['boldref2fmap'],
+                functional_cache['bold2anat'],
+            ]
+            all_xfms = niu.Merge(2)
+            all_xfms.inputs.in1 = xfms
+            workflow.connect([(template_iterator_wf, all_xfms, [('outputnode.anat2std', 'in2')])])
 
-                # With template_iterator I need to collect the forward and reverse transforms
-                # ahead of time (anat_fit_wf does this in fMRIPrep).
-                # I have the anat2std transforms from collect_derivatives.
-
-                # With nipreps/resampler, it will collect the transforms on the fly,
-                # but I already have those from the collect_derivatives calls.
-                # Is there a way to pass these transforms to nipreps/resampler?
-
-                # Plus, what will be easiest to extend to input data in different spaces?
-
-                # Warp each native-space BOLD run to requested output spaces
-                resample_to_space_wf = init_resample_volumetric_wf(
-                    bold_file=bold_file,
-                    functional_cache=functional_cache,
-                    name=_get_wf_name(bold_file, 'resample_'),
-                )
-                workflow.connect([
-                    (resample_to_space_wf, space_cache, [
-                        ('outputnode.bold_std', 'bold'),
-                        ('outputnode.bold_mask_std', 'bold_mask'),
-                    ]),
-                ])  # fmt:skip
-
-            # Now denoise the output-space BOLD data using ICA-AROMA
-            denoise_wf = init_denoise_wf(bold_file=bold_file)
-            denoise_wf.inputs.inputnode.skip_vols = skip_vols
-            denoise_wf.inputs.inputnode.spatial_reference = space
+            resample_std_wf = init_resample_volumetric_wf(
+                bold_file=bold_file,
+                precomputed=functional_cache,
+                name=_get_wf_name(bold_file, 'resample_std'),
+            )
             workflow.connect([
-                (space_cache, denoise_wf, [
-                    ('bold', 'inputnode.bold_file'),
-                    ('bold_mask', 'inputnode.bold_mask'),
-                ]),
-                (ica_aroma_wf, denoise_wf, [
-                    ('outputnode.mixing', 'inputnode.mixing'),
-                    ('outputnode.aroma_features', 'inputnode.classifications'),
+                (all_xfms, resample_std_wf, [('out', 'inputnode.transforms')]),
+                (resample_std_wf, std_buffer, [
+                    ('outputnode.bold_std', 'bold'),
+                    ('outputnode.bold_mask_std', 'bold_mask'),
                 ]),
             ])  # fmt:skip
+
+        # Now denoise the output-space BOLD data using ICA-AROMA
+        denoise_wf = init_denoise_wf(bold_file=bold_file)
+        denoise_wf.inputs.inputnode.skip_vols = skip_vols
+        workflow.connect([
+            (ica_aroma_wf, denoise_wf, [
+                ('outputnode.mixing', 'inputnode.mixing'),
+                ('outputnode.aroma_features', 'inputnode.classifications'),
+            ]),
+            (template_iterator_wf, denoise_wf, [
+                ('outputnode.space', 'inputnode.space'),
+                ('outputnode.cohort', 'inputnode.cohort'),
+                ('outputnode.resolution', 'inputnode.resolution'),
+            ]),
+            (std_buffer, denoise_wf, [
+                ('bold', 'inputnode.bold_file'),
+                ('bold_mask', 'inputnode.bold_mask'),
+            ]),
+        ])  # fmt:skip
 
     return workflow
 
