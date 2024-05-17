@@ -109,7 +109,7 @@ def init_ica_aroma_wf(
 
     from fmripost_aroma.interfaces.confounds import ICAConfounds
     from fmripost_aroma.interfaces.nilearn import MeanImage, MedianValue
-    from fmripost_aroma.interfaces.reportlets import ICAAROMARPT, MELODICRPT
+    from fmripost_aroma.interfaces.reportlets import ICAAROMARPT
 
     workflow = Workflow(name=_get_wf_name(bold_file, 'aroma'))
     workflow.__postdesc__ = f"""\
@@ -200,7 +200,7 @@ in the corresponding confounds file.
 
     # ICA with MELODIC
     melodic = pe.Node(
-        MELODICRPT(
+        fsl.MELODIC(
             no_bet=True,
             tr_sec=float(metadata['RepetitionTime']),
             mm_thresh=0.5,
@@ -213,20 +213,6 @@ in the corresponding confounds file.
         (inputnode, melodic, [('bold_mask_std', 'mask')]),
         (smooth, melodic, [('smoothed_file', 'in_files')]),
     ])  # fmt:skip
-
-    ds_report_melodic = pe.Node(
-        DerivativesDataSink(
-            base_directory=config.execution.fmripost_aroma_dir,
-            source_file=bold_file,
-            datatype='figures',
-            desc='melodic',
-            dismiss_entities=('echo', 'den', 'res'),
-        ),
-        name='ds_report_melodic',
-        run_without_submitting=True,
-        mem_gb=config.DEFAULT_MEMORY_MIN_GB,
-    )
-    workflow.connect([(melodic, ds_report_melodic, [('out_report', 'in_file')])])
 
     select_melodic_files = pe.Node(
         niu.Function(
