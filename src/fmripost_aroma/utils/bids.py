@@ -146,6 +146,8 @@ def collect_derivatives(
 
     # Search for requested output spaces
     if spaces is not None:
+        # Put the output-space files/transforms in lists so they can be parallelized with
+        # template_iterator_wf.
         spaces_found, bold_outputspaces, bold_mask_outputspaces = [], [], []
         for space in spaces.references:
             # First try to find processed BOLD+mask files in the requested space
@@ -179,9 +181,7 @@ def collect_derivatives(
             # First try to find processed BOLD+mask files in the requested space
             anat2space_query = {**entities, **spec['transforms']['anat2mni152nlin6asym']}
             anat2space_query['to'] = space.space
-            print(anat2space_query)
             item = layout.get(return_type='filename', **anat2space_query)
-            print(item)
             anat2outputspaces_xfm.append(item[0] if item else None)
             spaces_found.append(bool(item))
 

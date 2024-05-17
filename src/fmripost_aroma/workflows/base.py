@@ -407,6 +407,23 @@ def init_single_run_wf(bold_file):
         template_iterator_wf.inputs.inputnode.anat2std_xfm = functional_cache[
             'anat2outputspaces_xfm'
         ]
+
+        # Now denoise the output-space BOLD data using ICA-AROMA
+        denoise_wf = init_denoise_wf(bold_file=bold_file)
+        denoise_wf.inputs.inputnode.skip_vols = skip_vols
+
+        workflow.connect([
+            (ica_aroma_wf, denoise_wf, [
+                ('outputnode.mixing', 'inputnode.mixing'),
+                ('outputnode.aroma_features', 'inputnode.classifications'),
+            ]),
+            (template_iterator_wf, denoise_wf, [
+                ('outputnode.space', 'inputnode.space'),
+                ('outputnode.cohort', 'inputnode.cohort'),
+                ('outputnode.resolution', 'inputnode.resolution'),
+            ]),
+        ])  # fmt:skip
+
         if functional_cache['bold_outputspaces']:
             # No transforms necessary
             std_buffer = pe.Node(
@@ -418,6 +435,13 @@ def init_single_run_wf(bold_file):
             )
             std_buffer.inputs.bold = functional_cache['bold_outputspaces']
             std_buffer.inputs.bold_mask = functional_cache['bold_mask_outputspaces']
+            workflow.connect([
+                (template_iterator_wf, std_buffer, [('outputnode.space', 'key')]),
+                (std_buffer, denoise_wf, [
+                    ('bold', 'inputnode.bold_file'),
+                    ('bold_mask', 'inputnode.bold_mask'),
+                ]),
+            ])  # fmt:skip
         else:
             # Warp native BOLD to requested output spaces
             xfms = [
@@ -436,30 +460,11 @@ def init_single_run_wf(bold_file):
             )
             workflow.connect([
                 (all_xfms, resample_std_wf, [('out', 'inputnode.transforms')]),
-                (resample_std_wf, std_buffer, [
-                    ('outputnode.bold_std', 'bold'),
-                    ('outputnode.bold_mask_std', 'bold_mask'),
+                (resample_std_wf, denoise_wf, [
+                    ('outputnode.bold_std', 'inputnode.bold'),
+                    ('outputnode.bold_mask_std', 'inputnode.bold_mask'),
                 ]),
             ])  # fmt:skip
-
-        # Now denoise the output-space BOLD data using ICA-AROMA
-        denoise_wf = init_denoise_wf(bold_file=bold_file)
-        denoise_wf.inputs.inputnode.skip_vols = skip_vols
-        workflow.connect([
-            (ica_aroma_wf, denoise_wf, [
-                ('outputnode.mixing', 'inputnode.mixing'),
-                ('outputnode.aroma_features', 'inputnode.classifications'),
-            ]),
-            (template_iterator_wf, denoise_wf, [
-                ('outputnode.space', 'inputnode.space'),
-                ('outputnode.cohort', 'inputnode.cohort'),
-                ('outputnode.resolution', 'inputnode.resolution'),
-            ]),
-            (std_buffer, denoise_wf, [
-                ('bold', 'inputnode.bold_file'),
-                ('bold_mask', 'inputnode.bold_mask'),
-            ]),
-        ])  # fmt:skip
 
     return workflow
 
