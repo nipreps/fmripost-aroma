@@ -42,7 +42,6 @@ from nipype.interfaces.base import (
 from nipype.interfaces.mixins import reporting
 from nireports.interfaces.reporting import base as nrb
 from niworkflows import NIWORKFLOWS_LOG
-from smriprep.interfaces.freesurfer import ReconAll
 
 SUBJECT_TEMPLATE = """\
 \t<ul class="elem-desc">
