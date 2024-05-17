@@ -409,11 +409,15 @@ def init_single_run_wf(bold_file):
         ]
         if functional_cache['bold_outputspaces']:
             # No transforms necessary
-            std_buffer = KeySelect(
-                bold=functional_cache['bold_outputspaces'],
-                bold_mask=functional_cache['bold_mask_outputspaces'],
-                keys=[str(space) for space in spaces.references],
+            std_buffer = pe.Node(
+                KeySelect(
+                    fields=['bold', 'bold_mask'],
+                    keys=[str(space) for space in spaces.references],
+                ),
+                name='std_buffer',
             )
+            std_buffer.inputs.bold = functional_cache['bold_outputspaces']
+            std_buffer.inputs.bold_mask = functional_cache['bold_mask_outputspaces']
         else:
             # Warp native BOLD to requested output spaces
             xfms = [
@@ -421,7 +425,7 @@ def init_single_run_wf(bold_file):
                 functional_cache['boldref2fmap'],
                 functional_cache['bold2anat'],
             ]
-            all_xfms = niu.Merge(2)
+            all_xfms = pe.Node(niu.Merge(2), name='all_xfms')
             all_xfms.inputs.in1 = xfms
             workflow.connect([(template_iterator_wf, all_xfms, [('outputnode.anat2std', 'in2')])])
 
