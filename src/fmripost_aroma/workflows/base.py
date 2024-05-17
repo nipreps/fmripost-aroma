@@ -398,7 +398,6 @@ def init_single_run_wf(bold_file):
     ica_aroma_wf.inputs.inputnode.confounds = functional_cache['confounds']
     ica_aroma_wf.inputs.inputnode.skip_vols = skip_vols
 
-    template_iterator_wf = None
     if config.workflow.denoise_method and spaces.get_spaces():
         template_iterator_wf = init_template_iterator_wf(
             spaces=spaces,
