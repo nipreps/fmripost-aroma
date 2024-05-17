@@ -398,7 +398,7 @@ def init_denoise_wf(bold_file):
                 'skip_vols',
                 'space',
                 'cohort',
-                'res',
+                'resolution',
             ],
         ),
         name='inputnode',
@@ -458,7 +458,7 @@ def init_denoise_wf(bold_file):
             (inputnode, ds_denoised, [
                 ('space', 'space'),
                 ('cohort', 'cohort'),
-                ('res', 'res'),
+                ('resolution', 'res'),
             ]),
             (add_non_steady_state, ds_denoised, [('bold_add', 'in_file')]),
         ])  # fmt:skip
