@@ -110,7 +110,11 @@
                 "run": null,
                 "from": ["anat", "T1w", "T2w"],
                 "to": "MNI152NLin6Asym",
+                "space": null,
+                "res": null,
+                "den": null,
                 "mode": "image",
+                "desc": null,
                 "suffix": "xfm",
                 "extension": ".h5"
             }

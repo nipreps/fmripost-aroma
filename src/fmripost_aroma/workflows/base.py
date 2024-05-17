@@ -344,8 +344,10 @@ def init_single_run_wf(bold_file):
             ),
         )
 
-    mni6_buffer = niu.IdentityInterface(
-        fields=['bold_mni152nlin6asym', 'bold_mask_mni152nlin6asym'],
+    mni6_buffer = pe.Node(
+        niu.IdentityInterface(
+            fields=['bold_mni152nlin6asym', 'bold_mask_mni152nlin6asym'],
+        ),
         name='mni6_buffer',
     )
     if 'bold_mni152nlin6asym' not in functional_cache:
