@@ -30,6 +30,7 @@ fMRIPost AROMA workflows
 """
 
 import os
+import sys
 from copy import deepcopy
 
 import yaml
@@ -140,11 +141,16 @@ def init_single_subject_wf(subject_id: str):
     """
     from bids.utils import listify
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
+    from niworkflows.interfaces.bids import BIDSInfo
     from niworkflows.interfaces.nilearn import NILEARN_VERSION
     from niworkflows.utils.spaces import Reference
 
+    from fmripost_aroma.interfaces.bids import DerivativesDataSink
+    from fmripost_aroma.interfaces.reportlets import AboutSummary, SubjectSummary
     from fmripost_aroma.utils.bids import collect_derivatives, extract_entities
     from fmripost_aroma.workflows.aroma import init_denoise_wf, init_ica_aroma_wf
+
+    spaces = config.workflow.spaces
 
     workflow = Workflow(name=f'sub_{subject_id}_wf')
     workflow.__desc__ = f"""
@@ -209,6 +215,56 @@ It is released under the [CC0]\
             "All workflows require BOLD images. "
             f"Please check your BIDS filters: {config.execution.bids_filters}."
         )
+
+    bids_info = pe.Node(
+        BIDSInfo(
+            bids_dir=config.execution.bids_dir,
+            bids_validate=False,
+            in_file=subject_data['bold'][0],
+        ),
+        name='bids_info',
+    )
+
+    summary = pe.Node(
+        SubjectSummary(
+            bold=subject_data['bold'],
+            std_spaces=spaces.get_spaces(nonstandard=False),
+            nstd_spaces=spaces.get_spaces(standard=False),
+        ),
+        name='summary',
+        run_without_submitting=True,
+    )
+    workflow.connect([(bids_info, summary, [('subject', 'subject_id')])])
+
+    about = pe.Node(
+        AboutSummary(version=config.environment.version, command=' '.join(sys.argv)),
+        name='about',
+        run_without_submitting=True,
+    )
+
+    ds_report_summary = pe.Node(
+        DerivativesDataSink(
+            source_file=subject_data['bold'][0],
+            base_directory=config.execution.fmripost_aroma_dir,
+            desc='summary',
+            datatype='figures',
+        ),
+        name='ds_report_summary',
+        run_without_submitting=True,
+    )
+    workflow.connect([(summary, ds_report_summary, [('out_report', 'in_file')])])
+
+    ds_report_about = pe.Node(
+        DerivativesDataSink(
+            source_file=subject_data['bold'][0],
+            base_directory=config.execution.fmripost_aroma_dir,
+            desc='about',
+            datatype='figures',
+        ),
+        name='ds_report_about',
+        run_without_submitting=True,
+    )
+    workflow.connect([(about, ds_report_about, [('out_report', 'in_file')])])
 
     # Append the functional section to the existing anatomical excerpt
     # That way we do not need to stream down the number of bold datasets
