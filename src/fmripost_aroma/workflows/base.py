@@ -143,12 +143,11 @@ def init_single_subject_wf(subject_id: str):
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
     from niworkflows.interfaces.bids import BIDSInfo
     from niworkflows.interfaces.nilearn import NILEARN_VERSION
-    from niworkflows.utils.spaces import Reference
+    from smriprep.workflows.outputs import init_template_iterator_wf
 
     from fmripost_aroma.interfaces.bids import DerivativesDataSink
     from fmripost_aroma.interfaces.reportlets import AboutSummary, SubjectSummary
-    from fmripost_aroma.utils.bids import collect_derivatives, extract_entities
-    from fmripost_aroma.workflows.aroma import init_denoise_wf, init_ica_aroma_wf
+    from fmripost_aroma.utils.bids import collect_derivatives
 
     spaces = config.workflow.spaces
 
@@ -191,6 +190,7 @@ It is released under the [CC0]\
             entities=config.execution.bids_filters,
             fieldmap_id=None,
             allow_multiple=True,
+            spaces=None,
         )
         subject_data['bold'] = listify(subject_data['bold_raw'])
     else:
@@ -202,9 +202,10 @@ It is released under the [CC0]\
             entities=config.execution.bids_filters,
             fieldmap_id=None,
             allow_multiple=True,
+            spaces=None,
         )
         # Patch standard-space BOLD files into 'bold' key
-        subject_data['bold'] = listify(subject_data['bold_std'])
+        subject_data['bold'] = listify(subject_data['bold_mni152nlin6asym'])
 
     # Make sure we always go through these two checks
     if not subject_data['bold']:
@@ -274,120 +275,190 @@ Functional data postprocessing
 : For each of the {len(subject_data['bold'])} BOLD runs found per subject
 (across all tasks and sessions), the following postprocessing was performed.
 """
+    workflow.__desc__ += func_pre_desc
+
+    template_iterator_wf = None
+    if config.workflow.denoise_method and spaces.cached.get_spaces(nonstandard=False, dim=(3,)):
+        template_iterator_wf = init_template_iterator_wf(
+            spaces=spaces,
+            sloppy=config.execution.sloppy,
+        )
+        workflow.connect([
+            (workflow, template_iterator_wf, [
+                ('outputnode.template', 'inputnode.template'),
+                ('outputnode.anat2std_xfm', 'inputnode.anat2std_xfm'),
+            ]),
+        ])  # fmt:skip
 
     for bold_file in subject_data['bold']:
-        bold_metadata = config.execution.layout.get_metadata(bold_file)
-        ica_aroma_wf = init_ica_aroma_wf(bold_file=bold_file, metadata=bold_metadata)
-        ica_aroma_wf.__desc__ = func_pre_desc + (ica_aroma_wf.__desc__ or '')
+        single_run_wf = init_single_run_wf(bold_file)
+        workflow.add_nodes([single_run_wf])
 
-        entities = extract_entities(bold_file)
+    return clean_datasinks(workflow)
 
-        functional_cache = {}
-        if config.execution.derivatives:
-            # Collect native-space derivatives and transforms
-            for deriv_dir in config.execution.derivatives.values():
-                functional_cache = update_dict(
-                    functional_cache,
-                    collect_derivatives(
-                        raw_dataset=None,
-                        derivatives_dataset=deriv_dir,
-                        entities=entities,
-                        fieldmap_id=None,
-                        allow_multiple=False,
-                    ),
-                )
 
-            if not functional_cache['confounds']:
-                if config.workflow.dummy_scans is None:
-                    raise ValueError(
-                        'No confounds detected. '
-                        'Automatical dummy scan detection cannot be performed. '
-                        'Please set the `--dummy-scans` flag explicitly.'
-                    )
+def init_single_run_wf(bold_file):
+    """Set up a single-run workflow for fMRIPost-AROMA."""
+    from nipype.interfaces import utility as niu
+    from niworkflows.engine.workflows import LiterateWorkflow as Workflow
+    from niworkflows.utils.spaces import Reference
 
-                # TODO: Calculate motion parameters from motion correction transform
-                raise ValueError('Motion parameters cannot be extracted from transforms yet.')
+    from fmripost_aroma.utils.bids import collect_derivatives, extract_entities
+    from fmripost_aroma.workflows.aroma import init_denoise_wf, init_ica_aroma_wf
 
-            # Resample to MNI152NLin6Asym:res-2, for ICA-AROMA classification
-            resample_raw_wf = init_resample_volumetric_wf(
-                bold_file=bold_file,
-                precomputed=functional_cache,
-                space=Reference.from_string('MNI152NLin6Asym:res-2')[0],
-                name=_get_wf_name(bold_file, 'resample_raw'),
-            )
-            resample_raw_wf.inputs.inputnode.bold_file = bold_file
-            workflow.connect([
-                (resample_raw_wf, ica_aroma_wf, [
-                    ('outputnode.bold_std', 'inputnode.bold_std'),
-                    ('outputnode.bold_mask_std', 'inputnode.bold_mask_std'),
-                ]),
-            ])  # fmt:skip
-        else:
-            # Collect MNI152NLin6Asym:res-2 derivatives
-            # Only derivatives dataset was passed in, so we expected standard-space derivatives
-            functional_cache.update(
+    spaces = config.workflow.spaces
+
+    workflow = Workflow(name=_get_wf_name(bold_file, 'single_run'))
+
+    bold_metadata = config.execution.layout.get_metadata(bold_file)
+    ica_aroma_wf = init_ica_aroma_wf(bold_file=bold_file, metadata=bold_metadata)
+
+    entities = extract_entities(bold_file)
+
+    functional_cache = {}
+    if config.execution.derivatives:
+        # Collect native-space derivatives and transforms
+        for deriv_dir in config.execution.derivatives.values():
+            functional_cache = update_dict(
+                functional_cache,
                 collect_derivatives(
                     raw_dataset=None,
-                    derivatives_dataset=config.execution.layout,
+                    derivatives_dataset=deriv_dir,
                     entities=entities,
                     fieldmap_id=None,
                     allow_multiple=False,
+                    spaces=spaces,
                 ),
             )
-            ica_aroma_wf.inputs.inputnode.bold_std = functional_cache['bold_std']
-            ica_aroma_wf.inputs.inputnode.bold_mask_std = functional_cache['bold_mask_std']
-            workflow.add_nodes([ica_aroma_wf])
 
-        config.loggers.workflow.info(
-            (
-                f'Collected run data for {os.path.basename(bold_file)}:\n'
-                f'{yaml.dump(functional_cache, default_flow_style=False, indent=4)}'
-            ),
-        )
-
-        if config.workflow.dummy_scans is not None:
-            skip_vols = config.workflow.dummy_scans
-        else:
-            if not functional_cache['confounds']:
+        if not functional_cache['confounds']:
+            if config.workflow.dummy_scans is None:
                 raise ValueError(
                     'No confounds detected. '
                     'Automatical dummy scan detection cannot be performed. '
                     'Please set the `--dummy-scans` flag explicitly.'
                 )
-            skip_vols = get_nss(functional_cache['confounds'])
 
-        ica_aroma_wf.inputs.inputnode.confounds = functional_cache['confounds']
-        ica_aroma_wf.inputs.inputnode.skip_vols = skip_vols
+            # TODO: Calculate motion parameters from motion correction transform
+            raise ValueError('Motion parameters cannot be extracted from transforms yet.')
 
-        if config.workflow.denoise_method:
-            # for space in spaces:
-            #     # Warp each BOLD run to requested output spaces
-            #     resample_to_space_wf = init_resample_volumetric_wf(
-            #         bold_file=bold_file,
-            #         functional_cache=functional_cache,
-            #         space=space,
-            #         name=_get_wf_name(bold_file, f'resample_{space}'),
-            #     )
+    else:
+        # Collect MNI152NLin6Asym:res-2 derivatives
+        # Only derivatives dataset was passed in, so we expected standard-space derivatives
+        functional_cache.update(
+            collect_derivatives(
+                raw_dataset=None,
+                derivatives_dataset=config.execution.layout,
+                entities=entities,
+                fieldmap_id=None,
+                allow_multiple=False,
+                spaces=spaces,
+            ),
+        )
+
+    mni6_buffer = niu.IdentityInterface(
+        fields=['bold_mni152nlin6asym', 'bold_mask_mni152nlin6asym'],
+        name='mni6_buffer',
+    )
+    if 'bold_mni152nlin6asym' not in functional_cache:
+        # Resample to MNI152NLin6Asym:res-2, for ICA-AROMA classification
+        resample_raw_wf = init_resample_volumetric_wf(
+            bold_file=bold_file,
+            precomputed=functional_cache,
+            space=Reference.from_string('MNI152NLin6Asym:res-2')[0],
+            name=_get_wf_name(bold_file, 'resample_raw'),
+        )
+        workflow.connect([
+            (resample_raw_wf, mni6_buffer, [
+                ('outputnode.bold_std', 'inputnode.bold_mni152nlin6asym'),
+                ('outputnode.bold_mask_std', 'inputnode.bold_mask_mni152nlin6asym'),
+            ]),
+        ])  # fmt:skip
+    else:
+        mni6_buffer.inputs.bold_mni152nlin6asym = functional_cache['bold_mni152nlin6asym']
+        mni6_buffer.inputs.bold_mask_mni152nlin6asym = functional_cache[
+            'bold_mask_mni152nlin6asym'
+        ]
+
+    workflow.connect([
+        (mni6_buffer, ica_aroma_wf, [
+            ('bold_mni152nlin6asym', 'inputnode.bold_std'),
+            ('bold_mask_mni152nlin6asym', 'inputnode.bold_mask_std'),
+        ]),
+    ])  # fmt:skip
+
+    config.loggers.workflow.info(
+        (
+            f'Collected run data for {os.path.basename(bold_file)}:\n'
+            f'{yaml.dump(functional_cache, default_flow_style=False, indent=4)}'
+        ),
+    )
+
+    if config.workflow.dummy_scans is not None:
+        skip_vols = config.workflow.dummy_scans
+    else:
+        if not functional_cache['confounds']:
+            raise ValueError(
+                'No confounds detected. '
+                'Automatical dummy scan detection cannot be performed. '
+                'Please set the `--dummy-scans` flag explicitly.'
+            )
+        skip_vols = get_nss(functional_cache['confounds'])
+
+    ica_aroma_wf.inputs.inputnode.confounds = functional_cache['confounds']
+    ica_aroma_wf.inputs.inputnode.skip_vols = skip_vols
+
+    if config.workflow.denoise_method and spaces.get_spaces():
+        for space in spaces.get_nonstandard() + spaces.get_standard():
+            space_cache = niu.IdentityInterface(
+                fields=['bold', 'bold_mask'],
+                name=f'{str(space)}_cache',
+            )
+            if f'bold_{str(space)}' in functional_cache:
+                space_cache.inputs['bold'] = functional_cache[f'bold_{str(space)}']
+                space_cache.inputs['bold_mask'] = functional_cache[f'bold_mask_{str(space)}']
+            else:
+                # Resample using available transforms
+
+                # With template_iterator I need to collect the forward and reverse transforms
+                # ahead of time (anat_fit_wf does this in fMRIPrep).
+                # I have the anat2std transforms from collect_derivatives.
+
+                # With nipreps/resampler, it will collect the transforms on the fly,
+                # but I already have those from the collect_derivatives calls.
+                # Is there a way to pass these transforms to nipreps/resampler?
+
+                # Plus, what will be easiest to extend to input data in different spaces?
+
+                # Warp each native-space BOLD run to requested output spaces
+                resample_to_space_wf = init_resample_volumetric_wf(
+                    bold_file=bold_file,
+                    functional_cache=functional_cache,
+                    name=_get_wf_name(bold_file, 'resample_'),
+                )
+                workflow.connect([
+                    (resample_to_space_wf, space_cache, [
+                        ('outputnode.bold_std', 'bold'),
+                        ('outputnode.bold_mask_std', 'bold_mask'),
+                    ]),
+                ])  # fmt:skip
 
             # Now denoise the output-space BOLD data using ICA-AROMA
             denoise_wf = init_denoise_wf(bold_file=bold_file)
             denoise_wf.inputs.inputnode.skip_vols = skip_vols
-            denoise_wf.inputs.inputnode.bold_file = functional_cache['bold_std']
-            denoise_wf.inputs.inputnode.bold_mask = functional_cache['bold_mask_std']
-            denoise_wf.inputs.inputnode.spatial_reference = 'MNI152NLin6Asym'
+            denoise_wf.inputs.inputnode.spatial_reference = space
             workflow.connect([
-                # (resample_to_space_wf, denoise_wf, [
-                #     ('bold_std', 'inputnode.bold_file'),
-                #     ('bold_mask_std', 'inputnode.bold_mask'),
-                #     ('spatial_reference', 'inputnode.spatial_reference'),
-                # ]),
+                (space_cache, denoise_wf, [
+                    ('bold', 'inputnode.bold_file'),
+                    ('bold_mask', 'inputnode.bold_mask'),
+                ]),
                 (ica_aroma_wf, denoise_wf, [
                     ('outputnode.mixing', 'inputnode.mixing'),
                     ('outputnode.aroma_features', 'inputnode.classifications'),
                 ]),
             ])  # fmt:skip
 
-    return clean_datasinks(workflow)
+    return workflow
 
 
 def _prefix(subid):

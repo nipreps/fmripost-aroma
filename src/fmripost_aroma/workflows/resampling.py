@@ -11,7 +11,7 @@ def init_resample_volumetric_wf(
     run_stc,
     name='resample_volumetric_wf',
 ):
-    """Resample raw BOLD data to requested volumetric space space.
+    """Resample raw BOLD data to requested volumetric space.
 
     Parameters
     ----------
@@ -38,7 +38,7 @@ def init_resample_volumetric_wf(
         name='inputnode',
     )
     inputnode.inputs.bold_file = bold_file
-    inputnode.inputs.mask_file = functional_cache['bold_mask']
+    inputnode.inputs.mask_file = functional_cache['bold_mask_native']
 
     outputnode = pe.Node(
         niu.IdentityInterface(fields=['bold_std', 'bold_mask_std']),
@@ -71,7 +71,7 @@ def init_resample_volumetric_wf(
     ])  # fmt:skip
 
     resample_bold_mask = pe.Node(
-        Resampler(space='MNI152NLin6Asym', resolution='2'),
+        Resampler(space=space.space, **space.spec),
         name='resample_bold_mask',
     )
     workflow.connect([

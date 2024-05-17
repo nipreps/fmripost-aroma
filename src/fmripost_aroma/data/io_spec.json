@@ -16,13 +16,14 @@
             }
         },
         "derivatives": {
-            "bold_std": {
+            "bold_mni152nlin6asym": {
                 "datatype": "func",
                 "echo": null,
                 "part": [
                     "mag",
                     null
                 ],
+                "res": "2",
                 "space": "MNI152NLin6Asym",
                 "desc": "preproc",
                 "suffix": "bold",
@@ -31,13 +32,14 @@
                     ".nii"
                 ]
             },
-            "bold_mask_std": {
+            "bold_mask_mni152nlin6asym": {
                 "datatype": "func",
                 "echo": null,
                 "part": [
                     "mag",
                     null
                 ],
+                "res": "2",
                 "space": "MNI152NLin6Asym",
                 "desc": "brain",
                 "suffix": "mask",
@@ -46,7 +48,7 @@
                     ".nii"
                 ]
             },
-            "bold_mask": {
+            "bold_mask_native": {
                 "datatype": "func",
                 "echo": null,
                 "part": [
