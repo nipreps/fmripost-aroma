@@ -20,7 +20,7 @@ Structure)` format, and it must include at least one T1w structural image and
 We highly recommend that you validate your dataset with the free, online
 `BIDS Validator <https://bids-standard.github.io/bids-validator/>`_.
 
-The exact command to run *fMRIPRep* depends on the Installation_ method.
+The exact command to run *fMRIPost-AROMA* depends on the Installation_ method.
 The common parts of the command follow the `BIDS-Apps
 <https://github.com/BIDS-Apps>`_ definition.
 Example: ::
@@ -39,91 +39,17 @@ Command-Line Arguments
    :nodefault:
    :nodefaultconst:
 
-
-.. _fs_license:
-
-The FreeSurfer license
-----------------------
-*fMRIPRep* uses FreeSurfer tools, which require a license to run.
-
-To obtain a FreeSurfer license, simply register for free at
-https://surfer.nmr.mgh.harvard.edu/registration.html.
-
-When using manually-prepared environments or singularity, FreeSurfer will search
-for a license key file first using the ``$FS_LICENSE`` environment variable and then
-in the default path to the license key file (``$FREESURFER_HOME/license.txt``).
-If using the ``--cleanenv`` flag and ``$FS_LICENSE`` is set, use ``--fs-license-file $FS_LICENSE``
-to pass the license file location to *fMRIPRep*.
-
-It is possible to run the docker container pointing the image to a local path
-where a valid license file is stored.
-For example, if the license is stored in the ``$HOME/.licenses/freesurfer/license.txt``
-file on the host system: ::
-
-    $ docker run -ti --rm \
-        -v $HOME/fullds005:/data:ro \
-        -v $HOME/dockerout:/out \
-        -v $HOME/.licenses/freesurfer/license.txt:/opt/freesurfer/license.txt \
-        nipreps/fmripost_aroma:latest \
-        /data /out/out \
-        participant \
-        --ignore fieldmaps
-
 .. _prev_derivs:
 
 Reusing precomputed derivatives
 -------------------------------
 
 Reusing a previous, partial execution of *fMRIPost-AROMA*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 *fMRIPost-AROMA* will pick up where it left off a previous execution, so long as the work directory
 points to the same location, and this directory has not been changed/manipulated.
 Some workflow nodes will rerun unconditionally, so there will always be some amount of
 reprocessing.
-
-Using a previous run of *FreeSurfer*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*fMRIPost-AROMA* will automatically reuse previous runs of *FreeSurfer* if a subject directory
-named ``freesurfer/`` is found in the output directory (``<output_dir>/freesurfer``).
-Reconstructions for each participant will be checked for completeness, and any missing
-components will be recomputed.
-You can use the ``--fs-subjects-dir`` flag to specify a different location to save
-FreeSurfer outputs.
-If precomputed results are found, they will be reused.
-
-BIDS Derivatives reuse
-~~~~~~~~~~~~~~~~~~~~~~
-As of version 23.2.0, *fMRIPost-AROMA* can reuse precomputed derivatives that follow BIDS Derivatives
-conventions. To provide derivatives to *fMRIPost-AROMA*, use the ``--derivatives`` (``-d``) flag one
-or more times.
-
-This mechanism replaces the earlier, more limited ``--anat-derivatives`` flag.
-
-.. note::
-   Derivatives reuse is considered *experimental*.
-
-This feature has several intended use-cases:
-
-  * To enable fMRIPost-AROMA to be run in a "minimal" mode, where only the most essential
-    derivatives are generated. This can be useful for large datasets where disk space
-    is a concern, or for users who only need a subset of the derivatives. Further
-    derivatives may be generated later, or by a different tool.
-  * To enable fMRIPost-AROMA to be integrated into a larger processing pipeline, where
-    other tools may generate derivatives that fMRIPost-AROMA can use in place of its own
-    steps.
-  * To enable users to substitute their own custom derivatives for those generated
-    by fMRIPost-AROMA. For example, a user may wish to use a different brain extraction
-    tool, or a different registration tool, and then use fMRIPost-AROMA to generate the
-    remaining derivatives.
-  * To enable complicated meta-workflows, where fMRIPost-AROMA is run multiple times
-    with different options, and the results are combined. For example, the
-    `My Connectome <https://openneuro.org/datasets/ds000031/>`__ dataset contains
-    107 sessions for a single-subject. Processing of all sessions simultaneously
-    would be impractical, but the anatomical processing can be done once, and
-    then the functional processing can be done separately for each session.
-
-See also the ``--level`` flag, which can be used to control which derivatives are
-generated.
 
 Troubleshooting
 ---------------
@@ -139,14 +65,14 @@ The documentation of this project is found here: https://fmripost_aroma.org/en/l
 All bugs, concerns and enhancement requests for this software can be submitted here:
 https://github.com/nipreps/fmripost_aroma/issues.
 
-If you have a problem or would like to ask a question about how to use *fMRIPRep*,
+If you have a problem or would like to ask a question about how to use *fMRIPost-AROMA*,
 please submit a question to `NeuroStars.org <https://neurostars.org/tag/fmripost_aroma>`_ with an ``fmripost_aroma`` tag.
 NeuroStars.org is a platform similar to StackOverflow but dedicated to neuroinformatics.
 
-Previous questions about *fMRIPRep* are available here:
+Previous questions about *fMRIPost-AROMA* are available here:
 https://neurostars.org/tag/fmripost_aroma/
 
-To participate in the *fMRIPRep* development-related discussions please use the
+To participate in the *fMRIPost-AROMA* development-related discussions please use the
 following mailing list: https://mail.python.org/mailman/listinfo/neuroimaging
 Please add *[fmripost_aroma]* to the subject line when posting on the mailing list.
 
