@@ -74,11 +74,11 @@ def test_collect_derivatives_minimal(minimal_ignore_list):
         patterns=None,
     )
     expected = {
-        'bold_std': None,
-        'bold_mask_std': None,
-        # TODO: Add bold_mask to the dataset
-        # 'bold_mask': 'sub-01_task-mixedgamblestask_run-01_desc-brain_mask.nii.gz',
-        'bold_mask': None,
+        'bold_mni152nlin6asym': None,
+        'bold_mask_mni152nlin6asym': None,
+        # TODO: Add bold_mask_native to the dataset
+        # 'bold_mask_native': 'sub-01_task-mixedgamblestask_run-01_desc-brain_mask.nii.gz',
+        'bold_mask_native': None,
         'confounds': None,
         'hmc': (
             'sub-01_task-mixedgamblestask_run-01_from-orig_to-boldref_mode-image_desc-hmc_xfm.txt'
@@ -113,15 +113,15 @@ def test_collect_derivatives_full(full_ignore_list):
         patterns=None,
     )
     expected = {
-        'bold_std': (
+        'bold_mni152nlin6asym': (
             'sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_res-2_desc-preproc_'
             'bold.nii.gz'
         ),
-        'bold_mask_std': (
+        'bold_mask_mni152nlin6asym': (
             'sub-01_task-mixedgamblestask_run-01_space-MNI152NLin6Asym_res-2_desc-brain_'
             'mask.nii.gz'
         ),
-        'bold_mask': None,
+        'bold_mask_native': None,
         'confounds': 'sub-01_task-mixedgamblestask_run-01_desc-confounds_timeseries.tsv',
         'hmc': (
             'sub-01_task-mixedgamblestask_run-01_from-orig_to-boldref_mode-image_desc-hmc_xfm.txt'
