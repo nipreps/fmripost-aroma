@@ -27,7 +27,6 @@ import re
 import time
 from collections import Counter
 
-from nipype.interfaces import fsl
 from nipype.interfaces.base import (
     BaseInterfaceInputSpec,
     Directory,
@@ -39,9 +38,6 @@ from nipype.interfaces.base import (
     isdefined,
     traits,
 )
-from nipype.interfaces.mixins import reporting
-from nireports.interfaces.reporting import base as nrb
-from niworkflows import NIWORKFLOWS_LOG
 
 SUBJECT_TEMPLATE = """\
 \t<ul class="elem-desc">
