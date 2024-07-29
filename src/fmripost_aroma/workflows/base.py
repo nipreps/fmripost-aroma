@@ -399,6 +399,7 @@ def init_single_run_wf(bold_file):
     ica_aroma_wf.inputs.inputnode.skip_vols = skip_vols
 
     if config.workflow.denoise_method and spaces.get_spaces():
+        templates = spaces.get_spaces()
         template_iterator_wf = init_template_iterator_wf(
             spaces=spaces,
             sloppy=config.execution.sloppy,
@@ -406,6 +407,7 @@ def init_single_run_wf(bold_file):
         template_iterator_wf.inputs.inputnode.anat2std_xfm = functional_cache[
             'anat2outputspaces_xfm'
         ]
+        template_iterator_wf.inputs.inputnode.template = templates
 
         # Now denoise the output-space BOLD data using ICA-AROMA
         denoise_wf = init_denoise_wf(bold_file=bold_file)
