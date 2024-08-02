@@ -453,14 +453,22 @@ def init_single_run_wf(bold_file):
             ]
             all_xfms = pe.Node(niu.Merge(2), name='all_xfms')
             all_xfms.inputs.in1 = xfms
-            workflow.connect([(template_iterator_wf, all_xfms, [('outputnode.anat2std', 'in2')])])
+            workflow.connect([
+                (template_iterator_wf, all_xfms, [('outputnode.anat2std_xfm', 'in2')]),
+            ])  # fmt:skip
 
             resample_std_wf = init_resample_volumetric_wf(
                 bold_file=bold_file,
-                precomputed=functional_cache,
+                functional_cache=functional_cache,
+                run_stc=False,
                 name=_get_wf_name(bold_file, 'resample_std'),
             )
             workflow.connect([
+                (template_iterator_wf, resample_std_wf, [
+                    ('outputnode.space', 'inputnode.space'),
+                    ('outputnode.resolution', 'inputnode.resolution'),
+                    ('outputnode.cohort', 'inputnode.cohort'),
+                ]),
                 (all_xfms, resample_std_wf, [('out', 'inputnode.transforms')]),
                 (resample_std_wf, denoise_wf, [
                     ('outputnode.bold_std', 'inputnode.bold'),

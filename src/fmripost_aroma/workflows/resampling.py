@@ -7,7 +7,6 @@ from nipype.pipeline import engine as pe
 def init_resample_volumetric_wf(
     bold_file,
     functional_cache,
-    space,
     run_stc,
     name='resample_volumetric_wf',
 ):
@@ -19,8 +18,6 @@ def init_resample_volumetric_wf(
         Path to BOLD file.
     functional_cache : dict
         Dictionary with paths to functional data.
-    space : niworkflows.utils.spaces.Reference
-        Spatial reference.
     run_stc : bool
         Whether to run STC.
     name : str
@@ -34,7 +31,16 @@ def init_resample_volumetric_wf(
     workflow = Workflow(name=name)
 
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=['bold_file', 'mask_file']),
+        niu.IdentityInterface(
+            fields=[
+                'bold_file',
+                'mask_file',
+                'space',
+                'resolution',
+                'cohort',
+                'transforms',
+            ],
+        ),
         name='inputnode',
     )
     inputnode.inputs.bold_file = bold_file
@@ -62,19 +68,27 @@ def init_resample_volumetric_wf(
         workflow.connect([(inputnode, stc_buffer, [('bold_file', 'bold_file')])])
 
     resample_bold = pe.Node(
-        Resampler(space=space.space, **space.spec),
+        Resampler(),
         name='resample_bold',
     )
     workflow.connect([
+        (inputnode, resample_bold, [
+            ('space', 'space'),
+            ('resolution', 'resolution'),
+        ]),
         (stc_buffer, resample_bold, [('outputnode.bold_file', 'bold_file')]),
         (resample_bold, outputnode, [('output_file', 'bold_std')]),
     ])  # fmt:skip
 
     resample_bold_mask = pe.Node(
-        Resampler(space=space.space, **space.spec),
+        Resampler(),
         name='resample_bold_mask',
     )
     workflow.connect([
+        (inputnode, resample_bold_mask, [
+            ('space', 'space'),
+            ('resolution', 'resolution'),
+        ]),
         (inputnode, resample_bold_mask, [('mask_file', 'bold_file')]),
         (resample_bold_mask, outputnode, [('output_file', 'bold_mask_std')]),
     ])  # fmt:skip
