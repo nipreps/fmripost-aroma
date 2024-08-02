@@ -31,6 +31,7 @@ fMRIPost AROMA workflows
 
 import os
 import sys
+from collections import defaultdict
 from copy import deepcopy
 
 import yaml
@@ -303,7 +304,7 @@ def init_single_run_wf(bold_file):
 
     entities = extract_entities(bold_file)
 
-    functional_cache = {}
+    functional_cache = defaultdict(list, {})
     if config.execution.derivatives:
         # Collect native-space derivatives and transforms
         for deriv_dir in config.execution.derivatives.values():
