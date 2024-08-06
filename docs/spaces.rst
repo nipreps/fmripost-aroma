@@ -2,6 +2,10 @@
 
 .. _output-spaces:
 
+.. warning::
+   Output spaces are not currently supported.
+   fMRIPost-AROMA currently only generates denoised data in MNI152NLin6Asym space.
+
 Defining standard and nonstandard spaces where data will be resampled
 =====================================================================
 The command line interface of *fMRIPost-AROMA* allows resampling the preprocessed data
