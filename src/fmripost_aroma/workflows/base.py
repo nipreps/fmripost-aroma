@@ -399,7 +399,26 @@ def init_single_run_wf(bold_file):
     ica_aroma_wf.inputs.inputnode.confounds = functional_cache['confounds']
     ica_aroma_wf.inputs.inputnode.skip_vols = skip_vols
 
-    if config.workflow.denoise_method and spaces.get_spaces():
+    if config.workflow.denoise_method:
+        # Now denoise the output-space BOLD data using ICA-AROMA
+        denoise_wf = init_denoise_wf(bold_file=bold_file)
+        denoise_wf.inputs.inputnode.skip_vols = skip_vols
+        denoise_wf.inputs.inputnode.space = 'MNI152NLin6Asym'
+        denoise_wf.inputs.inputnode.resolution = '2'
+
+        workflow.connect([
+            (mni6_buffer, denoise_wf, [
+                ('bold_mni152nlin6asym', 'inputnode.bold_file'),
+                ('bold_mask_mni152nlin6asym', 'inputnode.bold_mask'),
+            ]),
+            (ica_aroma_wf, denoise_wf, [
+                ('outputnode.mixing', 'inputnode.mixing'),
+                ('outputnode.aroma_features', 'inputnode.classifications'),
+            ]),
+        ])  # fmt:skip
+
+    # Skip this for now
+    if config.workflow.denoise_method and spaces.get_spaces() and False:
         templates = spaces.get_spaces()
         template_iterator_wf = init_template_iterator_wf(
             spaces=spaces,
@@ -411,15 +430,15 @@ def init_single_run_wf(bold_file):
         template_iterator_wf.inputs.inputnode.template = templates
 
         # Now denoise the output-space BOLD data using ICA-AROMA
-        denoise_wf = init_denoise_wf(bold_file=bold_file)
-        denoise_wf.inputs.inputnode.skip_vols = skip_vols
+        denoise_std_wf = init_denoise_wf(bold_file=bold_file)
+        denoise_std_wf.inputs.inputnode.skip_vols = skip_vols
 
         workflow.connect([
-            (ica_aroma_wf, denoise_wf, [
+            (ica_aroma_wf, denoise_std_wf, [
                 ('outputnode.mixing', 'inputnode.mixing'),
                 ('outputnode.aroma_features', 'inputnode.classifications'),
             ]),
-            (template_iterator_wf, denoise_wf, [
+            (template_iterator_wf, denoise_std_wf, [
                 ('outputnode.space', 'inputnode.space'),
                 ('outputnode.cohort', 'inputnode.cohort'),
                 ('outputnode.resolution', 'inputnode.resolution'),
@@ -439,7 +458,7 @@ def init_single_run_wf(bold_file):
             std_buffer.inputs.bold_mask = functional_cache['bold_mask_outputspaces']
             workflow.connect([
                 (template_iterator_wf, std_buffer, [('outputnode.space', 'key')]),
-                (std_buffer, denoise_wf, [
+                (std_buffer, denoise_std_wf, [
                     ('bold', 'inputnode.bold_file'),
                     ('bold_mask', 'inputnode.bold_mask'),
                 ]),
@@ -470,7 +489,7 @@ def init_single_run_wf(bold_file):
                     ('outputnode.cohort', 'inputnode.cohort'),
                 ]),
                 (all_xfms, resample_std_wf, [('out', 'inputnode.transforms')]),
-                (resample_std_wf, denoise_wf, [
+                (resample_std_wf, denoise_std_wf, [
                     ('outputnode.bold_std', 'inputnode.bold'),
                     ('outputnode.bold_mask_std', 'inputnode.bold_mask'),
                 ]),
