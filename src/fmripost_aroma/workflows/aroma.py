@@ -382,7 +382,9 @@ def init_denoise_wf(bold_file):
                 'mixing',
                 'classifications',
                 'skip_vols',
-                'spatial_reference',
+                'space',
+                'cohort',
+                'resolution',
             ],
         ),
         name='inputnode',
@@ -430,15 +432,20 @@ def init_denoise_wf(bold_file):
             DerivativesDataSink(
                 base_directory=config.execution.fmripost_aroma_dir,
                 source_file=bold_file,
+                datatype='func',
                 desc=f'{denoise_method}Denoised',
+                suffix='bold',
             ),
             name=f'ds_denoised_{denoise_method}',
             run_without_submitting=True,
             mem_gb=config.DEFAULT_MEMORY_MIN_GB,
         )
         workflow.connect([
-            # spatial_reference needs to be parsed into space, cohort, res, den, etc.
-            (inputnode, ds_denoised, [('spatial_reference', 'space')]),
+            (inputnode, ds_denoised, [
+                ('space', 'space'),
+                ('cohort', 'cohort'),
+                ('resolution', 'res'),
+            ]),
             (add_non_steady_state, ds_denoised, [('bold_add', 'in_file')]),
         ])  # fmt:skip
 

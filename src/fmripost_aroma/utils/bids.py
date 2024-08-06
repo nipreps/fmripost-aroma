@@ -8,6 +8,7 @@ from pathlib import Path
 
 from bids.layout import BIDSLayout
 from bids.utils import listify
+from niworkflows.utils.spaces import SpatialReferences
 
 from fmripost_aroma.data import load as load_data
 
@@ -63,8 +64,11 @@ def collect_derivatives(
     spec: dict | None = None,
     patterns: list[str] | None = None,
     allow_multiple: bool = False,
+    spaces: SpatialReferences | None = None,
 ) -> dict:
     """Gather existing derivatives and compose a cache.
+
+    TODO: Ingress 'spaces' and search for BOLD+mask in the spaces *or* xfms.
 
     Parameters
     ----------
@@ -82,6 +86,8 @@ def collect_derivatives(
         List of patterns to use for filtering.
     allow_multiple : bool
         Allow multiple files to be returned for a given query.
+    spaces : SpatialReferences | None
+        Spatial references to select for.
 
     Returns
     -------
@@ -138,6 +144,57 @@ def collect_derivatives(
             else:
                 derivs_cache[k] = item[0] if len(item) == 1 else item
 
+    # Search for requested output spaces
+    if spaces is not None:
+        # Put the output-space files/transforms in lists so they can be parallelized with
+        # template_iterator_wf.
+        spaces_found, bold_outputspaces, bold_mask_outputspaces = [], [], []
+        for space in spaces.references:
+            # First try to find processed BOLD+mask files in the requested space
+            bold_query = {**entities, **spec['derivatives']['bold_mni152nlin6asym']}
+            bold_query['space'] = space.space
+            bold_query = {**bold_query, **space.spec}
+            bold_item = layout.get(return_type='filename', **bold_query)
+            bold_outputspaces.append(bold_item[0] if bold_item else None)
+
+            mask_query = {**entities, **spec['derivatives']['bold_mask_mni152nlin6asym']}
+            mask_query['space'] = space.space
+            mask_query = {**mask_query, **space.spec}
+            mask_item = layout.get(return_type='filename', **mask_query)
+            bold_mask_outputspaces.append(mask_item[0] if mask_item else None)
+
+            spaces_found.append(bool(bold_item) and bool(mask_item))
+
+        if all(spaces_found):
+            derivs_cache['bold_outputspaces'] = bold_outputspaces
+            derivs_cache['bold_mask_outputspaces'] = bold_mask_outputspaces
+        else:
+            # The requested spaces were not found, try to find transforms
+            print(
+                'Not all requested output spaces were found. '
+                'We will try to find transforms to these spaces and apply them to the BOLD data.',
+                flush=True,
+            )
+
+        spaces_found, anat2outputspaces_xfm = [], []
+        for space in spaces.references:
+            # First try to find processed BOLD+mask files in the requested space
+            anat2space_query = {**entities, **spec['transforms']['anat2mni152nlin6asym']}
+            anat2space_query['to'] = space.space
+            item = layout.get(return_type='filename', **anat2space_query)
+            anat2outputspaces_xfm.append(item[0] if item else None)
+            spaces_found.append(bool(item))
+
+        if all(spaces_found):
+            derivs_cache['anat2outputspaces_xfm'] = anat2outputspaces_xfm
+        else:
+            missing_spaces = ', '.join(
+                [s.space for s, found in zip(spaces.references, spaces_found) if not found]
+            )
+            raise ValueError(
+                f'Transforms to the following requested spaces not found: {missing_spaces}.'
+            )
+
     # Search for raw BOLD data
     if not derivs_cache and raw_dataset is not None:
         if isinstance(raw_dataset, Path):
@@ -157,47 +214,6 @@ def collect_derivatives(
                 derivs_cache[k] = item[0] if len(item) == 1 else item
 
     return derivs_cache
-
-
-def collect_derivatives_old(
-    layout,
-    subject_id,
-    task_id=None,
-    bids_filters=None,
-):
-    """Collect preprocessing derivatives."""
-    subj_data = {
-        'bold_raw': '',
-        'bold_boldref': '',
-        'bold_MNI152NLin6': '',
-    }
-    query = {
-        'bold': {
-            'space': 'MNI152NLin6Asym',
-            'res': 2,
-            'desc': 'preproc',
-            'suffix': 'bold',
-            'extension': ['.nii', '.nii.gz'],
-        }
-    }
-    subj_data = layout.get(subject=subject_id, **query)
-    return subj_data
-
-
-def collect_run_data(
-    layout,
-    bold_file,
-):
-    """Collect files and metadata related to a given BOLD file."""
-    queries = {}
-    run_data = {
-        'mask': {'desc': 'brain', 'suffix': 'mask', 'extension': ['.nii', '.nii.gz']},
-        'confounds': {'desc': 'confounds', 'suffix': 'timeseries', 'extension': '.tsv'},
-    }
-    for k, v in queries.items():
-        run_data[k] = layout.get_nearest(bold_file, **v)
-
-    return run_data
 
 
 def write_bidsignore(deriv_dir):

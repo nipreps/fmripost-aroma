@@ -16,13 +16,14 @@
             }
         },
         "derivatives": {
-            "bold_std": {
+            "bold_mni152nlin6asym": {
                 "datatype": "func",
                 "echo": null,
                 "part": [
                     "mag",
                     null
                 ],
+                "res": "2",
                 "space": "MNI152NLin6Asym",
                 "desc": "preproc",
                 "suffix": "bold",
@@ -31,13 +32,14 @@
                     ".nii"
                 ]
             },
-            "bold_mask_std": {
+            "bold_mask_mni152nlin6asym": {
                 "datatype": "func",
                 "echo": null,
                 "part": [
                     "mag",
                     null
                 ],
+                "res": "2",
                 "space": "MNI152NLin6Asym",
                 "desc": "brain",
                 "suffix": "mask",
@@ -46,7 +48,7 @@
                     ".nii"
                 ]
             },
-            "bold_mask": {
+            "bold_mask_native": {
                 "datatype": "func",
                 "echo": null,
                 "part": [
@@ -108,7 +110,11 @@
                 "run": null,
                 "from": ["anat", "T1w", "T2w"],
                 "to": "MNI152NLin6Asym",
+                "space": null,
+                "res": null,
+                "den": null,
                 "mode": "image",
+                "desc": null,
                 "suffix": "xfm",
                 "extension": ".h5"
             }
@@ -145,6 +151,6 @@
         "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}][_part-{part}][_desc-{desc}]_{suffix<timeseries>}.{extension<tsv|json>}",
         "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_space-{space}][_res-{resolution}][_den-{density}][_hemi-{hemi}][_label-{label}][_desc-{desc}]_{suffix<|boldref|dseg|mask>}.{extension<dtseries.nii|dtseries.json>}",
         "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}]_from-{from}_to-{to}_mode-{mode<image|points>|image}_{suffix<xfm>|xfm}.{extension<txt|h5>}",
-        "sub-{subject}[/ses-{session}]/{datatype<func|figures>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_res-{resolution}][_echo-{echo}][_part-{part}][_space-{space}][_stat-{statistic}][_desc-{desc}]_{suffix<components|mixing|bold>}.{extension<svg>|svg}"
+        "sub-{subject}[/ses-{session}]/{datatype<func|figures>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_res-{resolution}][_echo-{echo}][_part-{part}][_space-{space}][_stat-{statistic}][_desc-{desc}]_{suffix<components|mixing|bold>}.{extension<svg|html>|svg}"
     ]
 }

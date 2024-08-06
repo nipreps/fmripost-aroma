@@ -5,28 +5,32 @@
 ---------------------------
 Outputs of *fMRIPost-AROMA*
 ---------------------------
+
 *fMRIPost-AROMA* outputs conform to the :abbr:`BIDS (brain imaging data structure)`
 Derivatives specification (see `BIDS Derivatives`_, along with the
 upcoming `BEP 011`_ and `BEP 012`_).
 *fMRIPost-AROMA* generates three broad classes of outcomes:
 
-1. **Visual QA (quality assessment) reports**:
-   one :abbr:`HTML (hypertext markup language)` per subject,
-   that allows the user a thorough visual assessment of the quality
-   of processing and ensures the transparency of *fMRIPost-AROMA* operation.
+1.  **Visual QA (quality assessment) reports**:
+    One :abbr:`HTML (hypertext markup language)` per subject,
+    that allows the user a thorough visual assessment of the quality
+    of processing and ensures the transparency of *fMRIPost-AROMA* operation.
 
-2. **ICA outputs**:
-   Outputs from the independent component analysis (ICA).
-   For example, the mixing matrix and component weight maps.
+2.  **ICA outputs**:
+    Outputs from the independent component analysis (ICA).
+    For example, the mixing matrix and component weight maps.
 
-3. **Derivatives (denoised data)** denoised fMRI data in the requested output spaces and resolutions.
+3.  **Derivatives (denoised data)**:
+    Denoised fMRI data in the requested output spaces and resolutions.
 
-4. **Confounds**:
-   Time series of ICA components, as well as labels indicating if the components are accepted or rejected.
+4.  **Confounds**:
+    Time series of ICA components,
+    as well as labels indicating if the components are accepted or rejected.
 
 
 Layout
 ------
+
 Assuming fMRIPost-AROMA is invoked with::
 
     fmripost_aroma <input_dir>/ <output_dir>/ participant [OPTIONS]
@@ -47,60 +51,69 @@ The log directory contains `citation boilerplate`_ text.
 ``dataset_description.json`` is a metadata file in which fMRIPost-AROMA
 records metadata recommended by the BIDS standard.
 
+
 Visual Reports
 --------------
-*fMRIPost-AROMA* outputs summary reports, written to ``<output dir>/fmripost_aroma/sub-<subject_label>.html``.
+
+*fMRIPost-AROMA* outputs summary reports,
+written to ``<output dir>/fmripost_aroma/sub-<label>.html``.
 These reports provide a quick way to make visual inspection of the results easy.
+
 
 Derivatives of *fMRIPost-AROMA* (denoised data)
 -----------------------------------------------
+
 Derivative data are written to
-``<output dir>/sub-<subject_label>/``.
+``<output dir>/sub-<label>/``.
 The `BIDS Derivatives`_ specification describes the naming and metadata conventions we follow.
+
 
 ICA derivatives
 ~~~~~~~~~~~~~~~
 
 ICA outputs are stored in the ``func/`` subfolder::
 
-  sub-<subject_label>/
+  sub-<label>/
     func/
-      sub-<subject_label>_space-<space_label>_desc-melodic_mixing.tsv
-      sub-<subject_label>_space-<space_label>_desc-melodic_mixing.json
-      sub-<subject_label>_space-<space_label>_desc-melodic_components.nii.gz
-      sub-<subject_label>_space-<space_label>_desc-melodic_components.json
+      sub-<label>_space-<label>_desc-melodic_mixing.tsv
+      sub-<label>_space-<label>_desc-melodic_mixing.json
+      sub-<label>_space-<label>_desc-melodic_components.nii.gz
+      sub-<label>_space-<label>_desc-melodic_components.json
+
 
 Functional derivatives
 ~~~~~~~~~~~~~~~~~~~~~~
+
 Functional derivatives are stored in the ``func/`` subfolder.
 All derivatives contain ``task-<task_label>`` (mandatory) and ``run-<run_index>`` (optional), and
 these will be indicated with ``[specifiers]``::
 
-  sub-<subject_label>/
+  sub-<label>/
     func/
-      sub-<subject_label>_[specifiers]_space-<space_label>_desc-brain_mask.nii.gz
-      sub-<subject_label>_[specifiers]_space-<space_label>_desc-aggrDenoised_bold.nii.gz
-      sub-<subject_label>_[specifiers]_space-<space_label>_desc-nonaggrDenoised_bold.nii.gz
-      sub-<subject_label>_[specifiers]_space-<space_label>_desc-orthaggrDenoised_bold.nii.gz
+      sub-<label>_[specifiers]_space-<label>_desc-brain_mask.nii.gz
+      sub-<label>_[specifiers]_space-<label>_desc-aggrDenoised_bold.nii.gz
+      sub-<label>_[specifiers]_space-<label>_desc-nonaggrDenoised_bold.nii.gz
+      sub-<label>_[specifiers]_space-<label>_desc-orthaggrDenoised_bold.nii.gz
 
 **Regularly gridded outputs (images)**.
-Volumetric output spaces labels (``<space_label>`` above, and in the following) include
-``T1w`` and ``MNI152NLin6Asym`` (default).
+Volumetric output spaces labels (``<label>`` above, and in the following) include
+``MNI152NLin6Asym`` (default).
 
 **Extracted confounding time series**.
 For each :abbr:`BOLD (blood-oxygen level dependent)` run processed with *fMRIPost-AROMA*,
 an accompanying *confounds* file will be generated.
 Confounds_ are saved as a :abbr:`TSV (tab-separated value)` file::
 
-  sub-<subject_label>/
+  sub-<label>/
     func/
-      sub-<subject_label>_[specifiers]_desc-aroma_metrics.tsv
-      sub-<subject_label>_[specifiers]_desc-aroma_metrics.json
-      sub-<subject_label>_[specifiers]_desc-confounds_timeseries.tsv
-      sub-<subject_label>_[specifiers]_desc-confounds_timeseries.json
+      sub-<label>_[specifiers]_desc-aroma_metrics.tsv
+      sub-<label>_[specifiers]_desc-aroma_metrics.json
+      sub-<label>_[specifiers]_desc-confounds_timeseries.tsv
+      sub-<label>_[specifiers]_desc-confounds_timeseries.json
 
 Confounds
 ---------
+
 *fMRIPost-AROMA* outputs a set of confounds that can be used to denoise the data.
 These are stored in a TSV file (``desc-confounds_timeseries.tsv``) and a JSON file
 (``desc-confounds_timeseries.json``) that contains metadata about the confounds.
@@ -110,6 +123,7 @@ which may be labeled as "accepted" or "rejected" based on the ICA-AROMA classifi
 
 Confounds and "carpet"-plot on the visual reports
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The visual reports provide several sections per task and run to aid designing
 a denoising strategy for subsequent analysis.
 Some of the estimated confounds are plotted with a "carpet" visualization of the
