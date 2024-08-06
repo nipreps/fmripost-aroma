@@ -38,8 +38,7 @@ def main():
 
     from fmripost_aroma.cli.parser import parse_args
     from fmripost_aroma.cli.workflow import build_workflow
-    from fmripost_aroma.utils.bids import (write_bidsignore,
-                                           write_derivative_description)
+    from fmripost_aroma.utils.bids import write_bidsignore, write_derivative_description
 
     parse_args()
 

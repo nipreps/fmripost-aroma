@@ -4,8 +4,13 @@ import os
 
 import numpy as np
 import pandas as pd
-from nipype.interfaces.base import (BaseInterfaceInputSpec, File,
-                                    SimpleInterface, TraitedSpec, traits)
+from nipype.interfaces.base import (
+    BaseInterfaceInputSpec,
+    File,
+    SimpleInterface,
+    TraitedSpec,
+    traits,
+)
 from scipy import stats
 
 from fmripost_aroma import config

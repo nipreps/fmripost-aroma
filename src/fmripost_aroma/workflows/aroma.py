@@ -109,8 +109,7 @@ def init_ica_aroma_wf(
 
     from fmripost_aroma.interfaces.confounds import ICAConfounds
     from fmripost_aroma.interfaces.nilearn import MeanImage, MedianValue
-    from fmripost_aroma.interfaces.reportlets import (ICAAROMARPT,
-                                                      ICAAROMAMetricsRPT)
+    from fmripost_aroma.interfaces.reportlets import ICAAROMAMetricsRPT, ICAAROMARPT
     from fmripost_aroma.utils.utils import _convert_to_tsv
 
     workflow = Workflow(name=_get_wf_name(bold_file, 'aroma'))

@@ -27,9 +27,17 @@ import re
 import time
 from collections import Counter
 
-from nipype.interfaces.base import (BaseInterfaceInputSpec, Directory, File,
-                                    InputMultiObject, SimpleInterface, Str,
-                                    TraitedSpec, isdefined, traits)
+from nipype.interfaces.base import (
+    BaseInterfaceInputSpec,
+    Directory,
+    File,
+    InputMultiObject,
+    SimpleInterface,
+    Str,
+    TraitedSpec,
+    isdefined,
+    traits,
+)
 
 SUBJECT_TEMPLATE = """\
 \t<ul class="elem-desc">

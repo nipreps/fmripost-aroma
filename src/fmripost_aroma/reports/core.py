@@ -22,9 +22,8 @@
 #
 from pathlib import Path
 
-from nireports.assembler.report import Report
-
 from fmripost_aroma import config, data
+from nireports.assembler.report import Report
 
 
 def run_reports(
