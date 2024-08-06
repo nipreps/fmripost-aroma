@@ -109,7 +109,8 @@ def init_ica_aroma_wf(
 
     from fmripost_aroma.interfaces.confounds import ICAConfounds
     from fmripost_aroma.interfaces.nilearn import MeanImage, MedianValue
-    from fmripost_aroma.interfaces.reportlets import ICAAROMARPT
+    from fmripost_aroma.interfaces.reportlets import ICAAROMAMetricsRPT, ICAAROMARPT
+    from fmripost_aroma.utils.utils import _convert_to_tsv
 
     workflow = Workflow(name=_get_wf_name(bold_file, 'aroma'))
     workflow.__postdesc__ = f"""\
@@ -245,7 +246,7 @@ in the corresponding confounds file.
         ]),
     ])  # fmt:skip
 
-    # Generate reportlet
+    # Generate reportlets
     aroma_rpt = pe.Node(
         ICAAROMARPT(),
         name='aroma_rpt',
@@ -304,6 +305,12 @@ in the corresponding confounds file.
     )
     workflow.connect([(select_melodic_files, ds_components, [('component_maps', 'in_file')])])
 
+    convert_to_tsv = pe.Node(
+        niu.Function(function=_convert_to_tsv, output_names=['out_file']),
+        name='convert_to_tsv',
+    )
+    workflow.connect([(select_melodic_files, convert_to_tsv, [('mixing', 'in_file')])])
+
     ds_mixing = pe.Node(
         DerivativesDataSink(
             base_directory=config.execution.fmripost_aroma_dir,
@@ -318,7 +325,7 @@ in the corresponding confounds file.
         run_without_submitting=True,
         mem_gb=config.DEFAULT_MEMORY_MIN_GB,
     )
-    workflow.connect([(select_melodic_files, ds_mixing, [('mixing', 'in_file')])])
+    workflow.connect([(convert_to_tsv, ds_mixing, [('out_file', 'in_file')])])
 
     ds_aroma_features = pe.Node(
         DerivativesDataSink(
@@ -358,6 +365,26 @@ in the corresponding confounds file.
     workflow.connect([
         (ica_aroma_confound_extraction, ds_aroma_confounds, [('aroma_confounds', 'in_file')]),
     ])  # fmt:skip
+
+    metrics_rpt = pe.Node(
+        ICAAROMAMetricsRPT(),
+        name='metrics_rpt',
+    )
+    workflow.connect([(ica_aroma, metrics_rpt, [('aroma_features', 'aroma_features')])])
+
+    ds_report_metrics = pe.Node(
+        DerivativesDataSink(
+            base_directory=config.execution.fmripost_aroma_dir,
+            source_file=bold_file,
+            datatype='figures',
+            desc='metrics',
+            dismiss_entities=('echo', 'den', 'res'),
+        ),
+        name='ds_report_metrics',
+        run_without_submitting=True,
+        mem_gb=config.DEFAULT_MEMORY_MIN_GB,
+    )
+    workflow.connect([(metrics_rpt, ds_report_metrics, [('out_report', 'in_file')])])
 
     return workflow
 

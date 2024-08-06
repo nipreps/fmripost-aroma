@@ -10,6 +10,7 @@ sections:
   - bids: {datatype: figures, desc: summary, suffix: bold}
   - bids: {datatype: figures, desc: validation, suffix: bold}
   - bids: {datatype: figures, desc: aroma, suffix: bold}
+  - bids: {datatype: figures, desc: metrics, suffix: bold}
   - bids: {datatype: figures, desc: coreg, suffix: bold}
     caption: This panel shows the alignment of the reference EPI (BOLD) image to the
       anatomical (T1-weighted) image.
