@@ -417,7 +417,8 @@ def init_single_run_wf(bold_file):
             ]),
         ])  # fmt:skip
 
-    if config.workflow.denoise_method and spaces.get_spaces():
+    # Skip this for now
+    if config.workflow.denoise_method and spaces.get_spaces() and False:
         templates = spaces.get_spaces()
         template_iterator_wf = init_template_iterator_wf(
             spaces=spaces,
