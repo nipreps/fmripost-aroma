@@ -36,7 +36,7 @@ def init_resample_volumetric_wf(
                 'bold_file',
                 'mask_file',
                 'space',
-                'resolution',
+                'res',
                 'cohort',
                 'transforms',
             ],
@@ -74,7 +74,7 @@ def init_resample_volumetric_wf(
     workflow.connect([
         (inputnode, resample_bold, [
             ('space', 'space'),
-            ('resolution', 'resolution'),
+            ('res', 'res'),
         ]),
         (stc_buffer, resample_bold, [('outputnode.bold_file', 'bold_file')]),
         (resample_bold, outputnode, [('output_file', 'bold_std')]),
@@ -87,7 +87,7 @@ def init_resample_volumetric_wf(
     workflow.connect([
         (inputnode, resample_bold_mask, [
             ('space', 'space'),
-            ('resolution', 'resolution'),
+            ('res', 'res'),
         ]),
         (inputnode, resample_bold_mask, [('mask_file', 'bold_file')]),
         (resample_bold_mask, outputnode, [('output_file', 'bold_mask_std')]),
