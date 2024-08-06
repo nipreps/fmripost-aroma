@@ -459,6 +459,7 @@ def init_denoise_wf(bold_file):
             DerivativesDataSink(
                 base_directory=config.execution.fmripost_aroma_dir,
                 source_file=bold_file,
+                compress=True,
                 datatype='func',
                 desc=f'{denoise_method}Denoised',
                 suffix='bold',
