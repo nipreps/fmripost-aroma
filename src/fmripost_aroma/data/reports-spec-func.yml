@@ -1,5 +1,5 @@
 package: fmripost-aroma
-title: Visual report for participant '{subject}' - fMRIPost-AROMA
+title: Functional report for participant '{subject}' - fMRIPost-AROMA
 sections:
 - name: Summary
   reportlets:
