@@ -1,16 +1,35 @@
 {
   "title": "fMRIPost-AROMA: a robust preprocessing pipeline for functional MRI",
   "description": "<p>fMRIPost-AROMA is a robust and easy-to-use pipeline for running ICA-AROMA on preprocessed fMRI data organized in BIDS format.</p>",
-  "creators": [
+  "contributors": [
     {
-      "affiliation": "Department of Psychology, Stanford University",
-      "name": "Markiewicz, Christopher J.",
-      "orcid": "0000-0002-6533-164X"
+      "affiliation": "Lausanne University Hospital and University of Lausanne, Lausanne, Switzerland",
+      "name": "Esteban, Oscar",
+      "orcid": "0000-0001-8435-6191"
     },
+    {
+      "name": "Ferrer, Vicente"
+    },
+    {
+      "name": "Uruñuela, Eneko"
+    },
+    {
+      "name": "Pedregosa, Fabian"
+    },
+    {
+      "name": "Caballero Gaudes, Cesar"
+    }
+  ],
+  "creators": [
     {
       "affiliation": "Department of Psychology, Florida International University",
       "name": "Salo, Taylor",
       "orcid": "0000-0001-9813-3167"
+    },
+    {
+      "affiliation": "Department of Psychology, Stanford University",
+      "name": "Markiewicz, Christopher J.",
+      "orcid": "0000-0002-6533-164X"
     }
   ],
   "keywords": [
