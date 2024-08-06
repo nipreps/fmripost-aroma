@@ -1,0 +1,6 @@
+package: fmripost-aroma
+title: Anatomical report for participant '{subject}' - fMRIPost-AROMA
+sections:
+- name: Summary
+  reportlets:
+  - bids: {datatype: figures, desc: summary, suffix: bold}

@@ -11,6 +11,12 @@ import pandas as pd
 from nilearn import masking
 from nilearn._utils import load_niimg
 
+# Define criteria needed for classification (thresholds and
+# hyperplane-parameters)
+THR_CSF = 0.10
+THR_HFC = 0.35
+HYPERPLANE = np.array([-19.9751070082159, 9.95127547670627, 24.8333160239175])
+
 LGR = logging.getLogger(__name__)
 
 
@@ -58,12 +64,6 @@ def classification(features_df: pd.DataFrame):
     clf_df
     clf_metadata
     """
-    # Define criteria needed for classification (thresholds and
-    # hyperplane-parameters)
-    THR_CSF = 0.10
-    THR_HFC = 0.35
-    HYPERPLANE = np.array([-19.9751070082159, 9.95127547670627, 24.8333160239175])
-
     clf_metadata = {
         'classification': {
             'LongName': 'Component classification',
@@ -467,3 +467,26 @@ def update_dict(orig_dict, new_dict):
             updated_dict[key] = value
 
     return updated_dict
+
+
+def _convert_to_tsv(in_file):
+    """Convert a file to TSV format.
+
+    Parameters
+    ----------
+    in_file : str
+        Input file.
+
+    Returns
+    -------
+    out_file : str
+        Output file.
+    """
+    import os
+
+    import numpy as np
+
+    out_file = os.path.abspath('out_file.tsv')
+    arr = np.loadtxt(in_file)
+    np.savetxt(out_file, arr, delimiter='\t')
+    return out_file
