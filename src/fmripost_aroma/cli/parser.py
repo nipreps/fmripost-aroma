@@ -37,10 +37,11 @@ def _build_parser(**kwargs):
     from functools import partial
     from pathlib import Path
 
-    from niworkflows.utils.spaces import OutputReferencesAction
     from packaging.version import Version
 
     from fmripost_aroma.cli.version import check_latest, is_flagged
+
+    # from niworkflows.utils.spaces import OutputReferencesAction
 
     class ToDict(Action):
         def __call__(self, parser, namespace, values, option_string=None):
