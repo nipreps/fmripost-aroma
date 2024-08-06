@@ -315,7 +315,7 @@ in the corresponding confounds file.
             base_directory=config.execution.fmripost_aroma_dir,
             source_file=bold_file,
             datatype='func',
-            resolution='2',
+            res='2',
             desc='melodic',
             suffix='mixing',
             extension='tsv',
@@ -410,7 +410,7 @@ def init_denoise_wf(bold_file):
                 'skip_vols',
                 'space',
                 'cohort',
-                'resolution',
+                'res',
             ],
         ),
         name='inputnode',
@@ -471,7 +471,7 @@ def init_denoise_wf(bold_file):
             (inputnode, ds_denoised, [
                 ('space', 'space'),
                 ('cohort', 'cohort'),
-                ('resolution', 'resolution'),
+                ('res', 'res'),
             ]),
             (add_non_steady_state, ds_denoised, [('bold_add', 'in_file')]),
         ])  # fmt:skip

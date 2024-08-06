@@ -404,7 +404,7 @@ def init_single_run_wf(bold_file):
         denoise_wf = init_denoise_wf(bold_file=bold_file)
         denoise_wf.inputs.inputnode.skip_vols = skip_vols
         denoise_wf.inputs.inputnode.space = 'MNI152NLin6Asym'
-        denoise_wf.inputs.inputnode.resolution = '2'
+        denoise_wf.inputs.inputnode.res = '2'
 
         workflow.connect([
             (mni6_buffer, denoise_wf, [
@@ -441,7 +441,7 @@ def init_single_run_wf(bold_file):
             (template_iterator_wf, denoise_std_wf, [
                 ('outputnode.space', 'inputnode.space'),
                 ('outputnode.cohort', 'inputnode.cohort'),
-                ('outputnode.resolution', 'inputnode.resolution'),
+                ('outputnode.res', 'inputnode.res'),
             ]),
         ])  # fmt:skip
 
@@ -485,7 +485,7 @@ def init_single_run_wf(bold_file):
             workflow.connect([
                 (template_iterator_wf, resample_std_wf, [
                     ('outputnode.space', 'inputnode.space'),
-                    ('outputnode.resolution', 'inputnode.resolution'),
+                    ('outputnode.res', 'inputnode.res'),
                     ('outputnode.cohort', 'inputnode.cohort'),
                 ]),
                 (all_xfms, resample_std_wf, [('out', 'inputnode.transforms')]),
