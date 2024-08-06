@@ -5,13 +5,8 @@ import os
 import nibabel as nb
 import numpy as np
 import pandas as pd
-from nipype.interfaces.base import (
-    BaseInterfaceInputSpec,
-    File,
-    SimpleInterface,
-    TraitedSpec,
-    traits,
-)
+from nipype.interfaces.base import (BaseInterfaceInputSpec, File,
+                                    SimpleInterface, TraitedSpec, traits)
 
 from fmripost_aroma import config
 from fmripost_aroma.utils import features, utils

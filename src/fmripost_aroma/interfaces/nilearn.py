@@ -3,13 +3,8 @@
 import os
 
 import numpy as np
-from nipype.interfaces.base import (
-    BaseInterfaceInputSpec,
-    File,
-    SimpleInterface,
-    TraitedSpec,
-    traits,
-)
+from nipype.interfaces.base import (BaseInterfaceInputSpec, File,
+                                    SimpleInterface, TraitedSpec, traits)
 from nipype.interfaces.nilearn import NilearnBaseInterface
 
 

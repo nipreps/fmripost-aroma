@@ -28,8 +28,9 @@ from contextlib import contextmanager
 from pathlib import Path
 from tempfile import mkdtemp
 
-from fmripost_aroma.data import load as load_data
 from toml import loads
+
+from fmripost_aroma.data import load as load_data
 
 
 @contextmanager

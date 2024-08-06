@@ -146,7 +146,8 @@ def init_single_subject_wf(subject_id: str):
     from niworkflows.interfaces.nilearn import NILEARN_VERSION
 
     from fmripost_aroma.interfaces.bids import DerivativesDataSink
-    from fmripost_aroma.interfaces.reportlets import AboutSummary, SubjectSummary
+    from fmripost_aroma.interfaces.reportlets import (AboutSummary,
+                                                      SubjectSummary)
     from fmripost_aroma.utils.bids import collect_derivatives
 
     spaces = config.workflow.spaces
@@ -293,7 +294,8 @@ def init_single_run_wf(bold_file):
     from smriprep.workflows.outputs import init_template_iterator_wf
 
     from fmripost_aroma.utils.bids import collect_derivatives, extract_entities
-    from fmripost_aroma.workflows.aroma import init_denoise_wf, init_ica_aroma_wf
+    from fmripost_aroma.workflows.aroma import (init_denoise_wf,
+                                                init_ica_aroma_wf)
 
     spaces = config.workflow.spaces
 

@@ -1,7 +1,8 @@
 """Tests for fmripost_aroma.workflows."""
 
-from fmripost_aroma import config
 from fmriprep.workflows.tests import mock_config
+
+from fmripost_aroma import config
 
 
 def test_init_ica_aroma_wf(tmp_path_factory):

@@ -3,7 +3,8 @@
 from json import loads
 
 from bids.layout import Config
-from niworkflows.interfaces.bids import DerivativesDataSink as BaseDerivativesDataSink
+from niworkflows.interfaces.bids import \
+    DerivativesDataSink as BaseDerivativesDataSink
 
 from fmripost_aroma.data import load as load_data
 
