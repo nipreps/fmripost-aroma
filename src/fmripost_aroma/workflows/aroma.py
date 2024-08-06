@@ -471,7 +471,7 @@ def init_denoise_wf(bold_file):
             (inputnode, ds_denoised, [
                 ('space', 'space'),
                 ('cohort', 'cohort'),
-                ('resolution', 'res'),
+                ('resolution', 'resolution'),
             ]),
             (add_non_steady_state, ds_denoised, [('bold_add', 'in_file')]),
         ])  # fmt:skip
@@ -497,7 +497,7 @@ def _remove_volumes(bold_file, skip_vols):
     if skip_vols == 0:
         return bold_file
 
-    out = fname_presuffix(bold_file, suffix='_cut', newpath=os.getcwd())
+    out = fname_presuffix(bold_file, prefix='cut_', newpath=os.getcwd())
     bold_img = nb.load(bold_file)
     bold_img.__class__(
         bold_img.dataobj[..., skip_vols:], bold_img.affine, bold_img.header
@@ -507,6 +507,8 @@ def _remove_volumes(bold_file, skip_vols):
 
 def _add_volumes(bold_file, bold_cut_file, skip_vols):
     """Prepend skip_vols from bold_file onto bold_cut_file."""
+    import os
+
     import nibabel as nb
     import numpy as np
     from nipype.utils.filemanip import fname_presuffix
@@ -519,7 +521,7 @@ def _add_volumes(bold_file, bold_cut_file, skip_vols):
 
     bold_data = np.concatenate((bold_img.dataobj[..., :skip_vols], bold_cut_img.dataobj), axis=3)
 
-    out = fname_presuffix(bold_cut_file, suffix='_addnonsteady')
+    out = fname_presuffix(bold_cut_file, prefix='addnonsteady_', newpath=os.getcwd())
     bold_img.__class__(bold_data, bold_img.affine, bold_img.header).to_filename(out)
     return out
 
