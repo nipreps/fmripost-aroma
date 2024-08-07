@@ -9,10 +9,7 @@ from gzip import GzipFile
 from io import BytesIO
 from pathlib import Path
 
-import nibabel as nb
-import numpy as np
 import requests
-from bids.layout import BIDSLayout
 from nipype import logging
 
 LOGGER = logging.getLogger('nipype.utils')
@@ -77,13 +74,13 @@ def check_generated_files(output_dir, output_list_file):
     # Ignore logs
     found_files = [f for f in found_files if 'log' not in f.split(os.path.sep)]
 
-    with open(output_list_file, 'r') as fo:
-        expected_files = fo.readlines()
+    with open(output_list_file) as fileobj:
+        expected_files = fileobj.readlines()
         expected_files = [f.rstrip() for f in expected_files]
 
     if sorted(found_files) != sorted(expected_files):
-        expected_not_found = sorted(list(set(expected_files) - set(found_files)))
-        found_not_expected = sorted(list(set(found_files) - set(expected_files)))
+        expected_not_found = sorted(set(expected_files) - set(found_files))
+        found_not_expected = sorted(set(found_files) - set(expected_files))
 
         msg = ''
         if expected_not_found:
@@ -94,71 +91,6 @@ def check_generated_files(output_dir, output_list_file):
             msg += '\nFound but not expected:\n\t'
             msg += '\n\t'.join(found_not_expected)
         raise ValueError(msg)
-
-
-def check_affines(data_dir, out_dir, input_type):
-    """Confirm affines don't change across XCP-D runs."""
-    preproc_layout = BIDSLayout(str(data_dir), validate=False)
-    xcp_layout = BIDSLayout(str(out_dir), validate=False)
-    if input_type == 'cifti':  # Get the .dtseries.nii
-        denoised_files = xcp_layout.get(
-            invalid_filters='allow',
-            datatype='func',
-            extension='.dtseries.nii',
-        )
-        space = denoised_files[0].get_entities()['space']
-        preproc_files = preproc_layout.get(
-            invalid_filters='allow',
-            datatype='func',
-            space=space,
-            extension='.dtseries.nii',
-        )
-
-    elif input_type in ('nifti', 'ukb'):  # Get the .nii.gz
-        # Problem: it's collecting native-space data
-        denoised_files = xcp_layout.get(
-            datatype='func',
-            suffix='bold',
-            extension='.nii.gz',
-        )
-        space = denoised_files[0].get_entities()['space']
-        preproc_files = preproc_layout.get(
-            invalid_filters='allow',
-            datatype='func',
-            space=space,
-            suffix='bold',
-            extension='.nii.gz',
-        )
-
-    else:  # Nibabies
-        denoised_files = xcp_layout.get(
-            datatype='func',
-            space='MNIInfant',
-            suffix='bold',
-            extension='.nii.gz',
-        )
-        preproc_files = preproc_layout.get(
-            invalid_filters='allow',
-            datatype='func',
-            space='MNIInfant',
-            suffix='bold',
-            extension='.nii.gz',
-        )
-
-    preproc_file = preproc_files[0].path
-    denoised_file = denoised_files[0].path
-    img1 = nb.load(preproc_file)
-    img2 = nb.load(denoised_file)
-
-    if input_type == 'cifti':
-        assert img1._nifti_header.get_intent() == img2._nifti_header.get_intent()
-        np.testing.assert_array_equal(img1.nifti_header.get_zooms(), img2.nifti_header.get_zooms())
-    else:
-        np.testing.assert_array_equal(img1.affine, img2.affine)
-        if input_type != 'ukb':
-            # The UK Biobank test dataset has the wrong TR in the header.
-            # I'll fix it at some point, but it's not the software's fault.
-            np.testing.assert_array_equal(img1.header.get_zooms(), img2.header.get_zooms())
 
 
 def run_command(command, env=None):
@@ -211,13 +143,13 @@ def reorder_expected_outputs():
     for expected_output_file in expected_output_files:
         LOGGER.info(f'Sorting {expected_output_file}')
 
-        with open(expected_output_file, 'r') as fo:
-            file_contents = fo.readlines()
+        with open(expected_output_file) as fileobj:
+            file_contents = fileobj.readlines()
 
-        file_contents = sorted(list(set(file_contents)))
+        file_contents = sorted(set(file_contents))
 
-        with open(expected_output_file, 'w') as fo:
-            fo.writelines(file_contents)
+        with open(expected_output_file, 'w') as fileobj:
+            fileobj.writelines(file_contents)
 
 
 def list_files(startpath):
