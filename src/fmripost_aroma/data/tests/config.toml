@@ -18,7 +18,6 @@ log_level = 40
 low_mem = false
 md_only_boilerplate = false
 notrack = true
-fmripost_aroma_dir = "/home/runner/work/fmripost-aroma/fmripost-aroma/src/fmripost_aroma/tests/out"
 output_dir = "/home/runner/work/fmripost-aroma/fmripost-aroma/src/fmripost_aroma/tests/out"
 output_spaces = "MNI152NLin6Asym:res-2"
 reports_only = false

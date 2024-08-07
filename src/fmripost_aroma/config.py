@@ -403,8 +403,6 @@ class execution(_Config):
     """Run in sloppy mode (meaning, suboptimal parameters that minimize run-time)."""
     debug = []
     """Debug mode(s)."""
-    fmripost_aroma_dir = None
-    """Root of fMRIPost-AROMA BIDS Derivatives dataset. Depends on output_layout."""
     fs_license_file = _fs_license
     """An existing file containing a FreeSurfer license."""
     layout = None
@@ -451,7 +449,6 @@ class execution(_Config):
         'bids_dir',
         'derivatives',
         'bids_database_dir',
-        'fmripost_aroma_dir',
         'fs_license_file',
         'layout',
         'log_dir',

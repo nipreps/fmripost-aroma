@@ -72,7 +72,7 @@ def init_fmripost_aroma_wf():
         single_subject_wf = init_single_subject_wf(subject_id)
 
         single_subject_wf.config['execution']['crashdump_dir'] = str(
-            config.execution.fmripost_aroma_dir
+            config.execution.output_dir
             / f'sub-{subject_id}'
             / 'log'
             / config.execution.run_uuid
@@ -84,7 +84,7 @@ def init_fmripost_aroma_wf():
 
         # Dump a copy of the config file into the log directory
         log_dir = (
-            config.execution.fmripost_aroma_dir
+            config.execution.output_dir
             / f'sub-{subject_id}'
             / 'log'
             / config.execution.run_uuid
@@ -246,7 +246,7 @@ It is released under the [CC0]\
     ds_report_summary = pe.Node(
         DerivativesDataSink(
             source_file=subject_data['bold'][0],
-            base_directory=config.execution.fmripost_aroma_dir,
+            base_directory=config.execution.output_dir,
             desc='summary',
             datatype='figures',
         ),
@@ -258,7 +258,7 @@ It is released under the [CC0]\
     ds_report_about = pe.Node(
         DerivativesDataSink(
             source_file=subject_data['bold'][0],
-            base_directory=config.execution.fmripost_aroma_dir,
+            base_directory=config.execution.output_dir,
             desc='about',
             datatype='figures',
         ),
