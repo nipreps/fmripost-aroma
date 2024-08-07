@@ -101,7 +101,7 @@ def test_ds005115_resampling_and_raw(data_dir, output_dir, working_dir):
     )
 
 
-def _run_and_generate(test_name, parameters, test_main=False):
+def _run_and_generate(test_name, parameters, test_main=True):
     from fmripost_aroma import config
 
     parameters.append('--clean-workdir')
