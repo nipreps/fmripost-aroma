@@ -399,26 +399,7 @@ def init_single_run_wf(bold_file):
     ica_aroma_wf.inputs.inputnode.confounds = functional_cache['confounds']
     ica_aroma_wf.inputs.inputnode.skip_vols = skip_vols
 
-    if config.workflow.denoise_method:
-        # Now denoise the output-space BOLD data using ICA-AROMA
-        denoise_wf = init_denoise_wf(bold_file=bold_file)
-        denoise_wf.inputs.inputnode.skip_vols = skip_vols
-        denoise_wf.inputs.inputnode.space = 'MNI152NLin6Asym'
-        denoise_wf.inputs.inputnode.res = '2'
-
-        workflow.connect([
-            (mni6_buffer, denoise_wf, [
-                ('bold_mni152nlin6asym', 'inputnode.bold_file'),
-                ('bold_mask_mni152nlin6asym', 'inputnode.bold_mask'),
-            ]),
-            (ica_aroma_wf, denoise_wf, [
-                ('outputnode.mixing', 'inputnode.mixing'),
-                ('outputnode.aroma_features', 'inputnode.classifications'),
-            ]),
-        ])  # fmt:skip
-
-    # Skip this for now
-    if config.workflow.denoise_method and spaces.get_spaces() and False:
+    if config.workflow.denoise_method and spaces.get_spaces():
         templates = spaces.get_spaces()
         template_iterator_wf = init_template_iterator_wf(
             spaces=spaces,
