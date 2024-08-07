@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Run tests locally by calling Docker."""
 
 import argparse
