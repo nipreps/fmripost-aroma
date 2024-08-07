@@ -12,7 +12,9 @@ def _get_parser():
     -------
     parser.parse_args() : argparse dict
     """
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument(
         '-k',
         dest='test_regex',
