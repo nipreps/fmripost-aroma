@@ -207,6 +207,15 @@ It is released under the [CC0]\
         # Patch standard-space BOLD files into 'bold' key
         subject_data['bold'] = listify(subject_data['bold_mni152nlin6asym'])
 
+    if not subject_data['bold_mni152nlin6asym']:
+        task_id = config.execution.task_id
+        raise RuntimeError(
+            f"No MNI152NLin6Asym:res-2 BOLD images found for participant {subject_id} and "
+            f"task {task_id if task_id else '<all>'}. "
+            "All workflows require MNI152NLin6Asym:res-2 BOLD images. "
+            f"Please check your BIDS filters: {config.execution.bids_filters}."
+        )
+
     # Make sure we always go through these two checks
     if not subject_data['bold']:
         task_id = config.execution.task_id
