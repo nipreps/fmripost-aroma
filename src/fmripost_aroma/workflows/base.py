@@ -343,6 +343,27 @@ def init_single_run_wf(bold_file):
             ),
         )
 
+    config.loggers.workflow.info(
+        (
+            f'Collected run data for {os.path.basename(bold_file)}:\n'
+            f'{yaml.dump(functional_cache, default_flow_style=False, indent=4)}'
+        ),
+    )
+
+    if config.workflow.dummy_scans is not None:
+        skip_vols = config.workflow.dummy_scans
+    else:
+        if not functional_cache['confounds']:
+            raise ValueError(
+                'No confounds detected. '
+                'Automatical dummy scan detection cannot be performed. '
+                'Please set the `--dummy-scans` flag explicitly.'
+            )
+        skip_vols = get_nss(functional_cache['confounds'])
+
+    ica_aroma_wf.inputs.inputnode.confounds = functional_cache['confounds']
+    ica_aroma_wf.inputs.inputnode.skip_vols = skip_vols
+
     mni6_buffer = pe.Node(
         niu.IdentityInterface(
             fields=['bold_mni152nlin6asym', 'bold_mask_mni152nlin6asym'],
@@ -380,27 +401,6 @@ def init_single_run_wf(bold_file):
             ('bold_mask_mni152nlin6asym', 'inputnode.bold_mask_std'),
         ]),
     ])  # fmt:skip
-
-    config.loggers.workflow.info(
-        (
-            f'Collected run data for {os.path.basename(bold_file)}:\n'
-            f'{yaml.dump(functional_cache, default_flow_style=False, indent=4)}'
-        ),
-    )
-
-    if config.workflow.dummy_scans is not None:
-        skip_vols = config.workflow.dummy_scans
-    else:
-        if not functional_cache['confounds']:
-            raise ValueError(
-                'No confounds detected. '
-                'Automatical dummy scan detection cannot be performed. '
-                'Please set the `--dummy-scans` flag explicitly.'
-            )
-        skip_vols = get_nss(functional_cache['confounds'])
-
-    ica_aroma_wf.inputs.inputnode.confounds = functional_cache['confounds']
-    ica_aroma_wf.inputs.inputnode.skip_vols = skip_vols
 
     if config.workflow.denoise_method:
         # Now denoise the output-space BOLD data using ICA-AROMA
