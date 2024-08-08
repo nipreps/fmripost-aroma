@@ -351,10 +351,15 @@ def init_single_run_wf(bold_file):
     )
     if 'bold_mni152nlin6asym' not in functional_cache:
         # Resample to MNI152NLin6Asym:res-2, for ICA-AROMA classification
+        run_stc = (
+            bool(bold_metadata.get('SliceTiming')) and 'slicetiming' not in config.workflow.ignore
+        )
+
         resample_raw_wf = init_resample_volumetric_wf(
             bold_file=bold_file,
-            precomputed=functional_cache,
-            space=Reference.from_string('MNI152NLin6Asym:res-2')[0],
+            metadata=bold_metadata,
+            functional_cache=functional_cache,
+            run_stc=run_stc,
             name=_get_wf_name(bold_file, 'resample_raw'),
         )
         workflow.connect([
