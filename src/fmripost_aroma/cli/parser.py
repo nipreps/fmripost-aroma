@@ -543,9 +543,6 @@ def parse_args(args=None, namespace=None):
     work_dir = config.execution.work_dir
     version = config.environment.version
 
-    if config.execution.fmripost_aroma_dir is None:
-        config.execution.fmripost_aroma_dir = output_dir
-
     # Wipe out existing work_dir
     if opts.clean_workdir and work_dir.exists():
         from niworkflows.utils.misc import clean_directory
@@ -585,7 +582,7 @@ def parse_args(args=None, namespace=None):
         validate_input_dir(config.environment.exec_env, opts.bids_dir, opts.participant_label)
 
     # Setup directories
-    config.execution.log_dir = config.execution.fmripost_aroma_dir / 'logs'
+    config.execution.log_dir = config.execution.output_dir / 'logs'
     # Check and create output and working directories
     config.execution.log_dir.mkdir(exist_ok=True, parents=True)
     work_dir.mkdir(exist_ok=True, parents=True)

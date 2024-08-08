@@ -6,6 +6,7 @@ from nipype.pipeline import engine as pe
 
 def init_resample_volumetric_wf(
     bold_file,
+    metadata,
     functional_cache,
     run_stc,
     name='resample_volumetric_wf',
@@ -35,10 +36,6 @@ def init_resample_volumetric_wf(
             fields=[
                 'bold_file',
                 'mask_file',
-                'space',
-                'res',
-                'cohort',
-                'transforms',
             ],
         ),
         name='inputnode',
@@ -56,7 +53,11 @@ def init_resample_volumetric_wf(
         name='stc_buffer',
     )
     if run_stc:
-        stc_wf = init_bold_stc_wf(name='resample_stc_wf')
+        stc_wf = init_bold_stc_wf(
+            mem_gb={'filesize': 1},
+            metadata=metadata,
+            name='resample_stc_wf',
+        )
         workflow.connect([
             (inputnode, stc_wf, [
                 ('bold_file', 'inputnode.bold_file'),

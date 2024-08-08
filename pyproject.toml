@@ -182,3 +182,15 @@ inline-quotes = "single"
 
 [tool.ruff.format]
 quote-style = "single"
+
+[tool.pytest.ini_options]
+addopts = '-m "not integration"'
+markers = [
+    "integration: mark test as an integration test",
+    "ds005115_deriv_only: ds005115 with full fMRIPrep and derivatives only",
+    "ds005115_deriv_and_raw: ds005115 with full fMRIPrep and raw BIDS",
+    "ds005115_resampling_and_raw: ds005115 with resampling-level fMRIPrep and raw BIDS",
+]
+env = [
+    "RUNNING_PYTEST = 1",
+]

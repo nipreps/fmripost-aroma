@@ -36,12 +36,7 @@ class _ResamplerOutputSpec(TraitedSpec):
 
 
 class Resampler(SimpleInterface):
-    """Extract timeseries and compute connectivity matrices.
-
-    Write out time series using Nilearn's NiftiLabelMasker
-    Then write out functional correlation matrix of
-    timeseries using numpy.
-    """
+    """Apply the resampler workflow."""
 
     input_spec = _ResamplerInputSpec
     output_spec = _ResamplerOutputSpec

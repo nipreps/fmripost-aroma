@@ -62,7 +62,7 @@ def mock_config():
     yield
 
     shutil.rmtree(config.execution.work_dir)
-    shutil.rmtree(config.execution.fmripost_aroma_dir)
+    shutil.rmtree(config.execution.output_dir)
 
     if not _old_fs:
         del os.environ['FREESURFER_HOME']
