@@ -297,7 +297,6 @@ def init_single_run_wf(bold_file):
     """Set up a single-run workflow for fMRIPost-AROMA."""
     from nipype.interfaces import utility as niu
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-    from niworkflows.utils.spaces import Reference
 
     from fmripost_aroma.utils.bids import collect_derivatives, extract_entities
     from fmripost_aroma.workflows.aroma import init_denoise_wf, init_ica_aroma_wf
