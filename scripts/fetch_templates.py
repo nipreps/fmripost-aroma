@@ -50,7 +50,7 @@ def fetch_MNI6():
     tf.get(template, resolution=2, atlas='HCP', suffix='dseg')
     # Transform from MNI152NLin2009cAsym to MNI152NLin6Asym
     tf.get(
-        template, mode='image', suffix='xfm', extension='.h5', **{'from': 'MNI152NLin2009cAsym'},
+        template, mode='image', suffix='xfm', extension='.h5', **{'from': 'MNI152NLin2009cAsym'}
     )
 
 
