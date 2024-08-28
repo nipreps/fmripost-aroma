@@ -43,4 +43,4 @@ jobs:
           tags: |
             nipreps/fmripost-aroma:unstable
             ${{ github.event_name == 'release' && 'nipreps/fmripost-aroma:latest' || '' }}
-            ${{ github.event_name == 'release' && 'nipreps/fmripost-aroma:${{ github.event.release.tag_name }}' || '' }}
+            ${{ github.event_name == 'release' && 'nipreps/fmripost-aroma:${{ steps.meta.outputs.tags }}' || '' }}
