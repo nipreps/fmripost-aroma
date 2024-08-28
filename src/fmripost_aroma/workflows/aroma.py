@@ -480,9 +480,10 @@ def init_denoise_wf(bold_file):
         ])  # fmt:skip
 
         carpetplot_wf = init_carpetplot_wf(
-            bold_file=bold_file,
+            mem_gb=config.DEFAULT_MEMORY_MIN_GB,
             metadata=metadata,
             cifti_output=False,
+            name=f'{denoise_method}_carpet_wf',
         )
         carpetplot_wf.inputs.inputnode.desc = f'{denoise_method}Carpetplot'
         workflow.connect([
@@ -491,7 +492,6 @@ def init_denoise_wf(bold_file):
                 ('confounds_file', 'inputnode.confounds_file'),
             ]),
             (ds_denoised, carpetplot_wf, [('out_file', 'inputnode.bold')]),
-            (denoise, carpetplot_wf, [('denoised_file', 'inputnode.confounds_file')]),
         ])  # fmt:skip
 
     return workflow
