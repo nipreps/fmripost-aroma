@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Download test data."""
+
 import sys
 
 from fmripost_aroma.tests.utils import download_test_data
