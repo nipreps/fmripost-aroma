@@ -5,26 +5,9 @@ Installation
 ------------
 *fMRIPost-AROMA* should be installed using container technologies.
 
-The ``fmripost-aroma`` command-line adheres to the `BIDS-Apps recommendations
-for the user interface <usage.html#execution-and-the-bids-format>`__.
-Therefore, the command-line has the following structure::
-
-  $ fmripost-aroma <input_bids_path> -d <derivatives_path> <analysis_level> <named_options>
-
-The ``fmripost-aroma`` command-line options are documented in the :ref:`usage`
-section.
-
-The command-line will be composed of a preamble to configure the
-container execution followed by the ``fmripost-aroma`` command-line options
-as if you were running it on a *bare-metal* installation.
-The command-line structure above is then modified as follows::
-
-  $ <container_command_and_options> <container_image> \
-       <input_bids_path> <derivatives_path> <analysis_level> <fmriprep_named_options>
-
-Therefore, once specified the container options and the image to be run
-the command line is the same as for the *bare-metal* installation but dropping
-the ``fmripost-aroma`` executable name.
+```console
+docker pull nipreps/fmripost-aroma:unstable
+```
 
 Containerized execution (Docker and Singularity)
 ================================================
