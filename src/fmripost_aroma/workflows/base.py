@@ -414,6 +414,12 @@ def init_single_run_wf(bold_file):
             ]),
         ])  # fmt:skip
 
+    # Fill-in datasinks of reportlets seen so far
+    for node in workflow.list_node_names():
+        if node.split('.')[-1].startswith('ds_'):
+            workflow.get_node(node).inputs.base_directory = config.execution.output_dir
+            workflow.get_node(node).inputs.source_file = bold_file
+
     return workflow
 
 
