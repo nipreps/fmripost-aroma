@@ -152,7 +152,6 @@ def _build_parser(**kwargs):
         ),
     )
 
-
     g_aroma = parser.add_argument_group('Options for running ICA_AROMA')
     g_aroma.add_argument(
         '--melodic-dimensionality',

@@ -108,13 +108,13 @@ dependencies = [
 [tool.hatch.envs.style.scripts]
 fix = [
   "black src/",
-  "isort src/",
   "ruff check --fix src/",
+  "isort src/",
 ]
 check = [
   "black --check --diff src/",
-  "isort --check --diff src/",
   "ruff check --diff src/",
+  "isort --check --diff src/",
 ]
 
 [[tool.hatch.envs.test.matrix]]
