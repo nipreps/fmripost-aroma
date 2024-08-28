@@ -152,6 +152,39 @@ def _build_parser(**kwargs):
         ),
     )
 
+
+    g_aroma = parser.add_argument_group('Options for running ICA_AROMA')
+    g_aroma.add_argument(
+        '--melodic-dimensionality',
+        dest='melodic_dim',
+        action='store',
+        default=0,
+        type=int,
+        help=(
+            'Exact or maximum number of MELODIC components to estimate '
+            '(positive = exact, negative = maximum)'
+        ),
+    )
+    g_aroma.add_argument(
+        '--error-on-warnings',
+        dest='err_on_warn',
+        action='store_true',
+        default=False,
+        help=(
+            'Raise an error if ICA_AROMA does not produce sensible output '
+            '(e.g., if all the components are classified as signal or noise)'
+        ),
+    )
+    g_aroma.add_argument(
+        '--denoising-method',
+        action='store',
+        nargs='+',
+        choices=['aggr', 'nonaggr', 'orthaggr'],
+        default=None,
+        dest='denoise_method',
+        help='Denoising method to apply, if any.',
+    )
+
     g_bids = parser.add_argument_group('Options for filtering BIDS queries')
     g_bids.add_argument(
         '--skip_bids_validation',
@@ -343,38 +376,6 @@ def _build_parser(**kwargs):
             "Maximum number of sessions aggregated in one subject's visual report. "
             'If exceeded, visual reports are split by session.'
         ),
-    )
-
-    g_aroma = parser.add_argument_group('Options for running ICA_AROMA')
-    g_aroma.add_argument(
-        '--melodic-dimensionality',
-        dest='melodic_dim',
-        action='store',
-        default=0,
-        type=int,
-        help=(
-            'Exact or maximum number of MELODIC components to estimate '
-            '(positive = exact, negative = maximum)'
-        ),
-    )
-    g_aroma.add_argument(
-        '--error-on-warnings',
-        dest='err_on_warn',
-        action='store_true',
-        default=False,
-        help=(
-            'Raise an error if ICA_AROMA does not produce sensible output '
-            '(e.g., if all the components are classified as signal or noise)'
-        ),
-    )
-    g_aroma.add_argument(
-        '--denoising-method',
-        action='store',
-        nargs='+',
-        choices=['aggr', 'nonaggr', 'orthaggr'],
-        default=None,
-        dest='denoise_method',
-        help='Denoising method to apply, if any.',
     )
 
     g_carbon = parser.add_argument_group('Options for carbon usage tracking')
