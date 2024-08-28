@@ -397,7 +397,7 @@ def init_single_run_wf(bold_file):
 
     if config.workflow.denoise_method:
         # Now denoise the output-space BOLD data using ICA-AROMA
-        denoise_wf = init_denoise_wf(bold_file=bold_file)
+        denoise_wf = init_denoise_wf(bold_file=bold_file, metadata=bold_metadata)
         denoise_wf.inputs.inputnode.skip_vols = skip_vols
         denoise_wf.inputs.inputnode.space = 'MNI152NLin6Asym'
         denoise_wf.inputs.inputnode.res = '2'

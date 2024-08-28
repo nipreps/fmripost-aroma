@@ -388,7 +388,7 @@ in the corresponding confounds file.
     return workflow
 
 
-def init_denoise_wf(bold_file):
+def init_denoise_wf(bold_file, metadata):
     """Build a workflow that denoises a BOLD series using AROMA confounds.
 
     This workflow performs the denoising in the requested output space(s).
@@ -398,8 +398,6 @@ def init_denoise_wf(bold_file):
 
     from fmripost_aroma.interfaces.confounds import ICADenoise
     from fmripost_aroma.workflows.confounds import init_carpetplot_wf
-
-    metadata = config.execution.layout.get_metadata(bold_file)
 
     workflow = Workflow(name=_get_wf_name(bold_file, 'denoise'))
 

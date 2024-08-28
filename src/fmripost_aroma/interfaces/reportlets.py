@@ -67,7 +67,7 @@ FUNCTIONAL_TEMPLATE = """\
 ABOUT_TEMPLATE = """\t<ul>
 \t\t<li>fMRIPost-AROMA version: {version}</li>
 \t\t<li>fMRIPost-AROMA command: <code>{command}</code></li>
-\t\t<li>Date preprocessed: {date}</li>
+\t\t<li>Date postprocessed: {date}</li>
 \t</ul>
 </div>
 """
