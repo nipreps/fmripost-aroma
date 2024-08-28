@@ -5,6 +5,7 @@ import sys
 from unittest.mock import patch
 
 import pytest
+
 from fmripost_aroma.cli import run
 from fmripost_aroma.cli.parser import parse_args
 from fmripost_aroma.cli.workflow import build_boilerplate, build_workflow

@@ -183,6 +183,12 @@ inline-quotes = "single"
 [tool.ruff.format]
 quote-style = "single"
 
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+src_paths = ["isort", "test"]
+known_local_folder = ["fmripost_aroma"]
+
 [tool.pytest.ini_options]
 addopts = '-m "not integration"'
 markers = [
