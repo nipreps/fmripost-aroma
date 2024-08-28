@@ -152,7 +152,7 @@ def _build_parser(**kwargs):
         ),
     )
 
-    g_aroma = parser.add_argument_group('Options for running ICA_AROMA')
+    g_aroma = parser.add_argument_group('Options for running ICA-AROMA')
     g_aroma.add_argument(
         '--melodic-dimensionality',
         dest='melodic_dim',
@@ -170,7 +170,7 @@ def _build_parser(**kwargs):
         action='store_true',
         default=False,
         help=(
-            'Raise an error if ICA_AROMA does not produce sensible output '
+            'Raise an error if ICA-AROMA does not produce sensible output '
             '(e.g., if all the components are classified as signal or noise)'
         ),
     )
