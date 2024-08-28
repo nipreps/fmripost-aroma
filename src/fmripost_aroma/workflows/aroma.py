@@ -408,6 +408,7 @@ def init_denoise_wf(bold_file):
             fields=[
                 'bold_file',
                 'bold_mask',
+                'confounds_file',
                 'mixing',
                 'classifications',
                 'skip_vols',
