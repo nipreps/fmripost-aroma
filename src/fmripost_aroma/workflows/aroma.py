@@ -397,6 +397,9 @@ def init_denoise_wf(bold_file):
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
     from fmripost_aroma.interfaces.confounds import ICADenoise
+    from fmripost_aroma.workflows.confounds import init_carpetplot_wf
+
+    metadata = config.execution.layout.get_metadata(bold_file)
 
     workflow = Workflow(name=_get_wf_name(bold_file, 'denoise'))
 
@@ -474,6 +477,18 @@ def init_denoise_wf(bold_file):
                 ('res', 'res'),
             ]),
             (add_non_steady_state, ds_denoised, [('bold_add', 'in_file')]),
+        ])  # fmt:skip
+
+        carpetplot_wf = init_carpetplot_wf(
+            bold_file=bold_file,
+            metadata=metadata,
+            cifti_output=False,
+        )
+        carpetplot_wf.inputs.inputnode.desc = f'{denoise_method}Carpetplot'
+        workflow.connect([
+            (inputnode, carpetplot_wf, [('bold_mask', 'inputnode.bold_mask')]),
+            (ds_denoised, carpetplot_wf, [('out_file', 'inputnode.bold')]),
+            (denoise, carpetplot_wf, [('denoised_file', 'inputnode.confounds_file')]),
         ])  # fmt:skip
 
     return workflow

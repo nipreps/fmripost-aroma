@@ -410,6 +410,7 @@ def init_single_run_wf(bold_file):
         denoise_wf.inputs.inputnode.skip_vols = skip_vols
         denoise_wf.inputs.inputnode.space = 'MNI152NLin6Asym'
         denoise_wf.inputs.inputnode.res = '2'
+        denoise_wf.inputs.inputnode.confounds_file = functional_cache['confounds']
 
         workflow.connect([
             (mni6_buffer, denoise_wf, [

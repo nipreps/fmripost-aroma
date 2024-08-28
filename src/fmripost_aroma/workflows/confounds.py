@@ -54,17 +54,11 @@ def init_carpetplot_wf(
     Inputs
     ------
     bold
-        BOLD image, after the prescribed corrections (STC, HMC and SDC)
-        when available.
+        BOLD image, in MNI152NLin6Asym space + 2mm resolution.
     bold_mask
-        BOLD series mask
+        BOLD series mask in same space as ``bold``.
     confounds_file
         TSV of all aggregated confounds
-    boldref2anat_xfm
-        Affine matrix that maps the BOLD reference space into alignment with
-        the anatomical (T1w) space
-    std2anat_xfm
-        ANTs-compatible affine-and-warp transform file
     cifti_bold
         BOLD image in CIFTI format, to be used in place of volumetric BOLD
     crown_mask
@@ -79,6 +73,7 @@ def init_carpetplot_wf(
     out_carpetplot
         Path of the generated SVG file
     """
+    from fmriprep.interfaces.confounds import FMRISummary
     from nipype.interfaces import utility as niu
     from nipype.pipeline import engine as pe
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
@@ -86,8 +81,7 @@ def init_carpetplot_wf(
     from templateflow.api import get as get_template
 
     from fmripost_aroma.config import DEFAULT_MEMORY_MIN_GB
-    from fmripost_aroma.interfaces import DerivativesDataSink
-    from fmripost_aroma.interfaces.confounds import FMRISummary
+    from fmripost_aroma.interfaces.bids import DerivativesDataSink
 
     inputnode = pe.Node(
         niu.IdentityInterface(
@@ -95,13 +89,10 @@ def init_carpetplot_wf(
                 'bold',
                 'bold_mask',
                 'confounds_file',
-                'boldref2anat_xfm',
-                'std2anat_xfm',
                 'cifti_bold',
-                'crown_mask',
-                'acompcor_mask',
                 'dummy_scans',
-            ]
+                'desc',
+            ],
         ),
         name='inputnode',
     )
@@ -113,10 +104,12 @@ def init_carpetplot_wf(
         FMRISummary(
             tr=metadata['RepetitionTime'],
             confounds_list=[
-                ('global_signal', None, 'GS'),
-                ('csf', None, 'CSF'),
-                ('white_matter', None, 'WM'),
-                ('std_dvars', None, 'DVARS'),
+                ('trans_x', 'mm', 'x'),
+                ('trans_y', 'mm', 'y'),
+                ('trans_z', 'mm', 'z'),
+                ('rot_x', 'deg', 'pitch'),
+                ('rot_y', 'deg', 'roll'),
+                ('rot_z', 'deg', 'yaw'),
                 ('framewise_displacement', 'mm', 'FD'),
             ],
         ),
@@ -125,7 +118,6 @@ def init_carpetplot_wf(
     )
     ds_report_bold_conf = pe.Node(
         DerivativesDataSink(
-            desc='carpetplot',
             datatype='figures',
             extension='svg',
             dismiss_entities=('echo', 'den', 'res'),
@@ -137,10 +129,8 @@ def init_carpetplot_wf(
 
     parcels = pe.Node(niu.Function(function=_carpet_parcellation), name='parcels')
     parcels.inputs.nifti = not cifti_output
-    # List transforms
-    mrg_xfms = pe.Node(niu.Merge(2), name='mrg_xfms')
 
-    # Warp segmentation into EPI space
+    # Warp segmentation into MNI152NLin6Asym space
     resample_parc = pe.Node(
         ApplyTransforms(
             dimension=3,
@@ -153,7 +143,17 @@ def init_carpetplot_wf(
                     extension=['.nii', '.nii.gz'],
                 )
             ),
-            invert_transform_flags=[True, False],
+            transforms=[
+                str(
+                    get_template(
+                        template='MNI152NLin6Asym',
+                        mode='image',
+                        suffix='xfm',
+                        extension='.h5',
+                        **{'from': 'MNI152NLin2009cAsym'},
+                    ),
+                ),
+            ],
             interpolation='MultiLabel',
             args='-u int',
         ),
@@ -165,28 +165,22 @@ def init_carpetplot_wf(
         workflow.connect(inputnode, 'cifti_bold', conf_plot, 'in_cifti')
 
     workflow.connect([
-        (inputnode, mrg_xfms, [
-            ('boldref2anat_xfm', 'in1'),
-            ('std2anat_xfm', 'in2'),
-        ]),
         (inputnode, resample_parc, [('bold_mask', 'reference_image')]),
-        (inputnode, parcels, [('crown_mask', 'crown_mask')]),
-        (inputnode, parcels, [('acompcor_mask', 'acompcor_mask')]),
         (inputnode, conf_plot, [
             ('bold', 'in_nifti'),
             ('confounds_file', 'confounds_file'),
             ('dummy_scans', 'drop_trs'),
         ]),
-        (mrg_xfms, resample_parc, [('out', 'transforms')]),
         (resample_parc, parcels, [('output_image', 'segmentation')]),
         (parcels, conf_plot, [('out', 'in_segm')]),
+        (inputnode, ds_report_bold_conf, [('desc', 'desc')]),
         (conf_plot, ds_report_bold_conf, [('out_file', 'in_file')]),
         (conf_plot, outputnode, [('out_file', 'out_carpetplot')]),
     ])  # fmt:skip
     return workflow
 
 
-def _carpet_parcellation(segmentation, crown_mask, acompcor_mask, nifti=False):
+def _carpet_parcellation(segmentation, nifti=False):
     """Generate the union of two masks."""
     from pathlib import Path
 
@@ -202,9 +196,9 @@ def _carpet_parcellation(segmentation, crown_mask, acompcor_mask, nifti=False):
     lut[255] = 5 if nifti else 0  # Cerebellum
     # Apply lookup table
     seg = lut[np.uint16(img.dataobj)]
-    seg[np.bool_(nb.load(crown_mask).dataobj)] = 6 if nifti else 2
+    # seg[np.bool_(nb.load(crown_mask).dataobj)] = 6 if nifti else 2
     # Separate deep from shallow WM+CSF
-    seg[np.bool_(nb.load(acompcor_mask).dataobj)] = 4 if nifti else 1
+    # seg[np.bool_(nb.load(acompcor_mask).dataobj)] = 4 if nifti else 1
 
     outimg = img.__class__(seg.astype('uint8'), img.affine, img.header)
     outimg.set_data_dtype('uint8')
