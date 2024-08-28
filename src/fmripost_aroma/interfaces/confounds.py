@@ -158,7 +158,7 @@ class ICADenoise(SimpleInterface):
             # Denoise the data with the motion components
             masker = NiftiMasker(
                 mask_img=self.inputs.mask_file,
-                standardize_confounds=False,
+                standardize_confounds=True,
                 standardize=False,
                 smoothing_fwhm=None,
                 detrend=False,
@@ -182,7 +182,7 @@ class ICADenoise(SimpleInterface):
             # Once you have these "pure evil" components, you can denoise the data
             masker = NiftiMasker(
                 mask_img=self.inputs.mask_file,
-                standardize_confounds=False,
+                standardize_confounds=True,
                 standardize=False,
                 smoothing_fwhm=None,
                 detrend=False,
