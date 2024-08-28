@@ -5,6 +5,7 @@ import sys
 from unittest.mock import patch
 
 import pytest
+
 from fmripost_aroma.cli import run
 from fmripost_aroma.cli.parser import parse_args
 from fmripost_aroma.cli.workflow import build_boilerplate, build_workflow
@@ -17,8 +18,8 @@ from fmripost_aroma.tests.utils import (
 from fmripost_aroma.utils.bids import write_derivative_description
 
 
-@pytest.mark.integration()
-@pytest.mark.ds005115_deriv_only()
+@pytest.mark.integration
+@pytest.mark.ds005115_deriv_only
 def test_ds005115_deriv_only(data_dir, output_dir, working_dir):
     """Run fMRIPost-AROMA on ds005115 fMRIPrep derivatives with MNI152NLin6Asym-space data."""
     test_name = 'test_ds005115_deriv_only'
@@ -43,8 +44,8 @@ def test_ds005115_deriv_only(data_dir, output_dir, working_dir):
     )
 
 
-@pytest.mark.integration()
-@pytest.mark.ds005115_deriv_and_raw()
+@pytest.mark.integration
+@pytest.mark.ds005115_deriv_and_raw
 def test_ds005115_deriv_and_raw(data_dir, output_dir, working_dir):
     """Run fMRIPost-AROMA on ds005115 raw BIDS + fMRIPrep derivatives w/o MNI152NLin6Asym data."""
     test_name = 'test_ds005115_deriv_and_raw'
@@ -72,8 +73,8 @@ def test_ds005115_deriv_and_raw(data_dir, output_dir, working_dir):
     )
 
 
-@pytest.mark.integration()
-@pytest.mark.ds005115_resampling_and_raw()
+@pytest.mark.integration
+@pytest.mark.ds005115_resampling_and_raw
 def test_ds005115_resampling_and_raw(data_dir, output_dir, working_dir):
     """Run fMRIPost-AROMA on ds005115 raw BIDS + resampling-level fMRIPrep derivatives."""
     test_name = 'test_ds005115_resampling_and_raw'
