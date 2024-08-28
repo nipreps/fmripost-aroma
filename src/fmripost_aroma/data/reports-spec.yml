@@ -23,8 +23,8 @@ sections:
     subtitle: Alignment of functional and anatomical MRI data (coregistration)
   - bids:
       datatype: figures
-      desc: '[aggr,nonaggr,orthaggr]carpetplot'
-      extension: [.html]
+      desc: '[aggr,nonaggr,orthaggr]Carpetplot'
+      extension: [.svg]
       suffix: bold
 - name: About
   nested: true

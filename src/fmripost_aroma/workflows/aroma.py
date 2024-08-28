@@ -489,6 +489,7 @@ def init_denoise_wf(bold_file, metadata):
             (inputnode, carpetplot_wf, [
                 ('bold_mask', 'inputnode.bold_mask'),
                 ('confounds_file', 'inputnode.confounds_file'),
+                ('skip_vols', 'inputnode.dummy_scans'),
             ]),
             (ds_denoised, carpetplot_wf, [('out_file', 'inputnode.bold')]),
         ])  # fmt:skip
