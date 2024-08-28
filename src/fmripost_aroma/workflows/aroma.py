@@ -486,7 +486,10 @@ def init_denoise_wf(bold_file):
         )
         carpetplot_wf.inputs.inputnode.desc = f'{denoise_method}Carpetplot'
         workflow.connect([
-            (inputnode, carpetplot_wf, [('bold_mask', 'inputnode.bold_mask')]),
+            (inputnode, carpetplot_wf, [
+                ('bold_mask', 'inputnode.bold_mask'),
+                ('confounds_file', 'inputnode.confounds_file'),
+            ]),
             (ds_denoised, carpetplot_wf, [('out_file', 'inputnode.bold')]),
             (denoise, carpetplot_wf, [('denoised_file', 'inputnode.confounds_file')]),
         ])  # fmt:skip
