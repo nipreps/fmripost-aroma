@@ -90,11 +90,12 @@ def build_workflow(config_file, retval):
     # Called with reports only
     if config.execution.reports_only:
         build_log.log(25, 'Running --reports-only on participants %s', ', '.join(subject_list))
-        retval['return_code'] = generate_reports(
+        failed_reports = generate_reports(
             subject_list=config.execution.participant_label,
             output_dir=config.execution.output_dir,
             run_uuid=config.execution.run_uuid,
         )
+        retval['return_code'] = len(failed_reports)
         return retval
 
     # Build main workflow

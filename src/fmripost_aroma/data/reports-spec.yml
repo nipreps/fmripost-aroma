@@ -21,11 +21,14 @@ sections:
       anatomical white matter mask, which appears as a red contour.
     static: false
     subtitle: Alignment of functional and anatomical MRI data (coregistration)
-  - bids:
-      datatype: figures
-      desc: '[aggr,nonaggr,orthaggr]Carpetplot'
-      extension: [.svg]
-      suffix: bold
+  - bids: {datatype: figures, desc: preprocCarpetplot, suffix: bold}
+    title: Preprocessed BOLD
+  - bids: {datatype: figures, desc: nonaggrCarpetplot, suffix: bold}
+    title: Non-Aggressively Denoised BOLD
+  - bids: {datatype: figures, desc: aggrCarpetplot, suffix: bold}
+    title: Aggressively Denoised BOLD
+  - bids: {datatype: figures, desc: orthaggrCarpetplot, suffix: bold}
+    title: Othogonalized Aggressively Denoised BOLD
 - name: About
   nested: true
   reportlets:

@@ -429,6 +429,22 @@ def init_denoise_wf(bold_file, metadata):
         ]),
     ])  # fmt:skip
 
+    preproc_carpetplot_wf = init_carpetplot_wf(
+        mem_gb=config.DEFAULT_MEMORY_MIN_GB,
+        metadata=metadata,
+        cifti_output=False,
+        name='preproc_carpet_wf',
+    )
+    preproc_carpetplot_wf.inputs.inputnode.desc = 'preprocCarpetplot'
+    workflow.connect([
+        (inputnode, preproc_carpetplot_wf, [
+            ('bold_mask', 'inputnode.bold_mask'),
+            ('confounds_file', 'inputnode.confounds_file'),
+            ('skip_vols', 'inputnode.dummy_scans'),
+        ]),
+        (inputnode, preproc_carpetplot_wf, [('bold_file', 'inputnode.bold')]),
+    ])  # fmt:skip
+
     for denoise_method in config.workflow.denoise_method:
         denoise = pe.Node(
             ICADenoise(method=denoise_method),
