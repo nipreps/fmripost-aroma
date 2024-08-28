@@ -152,10 +152,7 @@ def main():
             from fmripost_aroma.utils.telemetry import process_crashfile
 
             crashfolders = [
-                config.execution.output_dir
-                / f'sub-{s}'
-                / 'log'
-                / config.execution.run_uuid
+                config.execution.output_dir / f'sub-{s}' / 'log' / config.execution.run_uuid
                 for s in config.execution.participant_label
             ]
             for crashfolder in crashfolders:
@@ -199,9 +196,7 @@ def main():
 
             dseg_tsv = str(api.get('fsaverage', suffix='dseg', extension=['.tsv']))
             _copy_any(dseg_tsv, str(config.execution.output_dir / 'desc-aseg_dseg.tsv'))
-            _copy_any(
-                dseg_tsv, str(config.execution.output_dir / 'desc-aparcaseg_dseg.tsv')
-            )
+            _copy_any(dseg_tsv, str(config.execution.output_dir / 'desc-aparcaseg_dseg.tsv'))
         errno = 0
     finally:
         # Code Carbon
@@ -219,9 +214,7 @@ def main():
             output_dir=config.execution.output_dir,
             run_uuid=config.execution.run_uuid,
         )
-        write_derivative_description(
-            config.execution.bids_dir, config.execution.output_dir
-        )
+        write_derivative_description(config.execution.bids_dir, config.execution.output_dir)
         write_bidsignore(config.execution.output_dir)
 
         if sentry_sdk is not None and failed_reports:
