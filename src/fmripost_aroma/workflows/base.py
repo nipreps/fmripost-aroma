@@ -201,15 +201,6 @@ It is released under the [CC0]\
         # Patch standard-space BOLD files into 'bold' key
         subject_data['bold'] = listify(subject_data['bold_mni152nlin6asym'])
 
-    if not subject_data['bold_mni152nlin6asym']:
-        task_id = config.execution.task_id
-        raise RuntimeError(
-            f"No MNI152NLin6Asym:res-2 BOLD images found for participant {subject_id} and "
-            f"task {task_id if task_id else '<all>'}. "
-            "All workflows require MNI152NLin6Asym:res-2 BOLD images. "
-            f"Please check your BIDS filters: {config.execution.bids_filters}."
-        )
-
     # Make sure we always go through these two checks
     if not subject_data['bold']:
         task_id = config.execution.task_id
@@ -406,10 +397,11 @@ def init_single_run_wf(bold_file):
 
     if config.workflow.denoise_method:
         # Now denoise the output-space BOLD data using ICA-AROMA
-        denoise_wf = init_denoise_wf(bold_file=bold_file)
+        denoise_wf = init_denoise_wf(bold_file=bold_file, metadata=bold_metadata)
         denoise_wf.inputs.inputnode.skip_vols = skip_vols
         denoise_wf.inputs.inputnode.space = 'MNI152NLin6Asym'
         denoise_wf.inputs.inputnode.res = '2'
+        denoise_wf.inputs.inputnode.confounds_file = functional_cache['confounds']
 
         workflow.connect([
             (mni6_buffer, denoise_wf, [
@@ -421,6 +413,12 @@ def init_single_run_wf(bold_file):
                 ('outputnode.aroma_features', 'inputnode.classifications'),
             ]),
         ])  # fmt:skip
+
+    # Fill-in datasinks seen so far
+    for node in workflow.list_node_names():
+        if node.split('.')[-1].startswith('ds_'):
+            workflow.get_node(node).inputs.base_directory = config.execution.output_dir
+            workflow.get_node(node).inputs.source_file = bold_file
 
     return workflow
 

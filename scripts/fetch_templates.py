@@ -25,11 +25,11 @@ def fetch_MNI2009():
     """
     template = 'MNI152NLin2009cAsym'
 
-    tf.get(template, resolution=(1, 2), desc=None, suffix='T1w')
-    tf.get(template, resolution=(1, 2), desc='brain', suffix='mask')
+    # tf.get(template, resolution=(1, 2), desc=None, suffix='T1w')
+    # tf.get(template, resolution=(1, 2), desc='brain', suffix='mask')
     tf.get(template, resolution=1, atlas=None, desc='carpet', suffix='dseg')
-    tf.get(template, resolution=2, desc='fMRIPrep', suffix='boldref')
-    tf.get(template, resolution=1, label='brain', suffix='probseg')
+    # tf.get(template, resolution=2, desc='fMRIPrep', suffix='boldref')
+    # tf.get(template, resolution=1, label='brain', suffix='probseg')
 
 
 def fetch_MNI6():
@@ -48,6 +48,10 @@ def fetch_MNI6():
     tf.get(template, resolution=(1, 2), desc='brain', suffix='mask')
     # CIFTI
     tf.get(template, resolution=2, atlas='HCP', suffix='dseg')
+    # Transform from MNI152NLin2009cAsym to MNI152NLin6Asym
+    tf.get(
+        template, mode='image', suffix='xfm', extension='.h5', **{'from': 'MNI152NLin2009cAsym'}
+    )
 
 
 def fetch_OASIS():
@@ -108,7 +112,7 @@ def fetch_fsLR():
 
 
 def fetch_all():
-    # fetch_MNI2009()
+    fetch_MNI2009()
     fetch_MNI6()
     # fetch_OASIS()
     # fetch_fsaverage()

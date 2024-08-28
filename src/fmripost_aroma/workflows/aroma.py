@@ -388,7 +388,7 @@ in the corresponding confounds file.
     return workflow
 
 
-def init_denoise_wf(bold_file):
+def init_denoise_wf(bold_file, metadata):
     """Build a workflow that denoises a BOLD series using AROMA confounds.
 
     This workflow performs the denoising in the requested output space(s).
@@ -397,6 +397,7 @@ def init_denoise_wf(bold_file):
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
     from fmripost_aroma.interfaces.confounds import ICADenoise
+    from fmripost_aroma.workflows.confounds import init_carpetplot_wf
 
     workflow = Workflow(name=_get_wf_name(bold_file, 'denoise'))
 
@@ -405,6 +406,7 @@ def init_denoise_wf(bold_file):
             fields=[
                 'bold_file',
                 'bold_mask',
+                'confounds_file',
                 'mixing',
                 'classifications',
                 'skip_vols',
@@ -425,6 +427,22 @@ def init_denoise_wf(bold_file):
             ('skip_vols', 'skip_vols'),
             ('bold_file', 'bold_file'),
         ]),
+    ])  # fmt:skip
+
+    preproc_carpetplot_wf = init_carpetplot_wf(
+        mem_gb=config.DEFAULT_MEMORY_MIN_GB,
+        metadata=metadata,
+        cifti_output=False,
+        name='preproc_carpet_wf',
+    )
+    preproc_carpetplot_wf.inputs.inputnode.desc = 'preprocCarpetplot'
+    workflow.connect([
+        (inputnode, preproc_carpetplot_wf, [
+            ('bold_mask', 'inputnode.bold_mask'),
+            ('confounds_file', 'inputnode.confounds_file'),
+            ('skip_vols', 'inputnode.dummy_scans'),
+        ]),
+        (inputnode, preproc_carpetplot_wf, [('bold_file', 'inputnode.bold')]),
     ])  # fmt:skip
 
     for denoise_method in config.workflow.denoise_method:
@@ -474,6 +492,22 @@ def init_denoise_wf(bold_file):
                 ('res', 'res'),
             ]),
             (add_non_steady_state, ds_denoised, [('bold_add', 'in_file')]),
+        ])  # fmt:skip
+
+        carpetplot_wf = init_carpetplot_wf(
+            mem_gb=config.DEFAULT_MEMORY_MIN_GB,
+            metadata=metadata,
+            cifti_output=False,
+            name=f'{denoise_method}_carpet_wf',
+        )
+        carpetplot_wf.inputs.inputnode.desc = f'{denoise_method}Carpetplot'
+        workflow.connect([
+            (inputnode, carpetplot_wf, [
+                ('bold_mask', 'inputnode.bold_mask'),
+                ('confounds_file', 'inputnode.confounds_file'),
+                ('skip_vols', 'inputnode.dummy_scans'),
+            ]),
+            (ds_denoised, carpetplot_wf, [('out_file', 'inputnode.bold')]),
         ])  # fmt:skip
 
     return workflow
