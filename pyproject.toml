@@ -170,6 +170,9 @@ ignore = [
   "ISC001",
   "S603",
   "PT023",
+  "S113",
+  "S202",
+  "S602",
 ]
 
 [tool.ruff.lint.flake8-quotes]
