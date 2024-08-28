@@ -72,7 +72,7 @@ def init_fmripost_aroma_wf():
         single_subject_wf = init_single_subject_wf(subject_id)
 
         single_subject_wf.config['execution']['crashdump_dir'] = str(
-            config.execution.fmripost_aroma_dir
+            config.execution.output_dir
             / f'sub-{subject_id}'
             / 'log'
             / config.execution.run_uuid
@@ -84,7 +84,7 @@ def init_fmripost_aroma_wf():
 
         # Dump a copy of the config file into the log directory
         log_dir = (
-            config.execution.fmripost_aroma_dir
+            config.execution.output_dir
             / f'sub-{subject_id}'
             / 'log'
             / config.execution.run_uuid
@@ -207,6 +207,15 @@ It is released under the [CC0]\
         # Patch standard-space BOLD files into 'bold' key
         subject_data['bold'] = listify(subject_data['bold_mni152nlin6asym'])
 
+    if not subject_data['bold_mni152nlin6asym']:
+        task_id = config.execution.task_id
+        raise RuntimeError(
+            f"No MNI152NLin6Asym:res-2 BOLD images found for participant {subject_id} and "
+            f"task {task_id if task_id else '<all>'}. "
+            "All workflows require MNI152NLin6Asym:res-2 BOLD images. "
+            f"Please check your BIDS filters: {config.execution.bids_filters}."
+        )
+
     # Make sure we always go through these two checks
     if not subject_data['bold']:
         task_id = config.execution.task_id
@@ -246,7 +255,7 @@ It is released under the [CC0]\
     ds_report_summary = pe.Node(
         DerivativesDataSink(
             source_file=subject_data['bold'][0],
-            base_directory=config.execution.fmripost_aroma_dir,
+            base_directory=config.execution.output_dir,
             desc='summary',
             datatype='figures',
         ),
@@ -258,7 +267,7 @@ It is released under the [CC0]\
     ds_report_about = pe.Node(
         DerivativesDataSink(
             source_file=subject_data['bold'][0],
-            base_directory=config.execution.fmripost_aroma_dir,
+            base_directory=config.execution.output_dir,
             desc='about',
             datatype='figures',
         ),
@@ -288,9 +297,6 @@ def init_single_run_wf(bold_file):
     """Set up a single-run workflow for fMRIPost-AROMA."""
     from nipype.interfaces import utility as niu
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-    from niworkflows.interfaces.utility import KeySelect
-    from niworkflows.utils.spaces import Reference
-    from smriprep.workflows.outputs import init_template_iterator_wf
 
     from fmripost_aroma.utils.bids import collect_derivatives, extract_entities
     from fmripost_aroma.workflows.aroma import init_denoise_wf, init_ica_aroma_wf
@@ -345,39 +351,6 @@ def init_single_run_wf(bold_file):
             ),
         )
 
-    mni6_buffer = pe.Node(
-        niu.IdentityInterface(
-            fields=['bold_mni152nlin6asym', 'bold_mask_mni152nlin6asym'],
-        ),
-        name='mni6_buffer',
-    )
-    if 'bold_mni152nlin6asym' not in functional_cache:
-        # Resample to MNI152NLin6Asym:res-2, for ICA-AROMA classification
-        resample_raw_wf = init_resample_volumetric_wf(
-            bold_file=bold_file,
-            precomputed=functional_cache,
-            space=Reference.from_string('MNI152NLin6Asym:res-2')[0],
-            name=_get_wf_name(bold_file, 'resample_raw'),
-        )
-        workflow.connect([
-            (resample_raw_wf, mni6_buffer, [
-                ('outputnode.bold_std', 'inputnode.bold_mni152nlin6asym'),
-                ('outputnode.bold_mask_std', 'inputnode.bold_mask_mni152nlin6asym'),
-            ]),
-        ])  # fmt:skip
-    else:
-        mni6_buffer.inputs.bold_mni152nlin6asym = functional_cache['bold_mni152nlin6asym']
-        mni6_buffer.inputs.bold_mask_mni152nlin6asym = functional_cache[
-            'bold_mask_mni152nlin6asym'
-        ]
-
-    workflow.connect([
-        (mni6_buffer, ica_aroma_wf, [
-            ('bold_mni152nlin6asym', 'inputnode.bold_std'),
-            ('bold_mask_mni152nlin6asym', 'inputnode.bold_mask_std'),
-        ]),
-    ])  # fmt:skip
-
     config.loggers.workflow.info(
         (
             f'Collected run data for {os.path.basename(bold_file)}:\n'
@@ -399,6 +372,44 @@ def init_single_run_wf(bold_file):
     ica_aroma_wf.inputs.inputnode.confounds = functional_cache['confounds']
     ica_aroma_wf.inputs.inputnode.skip_vols = skip_vols
 
+    mni6_buffer = pe.Node(
+        niu.IdentityInterface(
+            fields=['bold_mni152nlin6asym', 'bold_mask_mni152nlin6asym'],
+        ),
+        name='mni6_buffer',
+    )
+    if 'bold_mni152nlin6asym' not in functional_cache:
+        # Resample to MNI152NLin6Asym:res-2, for ICA-AROMA classification
+        run_stc = (
+            bool(bold_metadata.get('SliceTiming')) and 'slicetiming' not in config.workflow.ignore
+        )
+
+        resample_raw_wf = init_resample_volumetric_wf(
+            bold_file=bold_file,
+            metadata=bold_metadata,
+            functional_cache=functional_cache,
+            run_stc=run_stc,
+            name=_get_wf_name(bold_file, 'resample_raw'),
+        )
+        workflow.connect([
+            (resample_raw_wf, mni6_buffer, [
+                ('outputnode.bold_std', 'inputnode.bold_mni152nlin6asym'),
+                ('outputnode.bold_mask_std', 'inputnode.bold_mask_mni152nlin6asym'),
+            ]),
+        ])  # fmt:skip
+    else:
+        mni6_buffer.inputs.bold_mni152nlin6asym = functional_cache['bold_mni152nlin6asym']
+        mni6_buffer.inputs.bold_mask_mni152nlin6asym = functional_cache[
+            'bold_mask_mni152nlin6asym'
+        ]
+
+    workflow.connect([
+        (mni6_buffer, ica_aroma_wf, [
+            ('bold_mni152nlin6asym', 'inputnode.bold_std'),
+            ('bold_mask_mni152nlin6asym', 'inputnode.bold_mask_std'),
+        ]),
+    ])  # fmt:skip
+
     if config.workflow.denoise_method:
         # Now denoise the output-space BOLD data using ICA-AROMA
         denoise_wf = init_denoise_wf(bold_file=bold_file)
@@ -416,84 +427,6 @@ def init_single_run_wf(bold_file):
                 ('outputnode.aroma_features', 'inputnode.classifications'),
             ]),
         ])  # fmt:skip
-
-    # Skip this for now
-    if config.workflow.denoise_method and spaces.get_spaces() and False:
-        templates = spaces.get_spaces()
-        template_iterator_wf = init_template_iterator_wf(
-            spaces=spaces,
-            sloppy=config.execution.sloppy,
-        )
-        template_iterator_wf.inputs.inputnode.anat2std_xfm = functional_cache[
-            'anat2outputspaces_xfm'
-        ]
-        template_iterator_wf.inputs.inputnode.template = templates
-
-        # Now denoise the output-space BOLD data using ICA-AROMA
-        denoise_std_wf = init_denoise_wf(bold_file=bold_file)
-        denoise_std_wf.inputs.inputnode.skip_vols = skip_vols
-
-        workflow.connect([
-            (ica_aroma_wf, denoise_std_wf, [
-                ('outputnode.mixing', 'inputnode.mixing'),
-                ('outputnode.aroma_features', 'inputnode.classifications'),
-            ]),
-            (template_iterator_wf, denoise_std_wf, [
-                ('outputnode.space', 'inputnode.space'),
-                ('outputnode.cohort', 'inputnode.cohort'),
-                ('outputnode.res', 'inputnode.res'),
-            ]),
-        ])  # fmt:skip
-
-        if functional_cache['bold_outputspaces']:
-            # No transforms necessary
-            std_buffer = pe.Node(
-                KeySelect(
-                    fields=['bold', 'bold_mask'],
-                    keys=[str(space) for space in spaces.references],
-                ),
-                name='std_buffer',
-            )
-            std_buffer.inputs.bold = functional_cache['bold_outputspaces']
-            std_buffer.inputs.bold_mask = functional_cache['bold_mask_outputspaces']
-            workflow.connect([
-                (template_iterator_wf, std_buffer, [('outputnode.space', 'key')]),
-                (std_buffer, denoise_std_wf, [
-                    ('bold', 'inputnode.bold_file'),
-                    ('bold_mask', 'inputnode.bold_mask'),
-                ]),
-            ])  # fmt:skip
-        else:
-            # Warp native BOLD to requested output spaces
-            xfms = [
-                functional_cache['hmc'],
-                functional_cache['boldref2fmap'],
-                functional_cache['bold2anat'],
-            ]
-            all_xfms = pe.Node(niu.Merge(2), name='all_xfms')
-            all_xfms.inputs.in1 = xfms
-            workflow.connect([
-                (template_iterator_wf, all_xfms, [('outputnode.anat2std_xfm', 'in2')]),
-            ])  # fmt:skip
-
-            resample_std_wf = init_resample_volumetric_wf(
-                bold_file=bold_file,
-                functional_cache=functional_cache,
-                run_stc=False,
-                name=_get_wf_name(bold_file, 'resample_std'),
-            )
-            workflow.connect([
-                (template_iterator_wf, resample_std_wf, [
-                    ('outputnode.space', 'inputnode.space'),
-                    ('outputnode.res', 'inputnode.res'),
-                    ('outputnode.cohort', 'inputnode.cohort'),
-                ]),
-                (all_xfms, resample_std_wf, [('out', 'inputnode.transforms')]),
-                (resample_std_wf, denoise_std_wf, [
-                    ('outputnode.bold_std', 'inputnode.bold'),
-                    ('outputnode.bold_mask_std', 'inputnode.bold_mask'),
-                ]),
-            ])  # fmt:skip
 
     return workflow
 

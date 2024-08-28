@@ -111,9 +111,9 @@ def collect_derivatives(
     derivs_cache = defaultdict(list, {})
     if derivatives_dataset is not None:
         layout = derivatives_dataset
-        if isinstance(derivatives_dataset, Path):
-            derivatives_dataset = BIDSLayout(
-                derivatives_dataset,
+        if isinstance(layout, Path):
+            layout = BIDSLayout(
+                layout,
                 config=['bids', 'derivatives'],
                 validate=False,
             )
