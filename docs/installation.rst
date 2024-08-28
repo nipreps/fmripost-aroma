@@ -5,9 +5,9 @@ Installation
 ------------
 *fMRIPost-AROMA* should be installed using container technologies.
 
-```console
-docker pull nipreps/fmripost-aroma:unstable
-```
+.. code-block:: bash
+  docker pull nipreps/fmripost-aroma:unstable
+
 
 Containerized execution (Docker and Singularity)
 ================================================
