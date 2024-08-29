@@ -34,13 +34,15 @@ jobs:
         uses: docker/metadata-action@v5.5.1
         with:
           images: nipreps/fmripost-aroma
+        # generate Docker tags based on the following events/attributes
+        tags: |
+          type=ref,event=branch
+          type=semver,pattern={{version}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6.7.0
         with:
           context: .
           push: true
-          tags: |
-            nipreps/fmripost-aroma:unstable
-            ${{ github.event_name == 'release' && 'nipreps/fmripost-aroma:latest' || '' }}
-            ${{ github.event_name == 'release' && 'nipreps/fmripost-aroma:${{ steps.meta.outputs.tags }}' || '' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
