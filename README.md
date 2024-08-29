@@ -20,7 +20,7 @@ to MNI152NLin6Asym at 2 mm3 resolution.
 ## Installation
 
 ```console
-docker pull nipreps/fmripost-aroma:unstable
+docker pull nipreps/fmripost-aroma:main
 ```
 
 ## License
