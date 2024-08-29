@@ -36,6 +36,7 @@ from copy import deepcopy
 
 import yaml
 from nipype.pipeline import engine as pe
+from niworkflows.interfaces.utility import KeySelect
 from packaging.version import Version
 
 from fmripost_aroma import config
@@ -379,7 +380,7 @@ def init_single_run_wf(bold_file):
                 ('outputnode.mixing', 'inputnode.mixing'),
                 ('outputnode.aroma_features', 'inputnode.classifications'),
             ]),
-            (template_iterator_wf, denoise_std_wf, [
+            (template_iterator_wf, denoise_wf, [
                 ('outputnode.space', 'inputnode.space'),
                 ('outputnode.cohort', 'inputnode.cohort'),
                 ('outputnode.res', 'inputnode.res'),
@@ -399,7 +400,7 @@ def init_single_run_wf(bold_file):
             std_buffer.inputs.bold_mask = functional_cache['bold_mask_outputspaces']
             workflow.connect([
                 (template_iterator_wf, std_buffer, [('outputnode.space', 'key')]),
-                (std_buffer, denoise_std_wf, [
+                (std_buffer, denoise_wf, [
                     ('bold', 'inputnode.bold_file'),
                     ('bold_mask', 'inputnode.bold_mask'),
                 ]),
@@ -430,7 +431,7 @@ def init_single_run_wf(bold_file):
                     ('outputnode.cohort', 'inputnode.cohort'),
                 ]),
                 (all_xfms, resample_std_wf, [('out', 'inputnode.transforms')]),
-                (resample_std_wf, denoise_std_wf, [
+                (resample_std_wf, denoise_wf, [
                     ('outputnode.bold_std', 'inputnode.bold'),
                     ('outputnode.bold_mask_std', 'inputnode.bold_mask'),
                 ]),
