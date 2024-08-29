@@ -108,13 +108,13 @@ dependencies = [
 [tool.hatch.envs.style.scripts]
 fix = [
   "black src/",
-  "isort src/",
   "ruff check --fix src/",
+  "isort src/",
 ]
 check = [
   "black --check --diff src/",
-  "isort --check --diff src/",
   "ruff check --diff src/",
+  "isort --check --diff src/",
 ]
 
 [[tool.hatch.envs.test.matrix]]
@@ -169,6 +169,10 @@ ignore = [
   "S311",  # We are not using random for cryptographic purposes
   "ISC001",
   "S603",
+  "PT023",
+  "S113",
+  "S202",
+  "S602",
 ]
 
 [tool.ruff.lint.flake8-quotes]
@@ -182,3 +186,21 @@ inline-quotes = "single"
 
 [tool.ruff.format]
 quote-style = "single"
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+src_paths = ["isort", "test"]
+known_local_folder = ["fmripost_aroma"]
+
+[tool.pytest.ini_options]
+addopts = '-m "not integration"'
+markers = [
+    "integration: mark test as an integration test",
+    "ds005115_deriv_only: ds005115 with full fMRIPrep and derivatives only",
+    "ds005115_deriv_and_raw: ds005115 with full fMRIPrep and raw BIDS",
+    "ds005115_resampling_and_raw: ds005115 with resampling-level fMRIPrep and raw BIDS",
+]
+env = [
+    "RUNNING_PYTEST = 1",
+]

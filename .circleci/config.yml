@@ -1,0 +1,381 @@
+version: 2.1
+orbs:
+  codecov: codecov/codecov@3.2.4
+
+.dockersetup: &dockersetup
+  docker:
+    - image: cimg/python:3.12
+  working_directory: /src/fmripost-aroma
+
+runinstall: &runinstall
+    name: Install fMRIPost-AROMA
+    command: |
+      VERSION=0+build
+      if [[ -n "$CIRCLE_TAG" ]]; then
+        VERSION="$CIRCLE_TAG"
+      fi
+      git checkout $CIRCLE_BRANCH
+      echo "${VERSION}" > /src/fmripost-aroma/src/fmripost_aroma/VERSION
+      echo "include src/fmripost_aroma/VERSION" >> /src/fmripost-aroma/src/fmripost_aroma/MANIFEST.in
+      pip install .[tests] --progress-bar off
+
+      # Precaching fonts, set 'Agg' as default backend for matplotlib
+      python -c "from matplotlib import font_manager"
+      sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
+
+      # Write the config file
+      mkdir /root/.nipype
+      CFG=/root/.nipype/nipype.cfg
+      printf "[execution]\nstop_on_first_crash = true\n" > ${CFG}
+      echo "poll_sleep_duration = 0.01" >> ${CFG}
+      echo "hash_method = content" >> ${CFG}
+
+jobs:
+
+  build:
+    <<: *dockersetup
+    steps:
+      - checkout
+      - run: *runinstall
+
+  download_ds005115_raw:
+    <<: *dockersetup
+    steps:
+      - checkout
+      - restore_cache:
+          key: ds005115_raw-01
+      - run: *runinstall
+      - run:
+          name: Download ds005115_raw test data
+          command: |
+            cd /src/fmripost-aroma/.circleci
+            python get_data.py $PWD/data ds005115_raw
+      - save_cache:
+          key: ds005115_raw-01
+          paths:
+            - /src/fmripost-aroma/.circleci/data/ds005115_raw
+
+  download_ds005115_resampling:
+    <<: *dockersetup
+    steps:
+      - checkout
+      - restore_cache:
+          key: ds005115_resampling-01
+      - run: *runinstall
+      - run:
+          name: Download ds005115_resampling test data
+          command: |
+            cd /src/fmripost-aroma/.circleci
+            python get_data.py $PWD/data ds005115_resampling
+      - save_cache:
+          key: ds005115_resampling-01
+          paths:
+            - /src/fmripost-aroma/.circleci/data/ds005115_resampling
+
+  download_ds005115_deriv_no_mni6:
+    <<: *dockersetup
+    steps:
+      - checkout
+      - restore_cache:
+          key: ds005115_deriv_no_mni6-01
+      - run: *runinstall
+      - run:
+          name: Download ds005115_deriv_no_mni6 test data
+          command: |
+            cd /src/fmripost-aroma/.circleci
+            python get_data.py $PWD/data ds005115_deriv_no_mni6
+      - save_cache:
+          key: ds005115_deriv_no_mni6-01
+          paths:
+            - /src/fmripost-aroma/.circleci/data/ds005115_deriv_no_mni6
+
+  download_ds005115_deriv_mni6:
+    <<: *dockersetup
+    steps:
+      - checkout
+      - restore_cache:
+          key: ds005115_deriv_mni6-01
+      - run: *runinstall
+      - run:
+          name: Download ds005115_deriv_mni6 test data
+          command: |
+            cd /src/fmripost-aroma/.circleci
+            python get_data.py $PWD/data ds005115_deriv_mni6
+      - save_cache:
+          key: ds005115_deriv_mni6-01
+          paths:
+            - /src/fmripost-aroma/.circleci/data/ds005115_deriv_mni6
+
+  ds005115_deriv_only:
+    <<: *dockersetup
+    steps:
+      - checkout
+      - restore_cache:
+          key: multishell_output-01
+      - run: *runinstall
+      - run:
+          name: Test the PYAFQ standalone recon workflow
+          no_output_timeout: 1h
+          command: |
+            pytest -rP -o log_cli=true -m "pyafq_recon_full" --cov-config=/src/fmripost-aroma/pyproject.toml --cov-append --cov-report term-missing --cov=fmripost_aroma --data_dir=/src/fmripost-aroma/.circleci/data --output_dir=/src/fmripost-aroma/.circleci/out --working_dir=/src/fmripost-aroma/.circleci/work fmripost_aroma
+            mkdir /src/coverage
+            mv /src/fmripost-aroma/.coverage /src/coverage/.coverage.pyafq_recon_full
+            # remove nifti files before uploading artifacts
+            find /src/fmripost-aroma/.circleci/out/ -name "*.nii.gz" -type f -delete
+            find /src/fmripost-aroma/.circleci/out/ -name "*.fib.gz" -type f -delete
+      - persist_to_workspace:
+          root: /src/coverage/
+          paths:
+            - .coverage.pyafq_recon_full
+      - store_artifacts:
+          path: /src/fmripost-aroma/.circleci/out/pyafq_recon_full/
+
+  ds005115_deriv_and_raw:
+    <<: *dockersetup
+    steps:
+      - checkout
+      - restore_cache:
+          key: multishell_output-01
+      - run: *runinstall
+      - run:
+          name: Test the PYAFQ workflow with mrtrix tractography
+          no_output_timeout: 1h
+          command: |
+            pytest -rP -o log_cli=true -m "pyafq_recon_external_trk" --cov-config=/src/fmripost-aroma/pyproject.toml --cov-append --cov-report term-missing --cov=fmripost_aroma --data_dir=/src/fmripost-aroma/.circleci/data --output_dir=/src/fmripost-aroma/.circleci/out --working_dir=/src/fmripost-aroma/.circleci/work fmripost_aroma
+            mkdir /src/coverage
+            mv /src/fmripost-aroma/.coverage /src/coverage/.coverage.pyafq_recon_external_trk
+            # remove nifti files before uploading artifacts
+            find /src/fmripost-aroma/.circleci/out/ -name "*.nii.gz" -type f -delete
+            find /src/fmripost-aroma/.circleci/out/ -name "*.fib.gz" -type f -delete
+      - persist_to_workspace:
+          root: /src/coverage/
+          paths:
+            - .coverage.pyafq_recon_external_trk
+      - store_artifacts:
+          path: /src/fmripost-aroma/.circleci/out/pyafq_recon_external_trk/
+
+  ds005115_resampling_and_raw:
+    <<: *dockersetup
+    steps:
+      - checkout
+      - restore_cache:
+          key: multishell_output-01
+      - run: *runinstall
+      - run:
+          name: Test scalar_mapping workflow
+          no_output_timeout: 1h
+          command: |
+            pytest -rP -o log_cli=true -m "scalar_mapper" --cov-config=/src/fmripost-aroma/pyproject.toml --cov-append --cov-report term-missing --cov=fmripost_aroma --data_dir=/src/fmripost-aroma/.circleci/data --output_dir=/src/fmripost-aroma/.circleci/out --working_dir=/src/fmripost-aroma/.circleci/work fmripost_aroma
+            mkdir /src/coverage
+            mv /src/fmripost-aroma/.coverage /src/coverage/.coverage.scalar_mapper
+            # remove nifti files before uploading artifacts
+            find /src/fmripost-aroma/.circleci/out/ -name "*.nii.gz" -type f -delete
+            find /src/fmripost-aroma/.circleci/out/ -name "*.fib.gz" -type f -delete
+      - persist_to_workspace:
+          root: /src/coverage/
+          paths:
+            - .coverage.scalar_mapper
+      - store_artifacts:
+          path: /src/fmripost-aroma/.circleci/out/scalar_mapper/
+
+  pytests:
+    <<: *dockersetup
+    resource_class: medium+
+    environment:
+      CIRCLE_CPUS: 3
+    steps:
+      - checkout
+      - restore_cache:
+          key: singleshell_output-01
+      - run: *runinstall
+      - run:
+          name: Test the DIPY recon workflows
+          command: |
+            pytest -rP -o log_cli=true -m "amico_noddi" --cov-config=/src/fmripost-aroma/pyproject.toml --cov-append --cov-report term-missing --cov=fmripost_aroma --data_dir=/src/fmripost-aroma/.circleci/data --output_dir=/src/fmripost-aroma/.circleci/out --working_dir=/src/fmripost-aroma/.circleci/work fmripost_aroma
+            mkdir /src/coverage
+            mv /src/fmripost-aroma/.coverage /src/coverage/.coverage.amico_noddi
+            # remove nifti files before uploading artifacts
+            find /src/fmripost-aroma/.circleci/out/ -name "*.nii.gz" -type f -delete
+            find /src/fmripost-aroma/.circleci/out/ -name "*.fib.gz" -type f -delete
+      - persist_to_workspace:
+          root: /src/coverage/
+          paths:
+            - .coverage.amico_noddi
+      - store_artifacts:
+          path: /src/fmripost-aroma/.circleci/out/amico_noddi/
+
+  merge_coverage:
+    <<: *dockersetup
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /src/coverage
+      - run: *runinstall
+      - run:
+          name: Merge coverage files
+          command: |
+            cd /src/coverage/
+            coverage combine
+            coverage xml
+      - store_artifacts:
+          path: /src/coverage
+      - codecov/upload:
+          file: /src/coverage/coverage.xml
+
+  deployable:
+    resource_class: small
+    docker:
+      - image: busybox:latest
+    steps:
+      - run: echo Deploying!
+
+  build_and_deploy:
+    environment:
+      TZ: "/usr/share/zoneinfo/America/New_York"
+    docker:
+      - image: cimg/base:2020.09
+    working_directory: /tmp/src/fmripost-aroma
+    steps:
+      - checkout
+      - setup_remote_docker:
+         version: docker24
+         docker_layer_caching: true
+      - run:
+          name: Build Docker image
+          no_output_timeout: 3h
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y python3-pip
+            pip install hatch
+            # Get version, update files.
+            THISVERSION=$(hatch version)
+            if [[ ${THISVERSION:0:1} == "0" ]] ; then
+              echo "WARNING: latest git tag could not be found"
+              echo "Please, make sure you fetch all tags from upstream with"
+              echo "the command ``git fetch --tags --verbose`` and push"
+              echo "them to your fork with ``git push origin --tags``"
+            fi
+            sed -i -E "s/(var version = )'[A-Za-z0-9.-]+'/\1'${CIRCLE_TAG:-$THISVERSION}'/" docs/citing.rst
+            sed -i "s/title = {fmripost_aroma}/title = {fmripost_aroma ${CIRCLE_TAG:-$THISVERSION}}/" fmripost_aroma/src/fmripost_aroma/data/boilerplate.bib
+            # Build docker image
+            e=1 && for i in {1..5}; do
+              docker build \
+                --cache-from=nipreps/fmripost_aroma \
+                --rm=false \
+                -t nipreps/fmripost_aroma:latest \
+                --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+                --build-arg VCS_REF=`git rev-parse --short HEAD` \
+                --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" . \
+              && e=0 && break || sleep 15
+            done && [ "$e" -eq "0" ]
+      - run:
+          name: Deploy to Docker Hub
+          no_output_timeout: 40m
+          command: |
+            if [[ -n "$DOCKER_PASS" ]]; then
+              docker login -u $DOCKER_USER -p $DOCKER_PASS
+              docker tag nipreps/fmripost_aroma nipreps/fmripost_aroma:main
+              docker push nipreps/fmripost_aroma:main
+              if [[ -n "$CIRCLE_TAG" ]]; then
+                docker push nipreps/fmripost_aroma:latest
+                docker tag nipreps/fmripost_aroma nipreps/fmripost_aroma:$CIRCLE_TAG
+                docker push nipreps/fmripost_aroma:$CIRCLE_TAG
+              fi
+            fi
+
+workflows:
+  version: 2
+  build_test_deploy:
+    jobs:
+
+      - build:
+          filters:
+            tags:
+              only: /.*/
+
+      - download_ds005115_raw:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /.*/
+
+      - download_ds005115_resampling:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /.*/
+
+      - download_ds005115_deriv_no_mni6:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /.*/
+
+      - download_ds005115_deriv_mni6:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /.*/
+
+      - ds005115_resampling_and_raw:
+          requires:
+            - download_ds005115_raw
+            - download_ds005115_resampling
+          filters:
+            tags:
+              only: /.*/
+
+      - ds005115_deriv_and_raw:
+          requires:
+            - download_ds005115_raw
+            - download_ds005115_deriv_no_mni6
+          filters:
+            tags:
+              only: /.*/
+
+      - ds005115_deriv_only:
+          requires:
+            - download_ds005115_deriv_mni6
+          filters:
+            tags:
+              only: /.*/
+
+      - pytests:
+          requires:
+            - download_ds005115_raw
+            - download_ds005115_resampling
+            - download_ds005115_deriv_no_mni6
+            - download_ds005115_deriv_mni6
+          filters:
+            tags:
+              only: /.*/
+
+      - merge_coverage:
+          requires:
+            - ds005115_deriv_only
+            - ds005115_deriv_and_raw
+            - ds005115_resampling_and_raw
+            - pytests
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+                - /tests?\/.*/
+            tags:
+              only: /.*/
+
+      - deployable:
+          requires:
+            - ds005115_deriv_only
+            - ds005115_deriv_and_raw
+            - ds005115_resampling_and_raw
+            - pytests
+          filters:
+            branches:
+              only: main
+            tags:
+              only: /.*/

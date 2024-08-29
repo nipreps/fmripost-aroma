@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Run tests locally by calling Docker."""
 
 import argparse
@@ -12,7 +13,9 @@ def _get_parser():
     -------
     parser.parse_args() : argparse dict
     """
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument(
         '-k',
         dest='test_regex',
@@ -70,7 +73,7 @@ def run_tests(test_regex, test_mark):
     run_str = 'docker run --rm -ti '
     run_str += f'-v {local_patch}:{mounted_code} '
     run_str += '--entrypoint pytest '
-    run_str += 'nipreps/fmripost_aroma:unstable '
+    run_str += 'nipreps/fmripost_aroma:main '
     run_str += (
         f'{mounted_code}/fmripost_aroma '
         f'--data_dir={mounted_code}/fmripost_aroma/tests/test_data '

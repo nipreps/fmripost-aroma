@@ -4,6 +4,12 @@
 
 Usage Notes
 ===========
+
+.. warning::
+   *fMRIPost-AROMA* requires preprocessing outputs in MNI152NLin6Asym space with
+   2 mm3 voxels (i.e., ``res-02``).
+   Make sure you run fMRIPrep with ``--output-spaces MNI152NLin6Asym:res-02``.
+
 .. warning::
    *fMRIPost-AROMA* includes a tracking system to report usage statistics and errors
    for debugging and grant reporting purposes.

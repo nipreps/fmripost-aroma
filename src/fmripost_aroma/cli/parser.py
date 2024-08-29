@@ -151,6 +151,38 @@ def _build_parser(**kwargs):
         ),
     )
 
+    g_aroma = parser.add_argument_group('Options for running ICA-AROMA')
+    g_aroma.add_argument(
+        '--melodic-dimensionality',
+        dest='melodic_dim',
+        action='store',
+        default=0,
+        type=int,
+        help=(
+            'Exact or maximum number of MELODIC components to estimate '
+            '(positive = exact, negative = maximum)'
+        ),
+    )
+    g_aroma.add_argument(
+        '--error-on-warnings',
+        dest='err_on_warn',
+        action='store_true',
+        default=False,
+        help=(
+            'Raise an error if ICA-AROMA does not produce sensible output '
+            '(e.g., if all the components are classified as signal or noise)'
+        ),
+    )
+    g_aroma.add_argument(
+        '--denoising-method',
+        action='store',
+        nargs='+',
+        choices=['aggr', 'nonaggr', 'orthaggr'],
+        default=None,
+        dest='denoise_method',
+        help='Denoising method to apply, if any.',
+    )
+
     g_bids = parser.add_argument_group('Options for filtering BIDS queries')
     g_bids.add_argument(
         '--skip_bids_validation',
@@ -344,38 +376,6 @@ https://fmriprep.readthedocs.io/en/%s/spaces.html"""
         ),
     )
 
-    g_aroma = parser.add_argument_group('Options for running ICA_AROMA')
-    g_aroma.add_argument(
-        '--melodic-dimensionality',
-        dest='melodic_dim',
-        action='store',
-        default=0,
-        type=int,
-        help=(
-            'Exact or maximum number of MELODIC components to estimate '
-            '(positive = exact, negative = maximum)'
-        ),
-    )
-    g_aroma.add_argument(
-        '--error-on-warnings',
-        dest='err_on_warn',
-        action='store_true',
-        default=False,
-        help=(
-            'Raise an error if ICA_AROMA does not produce sensible output '
-            '(e.g., if all the components are classified as signal or noise)'
-        ),
-    )
-    g_aroma.add_argument(
-        '--denoising-method',
-        action='store',
-        nargs='+',
-        choices=['aggr', 'nonaggr', 'orthaggr'],
-        default=None,
-        dest='denoise_method',
-        help='Denoising method to apply, if any.',
-    )
-
     g_carbon = parser.add_argument_group('Options for carbon usage tracking')
     g_carbon.add_argument(
         '--track-carbon',
@@ -542,9 +542,6 @@ def parse_args(args=None, namespace=None):
     work_dir = config.execution.work_dir
     version = config.environment.version
 
-    if config.execution.fmripost_aroma_dir is None:
-        config.execution.fmripost_aroma_dir = output_dir
-
     # Wipe out existing work_dir
     if opts.clean_workdir and work_dir.exists():
         from niworkflows.utils.misc import clean_directory
@@ -584,7 +581,7 @@ def parse_args(args=None, namespace=None):
         validate_input_dir(config.environment.exec_env, opts.bids_dir, opts.participant_label)
 
     # Setup directories
-    config.execution.log_dir = config.execution.fmripost_aroma_dir / 'logs'
+    config.execution.log_dir = config.execution.output_dir / 'logs'
     # Check and create output and working directories
     config.execution.log_dir.mkdir(exist_ok=True, parents=True)
     work_dir.mkdir(exist_ok=True, parents=True)

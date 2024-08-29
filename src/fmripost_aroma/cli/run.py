@@ -152,10 +152,7 @@ def main():
             from fmripost_aroma.utils.telemetry import process_crashfile
 
             crashfolders = [
-                config.execution.fmripost_aroma_dir
-                / f'sub-{s}'
-                / 'log'
-                / config.execution.run_uuid
+                config.execution.output_dir / f'sub-{s}' / 'log' / config.execution.run_uuid
                 for s in config.execution.participant_label
             ]
             for crashfolder in crashfolders:
@@ -176,7 +173,7 @@ def main():
             sentry_sdk.capture_message(success_message, level='info')
 
         # Bother users with the boilerplate only iff the workflow went okay.
-        boiler_file = config.execution.fmripost_aroma_dir / 'logs' / 'CITATION.md'
+        boiler_file = config.execution.output_dir / 'logs' / 'CITATION.md'
         if boiler_file.exists():
             if config.environment.exec_env in (
                 'singularity',
@@ -198,10 +195,8 @@ def main():
             from templateflow import api
 
             dseg_tsv = str(api.get('fsaverage', suffix='dseg', extension=['.tsv']))
-            _copy_any(dseg_tsv, str(config.execution.fmripost_aroma_dir / 'desc-aseg_dseg.tsv'))
-            _copy_any(
-                dseg_tsv, str(config.execution.fmripost_aroma_dir / 'desc-aparcaseg_dseg.tsv')
-            )
+            _copy_any(dseg_tsv, str(config.execution.output_dir / 'desc-aseg_dseg.tsv'))
+            _copy_any(dseg_tsv, str(config.execution.output_dir / 'desc-aparcaseg_dseg.tsv'))
         errno = 0
     finally:
         # Code Carbon
@@ -216,13 +211,11 @@ def main():
         # Generate reports phase
         failed_reports = generate_reports(
             subject_list=config.execution.participant_label,
-            output_dir=config.execution.fmripost_aroma_dir,
+            output_dir=config.execution.output_dir,
             run_uuid=config.execution.run_uuid,
         )
-        write_derivative_description(
-            config.execution.bids_dir, config.execution.fmripost_aroma_dir
-        )
-        write_bidsignore(config.execution.fmripost_aroma_dir)
+        write_derivative_description(config.execution.bids_dir, config.execution.output_dir)
+        write_bidsignore(config.execution.output_dir)
 
         if sentry_sdk is not None and failed_reports:
             sentry_sdk.capture_message(

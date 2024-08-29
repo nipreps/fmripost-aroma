@@ -28,8 +28,9 @@ from contextlib import contextmanager
 from pathlib import Path
 from tempfile import mkdtemp
 
-from fmripost_aroma.data import load as load_data
 from toml import loads
+
+from fmripost_aroma.data import load as load_data
 
 
 @contextmanager
@@ -62,7 +63,7 @@ def mock_config():
     yield
 
     shutil.rmtree(config.execution.work_dir)
-    shutil.rmtree(config.execution.fmripost_aroma_dir)
+    shutil.rmtree(config.execution.output_dir)
 
     if not _old_fs:
         del os.environ['FREESURFER_HOME']

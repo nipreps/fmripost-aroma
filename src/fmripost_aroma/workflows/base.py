@@ -72,10 +72,7 @@ def init_fmripost_aroma_wf():
         single_subject_wf = init_single_subject_wf(subject_id)
 
         single_subject_wf.config['execution']['crashdump_dir'] = str(
-            config.execution.fmripost_aroma_dir
-            / f'sub-{subject_id}'
-            / 'log'
-            / config.execution.run_uuid
+            config.execution.output_dir / f'sub-{subject_id}' / 'log' / config.execution.run_uuid
         )
         for node in single_subject_wf._get_all_nodes():
             node.config = deepcopy(single_subject_wf.config)
@@ -84,10 +81,7 @@ def init_fmripost_aroma_wf():
 
         # Dump a copy of the config file into the log directory
         log_dir = (
-            config.execution.fmripost_aroma_dir
-            / f'sub-{subject_id}'
-            / 'log'
-            / config.execution.run_uuid
+            config.execution.output_dir / f'sub-{subject_id}' / 'log' / config.execution.run_uuid
         )
         log_dir.mkdir(exist_ok=True, parents=True)
         config.to_filename(log_dir / 'fmripost_aroma.toml')
@@ -246,7 +240,7 @@ It is released under the [CC0]\
     ds_report_summary = pe.Node(
         DerivativesDataSink(
             source_file=subject_data['bold'][0],
-            base_directory=config.execution.fmripost_aroma_dir,
+            base_directory=config.execution.output_dir,
             desc='summary',
             datatype='figures',
         ),
@@ -258,7 +252,7 @@ It is released under the [CC0]\
     ds_report_about = pe.Node(
         DerivativesDataSink(
             source_file=subject_data['bold'][0],
-            base_directory=config.execution.fmripost_aroma_dir,
+            base_directory=config.execution.output_dir,
             desc='about',
             datatype='figures',
         ),
@@ -288,9 +282,6 @@ def init_single_run_wf(bold_file):
     """Set up a single-run workflow for fMRIPost-AROMA."""
     from nipype.interfaces import utility as niu
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-    from niworkflows.interfaces.utility import KeySelect
-    from niworkflows.utils.spaces import Reference
-    from smriprep.workflows.outputs import init_template_iterator_wf
 
     from fmripost_aroma.utils.bids import collect_derivatives, extract_entities
     from fmripost_aroma.workflows.aroma import init_denoise_wf, init_ica_aroma_wf
@@ -345,39 +336,6 @@ def init_single_run_wf(bold_file):
             ),
         )
 
-    mni6_buffer = pe.Node(
-        niu.IdentityInterface(
-            fields=['bold_mni152nlin6asym', 'bold_mask_mni152nlin6asym'],
-        ),
-        name='mni6_buffer',
-    )
-    if 'bold_mni152nlin6asym' not in functional_cache:
-        # Resample to MNI152NLin6Asym:res-2, for ICA-AROMA classification
-        resample_raw_wf = init_resample_volumetric_wf(
-            bold_file=bold_file,
-            precomputed=functional_cache,
-            space=Reference.from_string('MNI152NLin6Asym:res-2')[0],
-            name=_get_wf_name(bold_file, 'resample_raw'),
-        )
-        workflow.connect([
-            (resample_raw_wf, mni6_buffer, [
-                ('outputnode.bold_std', 'inputnode.bold_mni152nlin6asym'),
-                ('outputnode.bold_mask_std', 'inputnode.bold_mask_mni152nlin6asym'),
-            ]),
-        ])  # fmt:skip
-    else:
-        mni6_buffer.inputs.bold_mni152nlin6asym = functional_cache['bold_mni152nlin6asym']
-        mni6_buffer.inputs.bold_mask_mni152nlin6asym = functional_cache[
-            'bold_mask_mni152nlin6asym'
-        ]
-
-    workflow.connect([
-        (mni6_buffer, ica_aroma_wf, [
-            ('bold_mni152nlin6asym', 'inputnode.bold_std'),
-            ('bold_mask_mni152nlin6asym', 'inputnode.bold_mask_std'),
-        ]),
-    ])  # fmt:skip
-
     config.loggers.workflow.info(
         (
             f'Collected run data for {os.path.basename(bold_file)}:\n'
@@ -410,12 +368,14 @@ def init_single_run_wf(bold_file):
         ]
         template_iterator_wf.inputs.inputnode.template = templates
 
-        # Now denoise the output-space BOLD data using ICA-AROMA
-        denoise_std_wf = init_denoise_wf(bold_file=bold_file)
-        denoise_std_wf.inputs.inputnode.skip_vols = skip_vols
+        denoise_wf = init_denoise_wf(bold_file=bold_file, metadata=bold_metadata)
+        denoise_wf.inputs.inputnode.skip_vols = skip_vols
+        denoise_wf.inputs.inputnode.space = 'MNI152NLin6Asym'
+        denoise_wf.inputs.inputnode.res = '2'
+        denoise_wf.inputs.inputnode.confounds_file = functional_cache['confounds']
 
         workflow.connect([
-            (ica_aroma_wf, denoise_std_wf, [
+            (ica_aroma_wf, denoise_wf, [
                 ('outputnode.mixing', 'inputnode.mixing'),
                 ('outputnode.aroma_features', 'inputnode.classifications'),
             ]),
@@ -475,6 +435,12 @@ def init_single_run_wf(bold_file):
                     ('outputnode.bold_mask_std', 'inputnode.bold_mask'),
                 ]),
             ])  # fmt:skip
+
+    # Fill-in datasinks seen so far
+    for node in workflow.list_node_names():
+        if node.split('.')[-1].startswith('ds_'):
+            workflow.get_node(node).inputs.base_directory = config.execution.output_dir
+            workflow.get_node(node).inputs.source_file = bold_file
 
     return workflow
 

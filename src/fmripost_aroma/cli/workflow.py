@@ -48,7 +48,7 @@ def build_workflow(config_file, retval):
     config.load(config_file)
     build_log = config.loggers.workflow
 
-    fmripost_aroma_dir = config.execution.fmripost_aroma_dir
+    output_dir = config.execution.output_dir
     version = config.environment.version
 
     retval['return_code'] = 1
@@ -68,7 +68,7 @@ def build_workflow(config_file, retval):
     msg = check_pipeline_version(
         'fMRIPost-AROMA',
         version,
-        fmripost_aroma_dir / 'dataset_description.json',
+        output_dir / 'dataset_description.json',
     )
     if msg is not None:
         build_log.warning(msg)
@@ -90,11 +90,12 @@ def build_workflow(config_file, retval):
     # Called with reports only
     if config.execution.reports_only:
         build_log.log(25, 'Running --reports-only on participants %s', ', '.join(subject_list))
-        retval['return_code'] = generate_reports(
+        failed_reports = generate_reports(
             subject_list=config.execution.participant_label,
-            output_dir=config.execution.fmripost_aroma_dir,
+            output_dir=config.execution.output_dir,
             run_uuid=config.execution.run_uuid,
         )
+        retval['return_code'] = len(failed_reports)
         return retval
 
     # Build main workflow
@@ -137,7 +138,7 @@ def build_boilerplate(config_file, workflow):
     from fmripost_aroma import config
 
     config.load(config_file)
-    logs_path = config.execution.fmripost_aroma_dir / 'logs'
+    logs_path = config.execution.output_dir / 'logs'
     boilerplate = workflow.visit_desc()
     citation_files = {ext: logs_path / f'CITATION.{ext}' for ext in ('bib', 'tex', 'md', 'html')}
 
