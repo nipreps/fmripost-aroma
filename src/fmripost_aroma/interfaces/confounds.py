@@ -68,6 +68,9 @@ def _get_ica_confounds(mixing, aroma_features, skip_vols, newpath=None):
     motion_ics = aroma_features_df.loc[
         aroma_features_df['classification'] == 'rejected'
     ].index.values
+    signal_ics = aroma_features_df.loc[
+        aroma_features_df['classification'] != 'rejected'
+    ].index.values
     mixing_arr = np.loadtxt(mixing, ndmin=2)
 
     # Prepare output paths
@@ -96,11 +99,29 @@ def _get_ica_confounds(mixing, aroma_features, skip_vols, newpath=None):
     # Select the mixing matrix rows corresponding to the motion ICs
     aggr_mixing_arr = mixing_arr[motion_ics, :].T
 
+    signal_mixing_arr = mixing_arr[signal_ics, :].T
+    orthaggr_mixing_arr = aggr_mixing_arr.copy()
+    orthaggr_mixing_arr = aggr_mixing_arr - np.dot(
+        np.dot(np.linalg.pinv(good_ic_arr), good_ic_arr), aggr_mixing_arr
+    )
+    # Regress the good components out of the bad time series to get "pure evil" regressors
+    aggr_mixing_arr_z = stats.zscore(aggr_mixing_arr, axis=0)
+    signal_mixing_arr_z = stats.zscore(signal_mixing_arr, axis=0)
+    betas = np.linalg.lstsq(signal_mixing_arr_z, aggr_mixing_arr_z, rcond=None)[0]
+    pred_bad_timeseries = np.dot(signal_mixing_arr_z, betas)
+    orthaggr_mixing_arr = aggr_mixing_arr_z - pred_bad_timeseries
+
     # add one to motion_ic_indices to match melodic report.
-    pd.DataFrame(
+    aggr_confounds_df = pd.DataFrame(
         aggr_mixing_arr,
         columns=[f'aroma_motion_{x + 1:02d}' for x in motion_ics],
-    ).to_csv(aroma_confounds, sep='\t', index=None)
+    )
+    orthaggr_confounds_df = pd.DataFrame(
+        orthaggr_mixing_arr,
+        columns=[f'aroma_orth_motion_{x + 1:02d}' for x in motion_ics],
+    )
+    confounds_df = pd.concat([aggr_confounds_df, orthaggr_confounds_df], axis=1)
+    confounds_df.to_csv(aroma_confounds, sep='\t', index=None)
 
     return aroma_confounds, mixing_out
 

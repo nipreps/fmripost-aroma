@@ -352,7 +352,7 @@ in the corresponding confounds file.
             base_directory=config.execution.output_dir,
             source_file=bold_file,
             datatype='func',
-            desc='melodic',
+            desc='aroma',
             suffix='timeseries',
             extension='tsv',
             dismiss_entities=('echo', 'den', 'res'),
