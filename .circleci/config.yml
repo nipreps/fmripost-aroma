@@ -274,8 +274,8 @@ jobs:
           command: |
             if [[ -n "$DOCKER_PASS" ]]; then
               docker login -u $DOCKER_USER -p $DOCKER_PASS
-              docker tag nipreps/fmripost_aroma nipreps/fmripost_aroma:unstable
-              docker push nipreps/fmripost_aroma:unstable
+              docker tag nipreps/fmripost_aroma nipreps/fmripost_aroma:main
+              docker push nipreps/fmripost_aroma:main
               if [[ -n "$CIRCLE_TAG" ]]; then
                 docker push nipreps/fmripost_aroma:latest
                 docker tag nipreps/fmripost_aroma nipreps/fmripost_aroma:$CIRCLE_TAG

@@ -73,7 +73,7 @@ def run_tests(test_regex, test_mark):
     run_str = 'docker run --rm -ti '
     run_str += f'-v {local_patch}:{mounted_code} '
     run_str += '--entrypoint pytest '
-    run_str += 'nipreps/fmripost_aroma:unstable '
+    run_str += 'nipreps/fmripost_aroma:main '
     run_str += (
         f'{mounted_code}/fmripost_aroma '
         f'--data_dir={mounted_code}/fmripost_aroma/tests/test_data '
