@@ -546,6 +546,8 @@ class workflow(_Config):
     (positive = exact, negative = maximum)."""
     denoise_method = None
     """Denoising strategy to be used."""
+    ignore = None
+    """Ignore particular steps for *fMRIPost-AROMA*."""
     cifti_output = None
     """Generate HCP Grayordinates, accepts either ``'91k'`` (default) or ``'170k'``."""
     dummy_scans = None

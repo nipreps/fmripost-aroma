@@ -35,6 +35,7 @@ def init_ica_aroma_wf(
     *,
     bold_file: str,
     metadata: dict,
+    mem_gb: dict,
     susan_fwhm: float = 6.0,
 ):
     """Build a workflow that runs `ICA-AROMA`_.
@@ -192,6 +193,7 @@ in the corresponding confounds file.
             output_type='NIFTI' if config.execution.low_mem else 'NIFTI_GZ',
         ),
         name='smooth',
+        mem_gb=mem_gb['resampled'],
     )
     workflow.connect([
         (rm_non_steady_state, smooth, [('bold_cut', 'in_file')]),
@@ -209,6 +211,7 @@ in the corresponding confounds file.
             dim=config.workflow.melodic_dim,
         ),
         name='melodic',
+        mem_gb=mem_gb['resampled'],
     )
     workflow.connect([
         (inputnode, melodic, [('bold_mask_std', 'mask')]),
