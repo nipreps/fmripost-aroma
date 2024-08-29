@@ -391,7 +391,7 @@ def init_single_run_wf(bold_file):
             niu.IdentityInterface(fields=['bold_file']),
             name='stc_buffer',
         )
-        run_stc = 'slicetiming' not in config.workflow.ignore
+        run_stc = ('SliceTiming' in bold_metadata) and 'slicetiming' not in config.workflow.ignore
         if run_stc:
             bold_stc_wf = init_bold_stc_wf(
                 mem_gb=mem_gb,
