@@ -359,6 +359,8 @@ def init_single_run_wf(bold_file):
     ica_aroma_wf.inputs.inputnode.skip_vols = skip_vols
 
     if config.workflow.denoise_method and spaces.get_spaces():
+        from smriprep.workflows.outputs import init_template_iterator_wf
+
         templates = spaces.get_spaces()
         template_iterator_wf = init_template_iterator_wf(
             spaces=spaces,
