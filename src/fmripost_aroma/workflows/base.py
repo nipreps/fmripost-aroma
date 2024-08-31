@@ -290,6 +290,7 @@ def init_single_run_wf(bold_file):
     omp_nthreads = config.nipype.omp_nthreads
 
     workflow = Workflow(name=_get_wf_name(bold_file, 'single_run'))
+    workflow.__desc__ = ''
 
     bold_metadata = config.execution.layout.get_metadata(bold_file)
     mem_gb = estimate_bold_mem_usage(bold_file)[1]
@@ -382,6 +383,10 @@ def init_single_run_wf(bold_file):
         from niworkflows.interfaces.header import ValidateImage
         from templateflow.api import get as get_template
 
+        workflow.__desc__ += """\
+Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classification.
+"""
+
         validate_bold = pe.Node(
             ValidateImage(in_file=functional_cache['bold_raw']),
             name='validate_bold',
@@ -464,6 +469,11 @@ def init_single_run_wf(bold_file):
         ])  # fmt:skip
 
     else:
+        workflow.__desc__ += """\
+Preprocessed BOLD series in MNI152NLin6Asym:res-2 space were collected for ICA-AROMA
+classification.
+"""
+
         mni6_buffer.inputs.bold_mni152nlin6asym = functional_cache['bold_mni152nlin6asym']
         mni6_buffer.inputs.bold_mask_mni152nlin6asym = functional_cache[
             'bold_mask_mni152nlin6asym'
