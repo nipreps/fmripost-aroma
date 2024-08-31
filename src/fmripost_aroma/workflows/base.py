@@ -404,7 +404,7 @@ Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classific
                 name='resample_stc_wf',
             )
             # TODO: Grab skip-vols from confounds file
-            bold_stc_wf.inputs.inputnode.skip_vols = config.workflow.dummy_scans or 0
+            bold_stc_wf.inputs.inputnode.skip_vols = skip_vols
             workflow.connect([
                 (validate_bold, bold_stc_wf, [('out_file', 'inputnode.bold_file')]),
                 (bold_stc_wf, stc_buffer, [('outputnode.stc_file', 'bold_file')]),
