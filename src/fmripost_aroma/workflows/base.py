@@ -368,12 +368,7 @@ def init_single_run_wf(bold_file):
     ica_aroma_wf.inputs.inputnode.confounds = functional_cache['confounds']
     ica_aroma_wf.inputs.inputnode.skip_vols = skip_vols
 
-    mni6_buffer = pe.Node(
-        niu.IdentityInterface(
-            fields=['bold_mni152nlin6asym', 'bold_mask_mni152nlin6asym'],
-        ),
-        name='mni6_buffer',
-    )
+    mni6_buffer = pe.Node(niu.IdentityInterface(fields=['bold', 'bold_mask']), name='mni6_buffer')
 
     if ('bold_mni152nlin6asym' not in functional_cache) and ('bold_raw' in functional_cache):
         # Resample to MNI152NLin6Asym:res-2, for ICA-AROMA classification
@@ -401,9 +396,8 @@ Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classific
             bold_stc_wf = init_bold_stc_wf(
                 mem_gb=mem_gb,
                 metadata=bold_metadata,
-                name='resample_stc_wf',
+                name='bold_stc_wf',
             )
-            # TODO: Grab skip-vols from confounds file
             bold_stc_wf.inputs.inputnode.skip_vols = skip_vols
             workflow.connect([
                 (validate_bold, bold_stc_wf, [('out_file', 'inputnode.bold_file')]),
@@ -430,7 +424,6 @@ Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classific
             jacobian='fmap-jacobian' not in config.workflow.ignore,
             name='bold_MNI6_wf',
         )
-        bold_MNI6_wf.inputs.inputnode.bold_file = functional_cache['bold_raw']
         bold_MNI6_wf.inputs.inputnode.motion_xfm = functional_cache['hmc']
         bold_MNI6_wf.inputs.inputnode.boldref2fmap_xfm = functional_cache['boldref2fmap']
         bold_MNI6_wf.inputs.inputnode.boldref2anat_xfm = functional_cache['boldref2anat']
@@ -449,9 +442,11 @@ Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classific
             #     ('fmap_coeff', 'inputnode.fmap_coeff'),
             #     ('fmap_id', 'inputnode.fmap_id'),
             # ]),
-            (bold_MNI6_wf, mni6_buffer, [('outputnode.bold_file', 'bold_mni152nlin6asym')]),
+            (stc_buffer, bold_MNI6_wf, [('bold_file', 'inputnode.bold_file')]),
+            (bold_MNI6_wf, mni6_buffer, [('outputnode.bold_file', 'bold')]),
         ])  # fmt:skip
 
+        # Warp the mask as well
         mask_to_mni6 = pe.Node(
             ApplyTransforms(
                 interpolation='MultiLabel',
@@ -464,25 +459,23 @@ Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classific
             ),
             name='mask_to_mni6',
         )
-        workflow.connect([
-            (mask_to_mni6, mni6_buffer, [('output_image', 'bold_mask_mni152nlin6asym')]),
-        ])  # fmt:skip
+        workflow.connect([(mask_to_mni6, mni6_buffer, [('output_image', 'bold_mask')])])
 
-    else:
+    elif 'bold_mni152nlin6asym' in functional_cache:
         workflow.__desc__ += """\
 Preprocessed BOLD series in MNI152NLin6Asym:res-2 space were collected for ICA-AROMA
 classification.
 """
+        mni6_buffer.inputs.bold = functional_cache['bold_mni152nlin6asym']
+        mni6_buffer.inputs.bold_mask = functional_cache['bold_mask_mni152nlin6asym']
 
-        mni6_buffer.inputs.bold_mni152nlin6asym = functional_cache['bold_mni152nlin6asym']
-        mni6_buffer.inputs.bold_mask_mni152nlin6asym = functional_cache[
-            'bold_mask_mni152nlin6asym'
-        ]
+    else:
+        raise ValueError('No valid BOLD series found for ICA-AROMA classification.')
 
     workflow.connect([
         (mni6_buffer, ica_aroma_wf, [
-            ('bold_mni152nlin6asym', 'inputnode.bold_std'),
-            ('bold_mask_mni152nlin6asym', 'inputnode.bold_mask_std'),
+            ('bold', 'inputnode.bold_std'),
+            ('bold_mask', 'inputnode.bold_mask_std'),
         ]),
     ])  # fmt:skip
 
@@ -496,8 +489,8 @@ classification.
 
         workflow.connect([
             (mni6_buffer, denoise_wf, [
-                ('bold_mni152nlin6asym', 'inputnode.bold_file'),
-                ('bold_mask_mni152nlin6asym', 'inputnode.bold_mask'),
+                ('bold', 'inputnode.bold_file'),
+                ('bold_mask', 'inputnode.bold_mask'),
             ]),
             (ica_aroma_wf, denoise_wf, [
                 ('outputnode.mixing', 'inputnode.mixing'),
