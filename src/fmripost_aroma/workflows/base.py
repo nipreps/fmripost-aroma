@@ -285,6 +285,7 @@ def init_single_run_wf(bold_file):
 
     from fmripost_aroma.utils.bids import collect_derivatives, extract_entities
     from fmripost_aroma.workflows.aroma import init_denoise_wf, init_ica_aroma_wf
+    from fmripost_aroma.workflows.outputs import init_func_fit_reports_wf
 
     spaces = config.workflow.spaces
     omp_nthreads = config.nipype.omp_nthreads
@@ -294,7 +295,6 @@ def init_single_run_wf(bold_file):
 
     bold_metadata = config.execution.layout.get_metadata(bold_file)
     mem_gb = estimate_bold_mem_usage(bold_file)[1]
-    ica_aroma_wf = init_ica_aroma_wf(bold_file=bold_file, metadata=bold_metadata, mem_gb=mem_gb)
 
     entities = extract_entities(bold_file)
 
@@ -365,6 +365,8 @@ def init_single_run_wf(bold_file):
             )
         skip_vols = get_nss(functional_cache['confounds'])
 
+    # Run ICA-AROMA
+    ica_aroma_wf = init_ica_aroma_wf(bold_file=bold_file, metadata=bold_metadata, mem_gb=mem_gb)
     ica_aroma_wf.inputs.inputnode.confounds = functional_cache['confounds']
     ica_aroma_wf.inputs.inputnode.skip_vols = skip_vols
 
@@ -478,6 +480,13 @@ classification.
             ('bold_mask', 'inputnode.bold_mask_std'),
         ]),
     ])  # fmt:skip
+
+    # Generate reportlets
+    func_fit_reports_wf = init_func_fit_reports_wf(output_dir=config.execution.output_dir)
+    func_fit_reports_wf.inputs.inputnode.source_file = bold_file
+    func_fit_reports_wf.inputs.inputnode.anat2std_xfm = functional_cache['anat2mni152nlin6asym']
+    func_fit_reports_wf.inputs.inputnode.anat_dseg = functional_cache['anat_dseg']
+    workflow.connect([(mni6_buffer, func_fit_reports_wf, [('bold', 'inputnode.bold_mni6')])])
 
     if config.workflow.denoise_method:
         # Now denoise the output-space BOLD data using ICA-AROMA
