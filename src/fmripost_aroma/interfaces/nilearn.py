@@ -21,7 +21,7 @@ class _MeanImageInputSpec(BaseInterfaceInputSpec):
     )
     mask_file = File(
         exists=True,
-        mandatory=True,
+        mandatory=False,
         desc='A binary brain mask.',
     )
     out_file = File(
@@ -46,11 +46,19 @@ class MeanImage(NilearnBaseInterface, SimpleInterface):
     output_spec = _MeanImageOutputSpec
 
     def _run_interface(self, runtime):
+        import nibabel as nb
         from nilearn.masking import apply_mask, unmask
+        from nipype.interfaces.base import isdefined
 
-        data = apply_mask(self.inputs.bold_file, self.inputs.mask_file)
-        mean_data = data.mean(axis=0)
-        mean_img = unmask(mean_data, self.inputs.mask_file)
+        if isdefined(self.inputs.mask_file):
+            data = apply_mask(self.inputs.bold_file, self.inputs.mask_file)
+            mean_data = data.mean(axis=0)
+            mean_img = unmask(mean_data, self.inputs.mask_file)
+        else:
+            in_img = nb.load(self.inputs.bold_file)
+            mean_data = in_img.get_fdata().mean(axis=3)
+            mean_img = nb.Nifti1Image(mean_data, in_img.affine, in_img.header)
+
         self._results['out_file'] = os.path.join(runtime.cwd, self.inputs.out_file)
         mean_img.to_filename(self._results['out_file'])
 

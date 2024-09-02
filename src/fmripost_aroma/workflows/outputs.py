@@ -58,6 +58,7 @@ def init_func_fit_reports_wf(
     from nireports.interfaces.reporting.base import (
         SimpleBeforeAfterRPT as SimpleBeforeAfter,
     )
+    from templateflow.api import get as get_template
 
     from fmripost_aroma.interfaces.nilearn import MeanImage
 
@@ -99,28 +100,36 @@ def init_func_fit_reports_wf(
         mem_gb=DEFAULT_MEMORY_MIN_GB,
     )
     mni6_wm.inputs.label = 2  # BIDS default is WM=2
-    workflow.connect([(dseg_to_mni6, mni6_wm, [('output_image', 'in_file')])])
+    workflow.connect([(dseg_to_mni6, mni6_wm, [('output_image', 'in_seg')])])
 
     # EPI-MNI registration
     epi_mni_report = pe.Node(
         SimpleBeforeAfter(
-            before_label='T1w',
-            after_label='EPI',
+            after=str(
+                get_template(
+                    'MNI152NLin6Asym',
+                    resolution=2,
+                    desc='brain',
+                    suffix='T1w',
+                    extension=['.nii', '.nii.gz'],
+                )
+            ),
+            before_label='EPI',
+            after_label='MNI152NLin6Asym',
             dismiss_affine=True,
         ),
         name='epi_mni_report',
         mem_gb=0.1,
     )
     workflow.connect([
-        (inputnode, epi_mni_report, [('coreg_boldref', 'after')]),
         (calculate_mean_bold, epi_mni_report, [('out_file', 'before')]),
-        (mni6_wm, epi_mni_report, [('output_image', 'wm_seg')]),
+        (mni6_wm, epi_mni_report, [('out', 'wm_seg')]),
     ])  # fmt:skip
 
     ds_epi_mni_report = pe.Node(
         DerivativesDataSink(
             base_directory=output_dir,
-            desc='coreg',
+            desc='normalization',
             suffix='bold',
             datatype='figures',
             dismiss_entities=dismiss_echo(),
