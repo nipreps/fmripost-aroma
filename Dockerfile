@@ -40,7 +40,7 @@ RUN python -m build /src
 #
 
 # Utilities for downloading packages
-FROM ${BASE_IMAGE} as downloader
+FROM ${BASE_IMAGE} AS downloader
 # Bump the date to current to refresh curl/certificates/etc
 RUN echo "2023.07.20"
 RUN apt-get update && \
@@ -53,7 +53,7 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # AFNI
-FROM downloader as afni
+FROM downloader AS afni
 # Bump the date to current to update AFNI
 RUN echo "2023.07.20"
 RUN mkdir -p /opt/afni-latest \
@@ -70,7 +70,7 @@ RUN mkdir -p /opt/afni-latest \
     && find /opt/afni-latest -type f -not -name "3dTshift" -delete
 
 # Connectome Workbench 1.5.0
-FROM downloader as workbench
+FROM downloader AS workbench
 RUN mkdir /opt/workbench && \
     curl -sSLO https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.5.0.zip && \
     unzip workbench-linux64-v1.5.0.zip -d /opt && \
@@ -79,7 +79,7 @@ RUN mkdir /opt/workbench && \
     strip --remove-section=.note.ABI-tag /opt/workbench/libs_linux64/libQt5Core.so.5
 
 # Micromamba
-FROM downloader as micromamba
+FROM downloader AS micromamba
 
 # Install a C compiler to build extensions when needed.
 # traits<6.4 wheels are not available for Python 3.11+, but build easily.
@@ -108,7 +108,7 @@ RUN npm install -g svgo@^3.2.0 bids-validator@^1.14.0 && \
 #
 # Main stage
 #
-FROM ${BASE_IMAGE} as fmripost_aroma
+FROM ${BASE_IMAGE} AS fmripost_aroma
 
 # Configure apt
 ENV DEBIAN_FRONTEND="noninteractive" \
