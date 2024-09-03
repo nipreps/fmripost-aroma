@@ -546,10 +546,17 @@ class workflow(_Config):
     (positive = exact, negative = maximum)."""
     denoise_method = None
     """Denoising strategy to be used."""
+    ignore = None
+    """Ignore particular steps for *fMRIPost-AROMA*."""
     cifti_output = None
     """Generate HCP Grayordinates, accepts either ``'91k'`` (default) or ``'170k'``."""
     dummy_scans = None
     """Set a number of initial scans to be considered nonsteady states."""
+    slice_time_ref = 0.5
+    """The time of the reference slice to correct BOLD values to, as a fraction
+    acquisition time. 0 indicates the start, 0.5 the midpoint, and 1 the end
+    of acquisition. The alias `start` corresponds to 0, and `middle` to 0.5.
+    The default value is 0.5."""
 
 
 class loggers:

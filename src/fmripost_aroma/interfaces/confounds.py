@@ -99,12 +99,8 @@ def _get_ica_confounds(mixing, aroma_features, skip_vols, newpath=None):
     # Select the mixing matrix rows corresponding to the motion ICs
     aggr_mixing_arr = mixing_arr[motion_ics, :].T
 
-    signal_mixing_arr = mixing_arr[signal_ics, :].T
-    orthaggr_mixing_arr = aggr_mixing_arr.copy()
-    orthaggr_mixing_arr = aggr_mixing_arr - np.dot(
-        np.dot(np.linalg.pinv(good_ic_arr), good_ic_arr), aggr_mixing_arr
-    )
     # Regress the good components out of the bad time series to get "pure evil" regressors
+    signal_mixing_arr = mixing_arr[signal_ics, :].T
     aggr_mixing_arr_z = stats.zscore(aggr_mixing_arr, axis=0)
     signal_mixing_arr_z = stats.zscore(signal_mixing_arr, axis=0)
     betas = np.linalg.lstsq(signal_mixing_arr_z, aggr_mixing_arr_z, rcond=None)[0]

@@ -317,8 +317,8 @@ def _build_parser(**kwargs):
         required=False,
         action='store',
         nargs='+',
-        default=[],
-        choices=['fieldmaps', 'slicetiming', 'jacobian'],
+        default=['fieldmaps'],
+        choices=['fieldmaps', 'slicetiming', 'fmap-jacobian'],
         help=(
             'Ignore selected aspects of the input dataset to disable corresponding '
             'parts of the resampling workflow (a space delimited list)'
