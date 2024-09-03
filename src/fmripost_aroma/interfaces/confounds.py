@@ -101,7 +101,6 @@ def _get_ica_confounds(mixing, aroma_features, skip_vols, newpath=None):
 
     # Regress the good components out of the bad time series to get "pure evil" regressors
     signal_mixing_arr = mixing_arr[signal_ics, :].T
-    orthaggr_mixing_arr = aggr_mixing_arr.copy()
     aggr_mixing_arr_z = stats.zscore(aggr_mixing_arr, axis=0)
     signal_mixing_arr_z = stats.zscore(signal_mixing_arr, axis=0)
     betas = np.linalg.lstsq(signal_mixing_arr_z, aggr_mixing_arr_z, rcond=None)[0]

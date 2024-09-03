@@ -78,6 +78,20 @@
                 "extension": [
                     ".tsv"
                 ]
+            },
+            "anat_dseg": {
+                "datatype": "anat",
+                "task": null,
+                "run": null,
+                "space": null,
+                "res": null,
+                "den": null,
+                "desc": null,
+                "suffix": "dseg",
+                "extension": [
+                    ".nii.gz",
+                    ".nii"
+                ]
             }
         },
         "transforms": {

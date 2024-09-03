@@ -20,6 +20,7 @@ def test_init_ica_aroma_wf(tmp_path_factory):
         wf = init_ica_aroma_wf(
             bold_file='sub-01_task-rest_bold.nii.gz',
             metadata={'RepetitionTime': 2.0},
+            mem_gb={'resampled': 1},
         )
         assert wf.name == 'aroma_task_rest_wf'
 
