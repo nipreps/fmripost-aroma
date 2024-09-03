@@ -36,6 +36,7 @@ from copy import deepcopy
 
 import yaml
 from nipype.pipeline import engine as pe
+from niworkflows.interfaces.utility import KeySelect
 from packaging.version import Version
 
 from fmripost_aroma import config
@@ -488,8 +489,20 @@ classification.
     func_fit_reports_wf.inputs.inputnode.anat_dseg = functional_cache['anat_dseg']
     workflow.connect([(mni6_buffer, func_fit_reports_wf, [('bold', 'inputnode.bold_mni6')])])
 
-    if config.workflow.denoise_method:
+    if config.workflow.denoise_method and spaces.get_spaces():
         # Now denoise the output-space BOLD data using ICA-AROMA
+        from smriprep.workflows.outputs import init_template_iterator_wf
+
+        templates = spaces.get_spaces()
+        template_iterator_wf = init_template_iterator_wf(
+            spaces=spaces,
+            sloppy=config.execution.sloppy,
+        )
+        template_iterator_wf.inputs.inputnode.anat2std_xfm = functional_cache[
+            'anat2outputspaces_xfm'
+        ]
+        template_iterator_wf.inputs.inputnode.template = templates
+
         denoise_wf = init_denoise_wf(bold_file=bold_file, metadata=bold_metadata)
         denoise_wf.inputs.inputnode.skip_vols = skip_vols
         denoise_wf.inputs.inputnode.space = 'MNI152NLin6Asym'
@@ -505,7 +518,62 @@ classification.
                 ('outputnode.mixing', 'inputnode.mixing'),
                 ('outputnode.aroma_features', 'inputnode.classifications'),
             ]),
+            (template_iterator_wf, denoise_wf, [
+                ('outputnode.space', 'inputnode.space'),
+                ('outputnode.cohort', 'inputnode.cohort'),
+                ('outputnode.res', 'inputnode.res'),
+            ]),
         ])  # fmt:skip
+
+        if functional_cache['bold_outputspaces']:
+            # No transforms necessary
+            std_buffer = pe.Node(
+                KeySelect(
+                    fields=['bold', 'bold_mask'],
+                    keys=[str(space) for space in spaces.references],
+                ),
+                name='std_buffer',
+            )
+            std_buffer.inputs.bold = functional_cache['bold_outputspaces']
+            std_buffer.inputs.bold_mask = functional_cache['bold_mask_outputspaces']
+            workflow.connect([
+                (template_iterator_wf, std_buffer, [('outputnode.space', 'key')]),
+                (std_buffer, denoise_wf, [
+                    ('bold', 'inputnode.bold_file'),
+                    ('bold_mask', 'inputnode.bold_mask'),
+                ]),
+            ])  # fmt:skip
+        else:
+            # Warp native BOLD to requested output spaces
+            xfms = [
+                functional_cache['hmc'],
+                functional_cache['boldref2fmap'],
+                functional_cache['bold2anat'],
+            ]
+            all_xfms = pe.Node(niu.Merge(2), name='all_xfms')
+            all_xfms.inputs.in1 = xfms
+            workflow.connect([
+                (template_iterator_wf, all_xfms, [('outputnode.anat2std_xfm', 'in2')]),
+            ])  # fmt:skip
+
+            resample_std_wf = init_resample_volumetric_wf(
+                bold_file=bold_file,
+                functional_cache=functional_cache,
+                run_stc=False,
+                name=_get_wf_name(bold_file, 'resample_std'),
+            )
+            workflow.connect([
+                (template_iterator_wf, resample_std_wf, [
+                    ('outputnode.space', 'inputnode.space'),
+                    ('outputnode.res', 'inputnode.res'),
+                    ('outputnode.cohort', 'inputnode.cohort'),
+                ]),
+                (all_xfms, resample_std_wf, [('out', 'inputnode.transforms')]),
+                (resample_std_wf, denoise_wf, [
+                    ('outputnode.bold_std', 'inputnode.bold'),
+                    ('outputnode.bold_mask_std', 'inputnode.bold_mask'),
+                ]),
+            ])  # fmt:skip
 
     # Fill-in datasinks seen so far
     for node in workflow.list_node_names():
