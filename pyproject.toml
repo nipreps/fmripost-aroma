@@ -21,6 +21,7 @@ dependencies = [
   "fmriprep @ git+https://github.com/nipreps/fmriprep.git@master",
   "nipype >= 1.8.5",
   "nireports @ git+https://github.com/nipreps/nireports.git@main",
+  "nitransforms == 23.0.1",
   "niworkflows @ git+https://github.com/nipreps/niworkflows.git@master",
   "pybids >= 0.15.6",
   "sdcflows @ git+https://github.com/nipreps/sdcflows.git@master",
