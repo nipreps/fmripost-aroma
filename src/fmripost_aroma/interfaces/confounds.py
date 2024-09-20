@@ -72,8 +72,8 @@ def _get_ica_confounds(mixing, aroma_features, skip_vols, newpath=None):
         aroma_features_df['classification'] != 'rejected'
     ].index.values
     mixing_arr = np.loadtxt(mixing, ndmin=2)
-    n_vols = mixing_arr.shape[0]
-    if n_vols != aroma_features_df.shape[0]:
+    n_comps = mixing_arr.shape[1]
+    if n_comps != aroma_features_df.shape[0]:
         raise ValueError('Mixing matrix and AROMA features do not match')
 
     # Prepare output paths
