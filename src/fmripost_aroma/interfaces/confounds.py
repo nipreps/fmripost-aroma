@@ -81,6 +81,7 @@ def _get_ica_confounds(mixing, aroma_features, skip_vols, newpath=None):
     aroma_confounds = os.path.join(newpath, 'AROMAAggrCompAROMAConfounds.tsv')
 
     # pad mixing_arr with rows of zeros corresponding to number of non steady-state volumes
+    padded_mixing_arr = mixing_arr.copy()
     if skip_vols > 0:
         zeros = np.zeros([skip_vols, mixing_arr.shape[1]])
         padded_mixing_arr = np.vstack([zeros, mixing_arr])
