@@ -277,9 +277,7 @@ in the corresponding confounds file.
 
     # extract the confound ICs from the results
     ica_aroma_confound_extraction = pe.Node(
-        ICAConfounds(
-            err_on_aroma_warn=config.workflow.err_on_warn,
-        ),
+        ICAConfounds(err_on_aroma_warn=config.workflow.err_on_warn),
         name='ica_aroma_confound_extraction',
     )
     workflow.connect([
@@ -311,7 +309,7 @@ in the corresponding confounds file.
         niu.Function(function=_convert_to_tsv, output_names=['out_file']),
         name='convert_to_tsv',
     )
-    workflow.connect([(select_melodic_files, convert_to_tsv, [('mixing', 'in_file')])])
+    workflow.connect([(ica_aroma_confound_extraction, convert_to_tsv, [('mixing', 'in_file')])])
 
     ds_mixing = pe.Node(
         DerivativesDataSink(
