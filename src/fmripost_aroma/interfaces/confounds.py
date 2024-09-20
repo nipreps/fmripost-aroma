@@ -79,7 +79,7 @@ def _get_ica_confounds(mixing, aroma_features, skip_vols, newpath=None):
     mixing_out = os.path.join(newpath, 'mixing.tsv')
     aroma_confounds = os.path.join(newpath, 'AROMAAggrCompAROMAConfounds.tsv')
 
-    # pad mixing_arr with rows of zeros corresponding to number non steady-state volumes
+    # pad mixing_arr with rows of zeros corresponding to number of non steady-state volumes
     if skip_vols > 0:
         zeros = np.zeros([skip_vols, mixing_arr.shape[1]])
         padded_mixing_arr = np.vstack([zeros, mixing_arr])
@@ -106,6 +106,12 @@ def _get_ica_confounds(mixing, aroma_features, skip_vols, newpath=None):
     betas = np.linalg.lstsq(signal_mixing_arr_z, aggr_mixing_arr_z, rcond=None)[0]
     pred_bad_timeseries = np.dot(signal_mixing_arr_z, betas)
     orthaggr_mixing_arr = aggr_mixing_arr_z - pred_bad_timeseries
+
+    # pad confounds with rows of zeros corresponding to number of non steady-state volumes
+    if skip_vols > 0:
+        zeros = np.zeros([skip_vols, aggr_mixing_arr.shape[1]])
+        aggr_mixing_arr = np.vstack([zeros, aggr_mixing_arr])
+        orthaggr_mixing_arr = np.vstack([zeros, orthaggr_mixing_arr])
 
     # add one to motion_ic_indices to match melodic report.
     aggr_confounds_df = pd.DataFrame(
