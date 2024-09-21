@@ -262,10 +262,10 @@ def write_derivative_description(input_dir, output_dir, dataset_links=None):
 
     orig_dset_description = os.path.join(input_dir, 'dataset_description.json')
     if not os.path.isfile(orig_dset_description):
-        raise FileNotFoundError(f'Dataset description DNE: {orig_dset_description}')
+        raise FileNotFoundError(f'Dataset description does not exist: {orig_dset_description}')
 
-    with open(orig_dset_description) as fo:
-        desc = json.load(fo)
+    with open(orig_dset_description) as fobj:
+        desc = json.load(fobj)
 
     # Update dataset description
     desc['Name'] = 'fMRIPost-AROMA- ICA-AROMA Postprocessing Outputs'
@@ -281,8 +281,9 @@ def write_derivative_description(input_dir, output_dir, dataset_links=None):
         if name not in ('templateflow', 'input'):
             dataset_desc = Path(link) / 'dataset_description.json'
             if dataset_desc.isfile():
-                with open(dataset_desc) as fo:
-                    dataset_desc_dict = json.load(fo)
+                with open(dataset_desc) as fobj:
+                    dataset_desc_dict = json.load(fobj)
+
                 if 'GeneratedBy' in dataset_desc_dict:
                     desc['GeneratedBy'].insert(0, dataset_desc_dict['GeneratedBy'][0])
 
@@ -308,7 +309,6 @@ def write_derivative_description(input_dir, output_dir, dataset_links=None):
             'Type': 'singularity',
             'URI': os.getenv('FMRIPOST_AROMA__SINGULARITY_URL'),
         }
-
 
     # Replace local templateflow path with URL
     dataset_links = dataset_links.copy()
