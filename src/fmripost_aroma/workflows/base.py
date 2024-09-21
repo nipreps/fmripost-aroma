@@ -377,9 +377,10 @@ def init_single_run_wf(bold_file):
         # Resample to MNI152NLin6Asym:res-2, for ICA-AROMA classification
         from fmriprep.workflows.bold.apply import init_bold_volumetric_resample_wf
         from fmriprep.workflows.bold.stc import init_bold_stc_wf
-        from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
         from niworkflows.interfaces.header import ValidateImage
         from templateflow.api import get as get_template
+
+        from fmripost_aroma.interfaces.misc import ApplyTransforms
 
         workflow.__desc__ += """\
 Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classification.
@@ -452,7 +453,7 @@ Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classific
         # Warp the mask as well
         mask_to_mni6 = pe.Node(
             ApplyTransforms(
-                interpolation='MultiLabel',
+                interpolation='GenericLabel',
                 input_image=functional_cache['bold_mask_native'],
                 reference_image=mni6_mask,
                 transforms=[

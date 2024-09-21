@@ -72,18 +72,22 @@ def _get_ica_confounds(mixing, aroma_features, skip_vols, newpath=None):
         aroma_features_df['classification'] != 'rejected'
     ].index.values
     mixing_arr = np.loadtxt(mixing, ndmin=2)
+    n_comps = mixing_arr.shape[1]
+    if n_comps != aroma_features_df.shape[0]:
+        raise ValueError('Mixing matrix and AROMA features do not match')
 
     # Prepare output paths
     mixing_out = os.path.join(newpath, 'mixing.tsv')
     aroma_confounds = os.path.join(newpath, 'AROMAAggrCompAROMAConfounds.tsv')
 
-    # pad mixing_arr with rows of zeros corresponding to number non steady-state volumes
+    # pad mixing_arr with rows of zeros corresponding to number of non steady-state volumes
+    padded_mixing_arr = mixing_arr.copy()
     if skip_vols > 0:
         zeros = np.zeros([skip_vols, mixing_arr.shape[1]])
-        mixing_arr = np.vstack([zeros, mixing_arr])
+        padded_mixing_arr = np.vstack([zeros, mixing_arr])
 
     # save mixing_arr
-    np.savetxt(mixing_out, mixing_arr, delimiter='\t')
+    np.savetxt(mixing_out, padded_mixing_arr, delimiter='\t')
 
     # Return dummy list of ones if no noise components were found
     if motion_ics.size == 0:
@@ -91,21 +95,25 @@ def _get_ica_confounds(mixing, aroma_features, skip_vols, newpath=None):
         return None, mixing_out
 
     # return dummy lists of zeros if no signal components were found
-    good_ic_arr = np.delete(mixing_arr, motion_ics, 1).T
-    if good_ic_arr.size == 0:
-        config.loggers.interfaces.warning('No signal components were classified')
-        return None, mixing_out
+    if signal_ics.size == 0:
+        raise Exception('No signal components were classified')
 
-    # Select the mixing matrix rows corresponding to the motion ICs
-    aggr_mixing_arr = mixing_arr[motion_ics, :].T
+    # Select the mixing matrix columns corresponding to the motion ICs
+    aggr_mixing_arr = mixing_arr[:, motion_ics]
 
     # Regress the good components out of the bad time series to get "pure evil" regressors
-    signal_mixing_arr = mixing_arr[signal_ics, :].T
+    signal_mixing_arr = mixing_arr[:, signal_ics]
     aggr_mixing_arr_z = stats.zscore(aggr_mixing_arr, axis=0)
     signal_mixing_arr_z = stats.zscore(signal_mixing_arr, axis=0)
     betas = np.linalg.lstsq(signal_mixing_arr_z, aggr_mixing_arr_z, rcond=None)[0]
     pred_bad_timeseries = np.dot(signal_mixing_arr_z, betas)
     orthaggr_mixing_arr = aggr_mixing_arr_z - pred_bad_timeseries
+
+    # pad confounds with rows of zeros corresponding to number of non steady-state volumes
+    if skip_vols > 0:
+        zeros = np.zeros([skip_vols, aggr_mixing_arr.shape[1]])
+        aggr_mixing_arr = np.vstack([zeros, aggr_mixing_arr])
+        orthaggr_mixing_arr = np.vstack([zeros, orthaggr_mixing_arr])
 
     # add one to motion_ic_indices to match melodic report.
     aggr_confounds_df = pd.DataFrame(
