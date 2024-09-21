@@ -234,61 +234,102 @@ def write_bidsignore(deriv_dir):
     ignore_file.write_text('\n'.join(bids_ignore) + '\n')
 
 
-def write_derivative_description(bids_dir, deriv_dir, dataset_links=None):
+def write_derivative_description(input_dir, output_dir, dataset_links=None):
+    """Write dataset_description.json file for derivatives.
+
+    Parameters
+    ----------
+    input_dir : :obj:`str`
+        Path to the primary input dataset being ingested.
+        This may be a raw BIDS dataset (in the case of raw+derivatives workflows)
+        or a preprocessing derivatives dataset (in the case of derivatives-only workflows).
+    output_dir : :obj:`str`
+        Path to the output xcp-d dataset.
+    dataset_links : :obj:`dict`, optional
+        Dictionary of dataset links to include in the dataset description.
+    """
+    import json
     import os
+
+    from packaging.version import Version
 
     from fmripost_aroma import __version__
 
     DOWNLOAD_URL = f'https://github.com/nipreps/fmripost_aroma/archive/{__version__}.tar.gz'
 
-    bids_dir = Path(bids_dir)
-    deriv_dir = Path(deriv_dir)
-    desc = {
-        'Name': 'fMRIPost-AROMA- ICA-AROMA Postprocessing Outputs',
-        'BIDSVersion': '1.9.0dev',
-        'DatasetType': 'derivative',
-        'GeneratedBy': [
-            {
-                'Name': 'fMRIPost-AROMA',
-                'Version': __version__,
-                'CodeURL': DOWNLOAD_URL,
-            }
-        ],
-        'HowToAcknowledge': 'Please cite fMRIPost-AROMA when using these results.',
-    }
+    input_dir = Path(input_dir)
+    output_dir = Path(output_dir)
+
+    orig_dset_description = os.path.join(input_dir, 'dataset_description.json')
+    if not os.path.isfile(orig_dset_description):
+        raise FileNotFoundError(f'Dataset description DNE: {orig_dset_description}')
+
+    with open(orig_dset_description) as fo:
+        desc = json.load(fo)
+
+    # Update dataset description
+    desc['Name'] = 'fMRIPost-AROMA- ICA-AROMA Postprocessing Outputs'
+    desc['BIDSVersion'] = '1.9.0dev'
+    desc['DatasetType'] = 'derivative'
+    desc['HowToAcknowledge'] = 'Include the generated boilerplate in the methods section.'
+
+    # Start with GeneratedBy from the primary input dataset's dataset_description.json
+    desc['GeneratedBy'] = desc.get('GeneratedBy', [])
+
+    # Add GeneratedBy from derivatives' dataset_description.jsons
+    for name, link in enumerate(dataset_links):
+        if name not in ('templateflow', 'input'):
+            dataset_desc = Path(link) / 'dataset_description.json'
+            if dataset_desc.isfile():
+                with open(dataset_desc) as fo:
+                    dataset_desc_dict = json.load(fo)
+                if 'GeneratedBy' in dataset_desc_dict:
+                    desc['GeneratedBy'].insert(0, dataset_desc_dict['GeneratedBy'][0])
+
+    # Add GeneratedBy from fMRIPost-AROMA
+    desc['GeneratedBy'].insert(
+        0,
+        {
+            'Name': 'fMRIPost-AROMA',
+            'Version': __version__,
+            'CodeURL': DOWNLOAD_URL,
+        },
+    )
 
     # Keys that can only be set by environment
     if 'FMRIPOST_AROMA_DOCKER_TAG' in os.environ:
         desc['GeneratedBy'][0]['Container'] = {
             'Type': 'docker',
-            'Tag': f"nipreps/fmriprep:{os.environ['FMRIPOST_AROMA__DOCKER_TAG']}",
+            'Tag': f'nipreps/fmripost_aroma:{os.environ["FMRIPOST_AROMA__DOCKER_TAG"]}',
         }
+
     if 'FMRIPOST_AROMA__SINGULARITY_URL' in os.environ:
         desc['GeneratedBy'][0]['Container'] = {
             'Type': 'singularity',
             'URI': os.getenv('FMRIPOST_AROMA__SINGULARITY_URL'),
         }
 
-    # Keys deriving from source dataset
-    orig_desc = {}
-    fname = bids_dir / 'dataset_description.json'
-    if fname.exists():
-        orig_desc = json.loads(fname.read_text())
 
-    if 'DatasetDOI' in orig_desc:
-        desc['SourceDatasets'] = [
-            {'URL': f'https://doi.org/{orig_desc["DatasetDOI"]}', 'DOI': orig_desc['DatasetDOI']}
-        ]
-    if 'License' in orig_desc:
-        desc['License'] = orig_desc['License']
+    # Replace local templateflow path with URL
+    dataset_links = dataset_links.copy()
+    dataset_links['templateflow'] = 'https://github.com/templateflow/templateflow'
 
     # Add DatasetLinks
-    if dataset_links:
-        desc['DatasetLinks'] = {k: str(v) for k, v in dataset_links.items()}
-        if 'templateflow' in dataset_links:
-            desc['DatasetLinks']['templateflow'] = 'https://github.com/templateflow/templateflow'
+    desc['DatasetLinks'] = desc.get('DatasetLinks', {})
+    for k, v in dataset_links.items():
+        if k in desc['DatasetLinks'].keys() and str(desc['DatasetLinks'][k]) != str(v):
+            print(f'"{k}" is already a dataset link. Overwriting.')
 
-    Path.write_text(deriv_dir / 'dataset_description.json', json.dumps(desc, indent=4))
+        desc['DatasetLinks'][k] = str(v)
+
+    out_desc = Path(output_dir / 'dataset_description.json')
+    if out_desc.is_file():
+        old_desc = json.loads(out_desc.read_text())
+        old_version = old_desc['GeneratedBy'][0]['Version']
+        if Version(__version__).public != Version(old_version).public:
+            print(f'Previous output generated by version {old_version} found.')
+    else:
+        out_desc.write_text(json.dumps(desc, indent=4))
 
 
 def validate_input_dir(exec_env, bids_dir, participant_label, need_T1w=True):

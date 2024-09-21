@@ -127,11 +127,15 @@ def _run_and_generate(test_name, parameters, test_main=True):
         config.to_filename(config_file)
 
         retval = build_workflow(config_file, retval={})
-        xcpd_wf = retval['workflow']
-        xcpd_wf.run()
-        write_derivative_description(config.execution.bids_dir, config.execution.output_dir)
+        wf = retval['workflow']
+        wf.run()
+        write_derivative_description(
+            input_dir=config.execution.bids_dir,
+            output_dir=config.execution.output_dir,
+            dataset_links={},
+        )
 
-        build_boilerplate(str(config_file), xcpd_wf)
+        build_boilerplate(str(config_file), wf)
         session_list = (
             config.execution.bids_filters.get('bold', {}).get('session')
             if config.execution.bids_filters
