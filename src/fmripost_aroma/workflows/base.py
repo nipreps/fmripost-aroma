@@ -210,6 +210,10 @@ It is released under the [CC0]\
             f"Please check your BIDS filters: {config.execution.bids_filters}."
         )
 
+    config.loggers.workflow.info(
+        f'Collected subject data:\n{yaml.dump(subject_data, default_flow_style=False, indent=4)}',
+    )
+
     bids_info = pe.Node(
         BIDSInfo(
             bids_dir=config.execution.bids_dir,

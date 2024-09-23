@@ -540,6 +540,7 @@ def parse_args(args=None, namespace=None):
 
     bids_dir = config.execution.bids_dir
     output_dir = config.execution.output_dir
+    derivatives = config.execution.derivatives
     work_dir = config.execution.work_dir
     version = config.environment.version
 
@@ -571,8 +572,8 @@ def parse_args(args=None, namespace=None):
             'Please modify the output path.'
         )
 
-    # Validate inputs
-    if not opts.skip_bids_validation:
+    # Validate raw inputs if running in raw+derivatives mode
+    if derivatives and not opts.skip_bids_validation:
         from fmripost_aroma.utils.bids import validate_input_dir
 
         build_log.info(
