@@ -514,7 +514,7 @@ class execution(_Config):
                     cls.bids_filters[acq][k] = _process_value(v)
 
         dataset_links = {
-            'raw': cls.bids_dir,
+            'input': cls.bids_dir,
             'templateflow': Path(TF_LAYOUT.root),
         }
         for deriv_name, deriv_path in cls.derivatives.items():
