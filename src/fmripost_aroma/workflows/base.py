@@ -322,7 +322,7 @@ def init_single_run_wf(bold_file):
                 ),
             )
 
-        if not functional_cache['confounds']:
+        if not functional_cache['bold_confounds']:
             if config.workflow.dummy_scans is None:
                 raise ValueError(
                     'No confounds detected. '
@@ -357,17 +357,17 @@ def init_single_run_wf(bold_file):
     if config.workflow.dummy_scans is not None:
         skip_vols = config.workflow.dummy_scans
     else:
-        if not functional_cache['confounds']:
+        if not functional_cache['bold_confounds']:
             raise ValueError(
                 'No confounds detected. '
                 'Automatical dummy scan detection cannot be performed. '
                 'Please set the `--dummy-scans` flag explicitly.'
             )
-        skip_vols = get_nss(functional_cache['confounds'])
+        skip_vols = get_nss(functional_cache['bold_confounds'])
 
     # Run ICA-AROMA
     ica_aroma_wf = init_ica_aroma_wf(bold_file=bold_file, metadata=bold_metadata, mem_gb=mem_gb)
-    ica_aroma_wf.inputs.inputnode.confounds = functional_cache['confounds']
+    ica_aroma_wf.inputs.inputnode.confounds = functional_cache['bold_confounds']
     ica_aroma_wf.inputs.inputnode.skip_vols = skip_vols
 
     mni6_buffer = pe.Node(niu.IdentityInterface(fields=['bold', 'bold_mask']), name='mni6_buffer')
@@ -427,7 +427,7 @@ Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classific
             jacobian='fmap-jacobian' not in config.workflow.ignore,
             name='bold_MNI6_wf',
         )
-        bold_MNI6_wf.inputs.inputnode.motion_xfm = functional_cache['hmc']
+        bold_MNI6_wf.inputs.inputnode.motion_xfm = functional_cache['bold_hmc']
         bold_MNI6_wf.inputs.inputnode.boldref2fmap_xfm = functional_cache['boldref2fmap']
         bold_MNI6_wf.inputs.inputnode.boldref2anat_xfm = functional_cache['boldref2anat']
         bold_MNI6_wf.inputs.inputnode.anat2std_xfm = functional_cache['anat2mni152nlin6asym']
