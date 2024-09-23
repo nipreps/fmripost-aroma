@@ -300,7 +300,7 @@ def write_derivative_description(input_dir, output_dir, dataset_links=None):
     for name, link in enumerate(dataset_links):
         if name not in ('templateflow', 'input'):
             dataset_desc = Path(link) / 'dataset_description.json'
-            if dataset_desc.isfile():
+            if dataset_desc.is_file():
                 with open(dataset_desc) as fobj:
                     dataset_desc_dict = json.load(fobj)
 
