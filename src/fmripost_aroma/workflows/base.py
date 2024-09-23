@@ -211,10 +211,7 @@ It is released under the [CC0]\
         )
 
     config.loggers.workflow.info(
-        (
-            'Collected subject data:\n'
-            f'{yaml.dump(subject_data, default_flow_style=False, indent=4)}'
-        ),
+        f'Collected subject data:\n{yaml.dump(subject_data, default_flow_style=False, indent=4)}',
     )
 
     bids_info = pe.Node(
