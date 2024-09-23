@@ -63,7 +63,7 @@
                     ".nii"
                 ]
             },
-            "confounds": {
+            "bold_confounds": {
                 "datatype": "func",
                 "echo": null,
                 "part": [
@@ -79,12 +79,27 @@
                     ".tsv"
                 ]
             },
+            "anat_mni152nlin6asym": {
+                "datatype": "anat",
+                "echo": null,
+                "part": [
+                    "mag",
+                    null
+                ],
+                "res": "2",
+                "space": "MNI152NLin6Asym",
+                "desc": "preproc",
+                "suffix": [
+                    "T1w",
+                    "T2w"
+                ],
+                "extension": [
+                    ".nii.gz",
+                    ".nii"
+                ]
+            },
             "anat_dseg": {
                 "datatype": "anat",
-                "task": null,
-                "acquisition": null,
-                "run": null,
-                "part": null,
                 "space": null,
                 "res": null,
                 "den": null,
@@ -97,9 +112,8 @@
             }
         },
         "transforms": {
-            "hmc": {
+            "bold_hmc": {
                 "datatype": "func",
-                "part": null,
                 "from": "orig",
                 "to": "boldref",
                 "mode": "image",
@@ -108,7 +122,6 @@
             },
             "boldref2anat": {
                 "datatype": "func",
-                "part": null,
                 "from": "boldref",
                 "to": ["anat", "T1w", "T2w"],
                 "mode": "image",
@@ -117,18 +130,14 @@
             },
             "boldref2fmap": {
                 "datatype": "func",
-                "part": null,
-                "from": "boldref",
+                "from": "orig",
                 "mode": "image",
                 "suffix": "xfm",
                 "extension": ".txt"
             },
             "anat2mni152nlin6asym": {
                 "datatype": "anat",
-                "task": null,
-                "acquisition": null,
                 "run": null,
-                "part": null,
                 "from": ["anat", "T1w", "T2w"],
                 "to": "MNI152NLin6Asym",
                 "space": null,

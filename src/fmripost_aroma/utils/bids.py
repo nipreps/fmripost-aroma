@@ -119,26 +119,43 @@ def collect_derivatives(
             )
 
         for k, q in spec['derivatives'].items():
-            # Combine entities with query. Query values override file entities.
-            query = {**entities, **q}
+            if k.startswith('anat'):
+                # Allow anatomical derivatives at session level or subject level
+                query = {**{'session': [entities.get('session'), None]}, **q}
+            else:
+                # Combine entities with query. Query values override file entities.
+                query = {**entities, **q}
+
             item = layout.get(return_type='filename', **query)
             if not item:
                 derivs_cache[k] = None
+            elif not allow_multiple and len(item) > 1 and k.startswith('anat'):
+                # Anatomical derivatives are allowed to have multiple files (e.g., T1w and T2w)
+                # but we just grab the first one
+                derivs_cache[k] = item[0]
             elif not allow_multiple and len(item) > 1:
                 raise ValueError(f'Multiple files found for {k}: {item}')
             else:
                 derivs_cache[k] = item[0] if len(item) == 1 else item
 
         for k, q in spec['transforms'].items():
-            # Combine entities with query. Query values override file entities.
-            # TODO: Drop functional entities (task, run, etc.) from anat transforms.
-            query = {**entities, **q}
+            if k.startswith('anat'):
+                # Allow anatomical derivatives at session level or subject level
+                query = {**{'session': [entities.get('session'), None]}, **q}
+            else:
+                # Combine entities with query. Query values override file entities.
+                query = {**entities, **q}
+
             if k == 'boldref2fmap':
                 query['to'] = fieldmap_id
 
             item = layout.get(return_type='filename', **query)
             if not item:
                 derivs_cache[k] = None
+            elif not allow_multiple and len(item) > 1 and k.startswith('anat'):
+                # Anatomical derivatives are allowed to have multiple files (e.g., T1w and T2w)
+                # but we just grab the first one
+                derivs_cache[k] = item[0]
             elif not allow_multiple and len(item) > 1:
                 raise ValueError(f'Multiple files found for {k}: {item}')
             else:
@@ -178,8 +195,11 @@ def collect_derivatives(
 
         spaces_found, anat2outputspaces_xfm = [], []
         for space in spaces.references:
-            # First try to find processed BOLD+mask files in the requested space
-            anat2space_query = {**entities, **spec['transforms']['anat2mni152nlin6asym']}
+            # Now try to find transform to the requested space
+            anat2space_query = {
+                **{'session': [entities.get('session'), None]},
+                **spec['transforms']['anat2mni152nlin6asym'],
+            }
             anat2space_query['to'] = space.space
             item = layout.get(return_type='filename', **anat2space_query)
             anat2outputspaces_xfm.append(item[0] if item else None)
