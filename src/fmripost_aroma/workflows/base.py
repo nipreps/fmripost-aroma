@@ -173,6 +173,8 @@ It is released under the [CC0]\
 ### References
 
 """
+    entities = config.execution.bids_filters.copy()
+    entities['subject'] = subject_id
 
     if config.execution.derivatives:
         # Raw dataset + derivatives dataset
@@ -180,7 +182,7 @@ It is released under the [CC0]\
         subject_data = collect_derivatives(
             raw_dataset=config.execution.layout,
             derivatives_dataset=None,
-            entities=config.execution.bids_filters,
+            entities=entities,
             fieldmap_id=None,
             allow_multiple=True,
             spaces=None,
@@ -192,7 +194,7 @@ It is released under the [CC0]\
         subject_data = collect_derivatives(
             raw_dataset=None,
             derivatives_dataset=config.execution.layout,
-            entities=config.execution.bids_filters,
+            entities=entities,
             fieldmap_id=None,
             allow_multiple=True,
             spaces=None,
