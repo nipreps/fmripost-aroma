@@ -82,7 +82,9 @@
             "anat_dseg": {
                 "datatype": "anat",
                 "task": null,
+                "acquisition": null,
                 "run": null,
+                "part": null,
                 "space": null,
                 "res": null,
                 "den": null,
@@ -97,6 +99,7 @@
         "transforms": {
             "hmc": {
                 "datatype": "func",
+                "part": null,
                 "from": "orig",
                 "to": "boldref",
                 "mode": "image",
@@ -105,6 +108,7 @@
             },
             "boldref2anat": {
                 "datatype": "func",
+                "part": null,
                 "from": "boldref",
                 "to": ["anat", "T1w", "T2w"],
                 "mode": "image",
@@ -113,7 +117,8 @@
             },
             "boldref2fmap": {
                 "datatype": "func",
-                "from": "orig",
+                "part": null,
+                "from": "boldref",
                 "mode": "image",
                 "suffix": "xfm",
                 "extension": ".txt"
@@ -121,7 +126,9 @@
             "anat2mni152nlin6asym": {
                 "datatype": "anat",
                 "task": null,
+                "acquisition": null,
                 "run": null,
+                "part": null,
                 "from": ["anat", "T1w", "T2w"],
                 "to": "MNI152NLin6Asym",
                 "space": null,
