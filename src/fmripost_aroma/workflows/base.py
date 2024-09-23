@@ -173,7 +173,7 @@ It is released under the [CC0]\
 ### References
 
 """
-    entities = config.execution.bids_filters.copy()
+    entities = config.execution.bids_filters or {}
     entities['subject'] = subject_id
 
     if config.execution.derivatives:
