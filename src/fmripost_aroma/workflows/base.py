@@ -179,6 +179,7 @@ It is released under the [CC0]\
     if config.execution.derivatives:
         # Raw dataset + derivatives dataset
         config.loggers.workflow.info('Raw+derivatives workflow mode enabled')
+        # Just build a list of BOLD files right now
         subject_data = collect_derivatives(
             raw_dataset=config.execution.layout,
             derivatives_dataset=None,
@@ -191,6 +192,7 @@ It is released under the [CC0]\
     else:
         # Derivatives dataset only
         config.loggers.workflow.info('Derivatives-only workflow mode enabled')
+        # Just build a list of BOLD files right now
         subject_data = collect_derivatives(
             raw_dataset=None,
             derivatives_dataset=config.execution.layout,
@@ -304,6 +306,23 @@ def init_single_run_wf(bold_file):
 
     entities = extract_entities(bold_file)
 
+    # Attempt to extract the associated fmap ID
+    fmapid = None
+    all_fmapids = config.execution.layout.get_fmapids(
+        subject=entities['subject'],
+        session=entities.get('session', None),
+    )
+    if all_fmapids:
+        fmap_file = config.execution.layout.get_nearest(
+            bold_file,
+            to=all_fmapids,
+            suffix='xfm',
+            extension='.txt',
+            strict=False,
+            **{'from': 'boldref'},
+        )
+        fmapid = config.execution.layout.get_file(fmap_file).entities['to']
+
     functional_cache = defaultdict(list, {})
     if config.execution.derivatives:
         # Collect native-space derivatives and transforms
@@ -311,7 +330,7 @@ def init_single_run_wf(bold_file):
             raw_dataset=config.execution.layout,
             derivatives_dataset=None,
             entities=entities,
-            fieldmap_id=None,
+            fieldmap_id=fmapid,
             allow_multiple=False,
             spaces=None,
         )
@@ -322,7 +341,7 @@ def init_single_run_wf(bold_file):
                     raw_dataset=None,
                     derivatives_dataset=deriv_dir,
                     entities=entities,
-                    fieldmap_id=None,
+                    fieldmap_id=fmapid,
                     allow_multiple=False,
                     spaces=spaces,
                 ),
@@ -347,7 +366,7 @@ def init_single_run_wf(bold_file):
                 raw_dataset=None,
                 derivatives_dataset=config.execution.layout,
                 entities=entities,
-                fieldmap_id=None,
+                fieldmap_id=fmapid,
                 allow_multiple=False,
                 spaces=spaces,
             ),
