@@ -37,11 +37,10 @@ def _build_parser(**kwargs):
     from functools import partial
     from pathlib import Path
 
+    from niworkflows.utils.spaces import OutputReferencesAction
     from packaging.version import Version
 
     from fmripost_aroma.cli.version import check_latest, is_flagged
-
-    # from niworkflows.utils.spaces import OutputReferencesAction
 
     class ToDict(Action):
         def __call__(self, parser, namespace, values, option_string=None):
@@ -326,21 +325,21 @@ def _build_parser(**kwargs):
         ),
     )
     # Disable output spaces until warping works
-    # g_conf.add_argument(
-    #     '--output-spaces',
-    #     nargs='*',
-    #     action=OutputReferencesAction,
-    #     help="""\
-    # Standard and non-standard spaces to resample denoised functional images to. \
-    # Standard spaces may be specified by the form \
-    # ``<SPACE>[:cohort-<label>][:res-<resolution>][...]``, where ``<SPACE>`` is \
-    # a keyword designating a spatial reference, and may be followed by optional, \
-    # colon-separated parameters. \
-    # Non-standard spaces imply specific orientations and sampling grids. \
-    # For further details, please check out \
-    # https://fmriprep.readthedocs.io/en/%s/spaces.html"""
-    #    % (currentv.base_version if is_release else 'latest'),
-    # )
+    g_conf.add_argument(
+        '--output-spaces',
+        nargs='*',
+        action=OutputReferencesAction,
+        help="""\
+Standard and non-standard spaces to resample denoised functional images to. \
+Standard spaces may be specified by the form \
+``<SPACE>[:cohort-<label>][:res-<resolution>][...]``, where ``<SPACE>`` is \
+a keyword designating a spatial reference, and may be followed by optional, \
+colon-separated parameters. \
+Non-standard spaces imply specific orientations and sampling grids. \
+For further details, please check out \
+https://fmriprep.readthedocs.io/en/%s/spaces.html"""
+        % (currentv.base_version if is_release else 'latest'),
+    )
     g_conf.add_argument(
         '--dummy-scans',
         required=False,
