@@ -91,7 +91,7 @@ def _get_ica_confounds(mixing, aroma_features, skip_vols, newpath=None):
 
     # Return dummy list of ones if no noise components were found
     if motion_ics.size == 0:
-        config.loggers.interfaces.warning('No noise components were classified')
+        config.loggers.interface.warning('No noise components were classified')
         return None, mixing_out
 
     # return dummy lists of zeros if no signal components were found
