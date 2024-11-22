@@ -31,4 +31,4 @@ class DerivativesDataSink(BaseDerivativesDataSink):
     _allowed_entities = set(config_entities)
     _config_entities = config_entities
     _config_entities_dict = merged_entities
-    _file_patterns = fmripost_aroma_spec['patterns']
+    _file_patterns = fmripost_aroma_spec['default_path_patterns']

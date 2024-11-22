@@ -1,4 +1,5 @@
 {
+    "name": "aroma",
     "queries": {
         "raw": {
             "bold_raw": {
@@ -152,8 +153,8 @@
     },
     "entities": [
         {
-            "name": "datatype",
-            "pattern": "[/\\\\]+(anat|func)[/\\\\]+"
+            "name": "fmapid",
+            "pattern": "fmapid-([a-zA-Z0-9]+)"
         },
         {
             "name": "cohort",
@@ -173,7 +174,7 @@
             "pattern": "(?:^|_)thresh-([a-zA-Z0-9]+)"
         }
       ],
-    "patterns": [
+    "default_path_patterns": [
         "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}][_echo-{echo}][_part-{part}][_space-{space}][_res-{res}][_desc-{desc}]_{suffix<bold|boldref|dseg|mask>}.{extension<nii|nii.gz|json>|nii.gz}",
         "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}][_echo-{echo}][_part-{part}][_space-{space}][_res-{res}][_stat-{statistic}][_desc-{desc}]_{suffix<components|mixing>}.{extension<nii|nii.gz|json>|nii.gz}",
         "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}][_echo-{echo}][_part-{part}][_space-{space}][_res-{res}][_stat-{statistic}][_desc-{desc}]_{suffix<components|mixing>}.{extension<tsv|json>|tsv}",
