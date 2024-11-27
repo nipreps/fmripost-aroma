@@ -1,0 +1,57 @@
+{
+  "title": "fMRIPost-template: a robust postprocessing pipeline for functional MRI",
+  "description": "<p>fMRIPost-template is a robust and easy-to-use pipeline for post-processing preprocessed fMRI data organized in BIDS format.</p>",
+  "contributors": [
+    {
+      "affiliation": "Lausanne University Hospital and University of Lausanne, Lausanne, Switzerland",
+      "name": "Esteban, Oscar",
+      "orcid": "0000-0001-8435-6191"
+    },
+    {
+      "name": "Ferrer, Vicente"
+    },
+    {
+      "name": "Uruñuela, Eneko"
+    },
+    {
+      "name": "Pedregosa, Fabian"
+    },
+    {
+      "name": "Caballero Gaudes, Cesar"
+    }
+  ],
+  "creators": [
+    {
+      "affiliation": "Department of Psychology, Florida International University",
+      "name": "Salo, Taylor",
+      "orcid": "0000-0001-9813-3167"
+    },
+    {
+      "affiliation": "Department of Psychology, Stanford University",
+      "name": "Markiewicz, Christopher J.",
+      "orcid": "0000-0002-6533-164X"
+    }
+  ],
+  "keywords": [
+    "neuroimaging",
+    "workflow",
+    "pipeline",
+    "preprocessing",
+    "fMRI",
+    "BIDS"
+  ],
+  "license": "Apache-2.0",
+  "related_identifiers": [
+    {
+      "identifier": "https://fmripost_template.org",
+      "relation": "documents",
+      "scheme": "url"
+    },
+    {
+      "identifier": "10.1038/s41592-018-0235-4",
+      "relation": "isPartOf",
+      "scheme": "doi"
+    }
+  ],
+  "upload_type": "software"
+}

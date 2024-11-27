@@ -1,0 +1,203 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fmripost-template"
+description = 'A template tool for postprocessing fMRIPrep derivatives'
+readme = "README.md"
+requires-python = ">=3.11"
+license = {file = "LICENSE"}
+keywords = []
+authors = [{name = "The NiPreps Developers", email = "nipreps@gmail.com"}]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+  "fmriprep @ git+https://github.com/nipreps/fmriprep.git@master",
+  "acres",
+  "nipype >= 1.8.5",
+  "nireports @ git+https://github.com/nipreps/nireports.git@main",
+  "nitransforms >= 24.0.2",
+  "niworkflows @ git+https://github.com/nipreps/niworkflows.git@master",
+  "pybids >= 0.15.6",
+  "sdcflows @ git+https://github.com/nipreps/sdcflows.git@master",
+  "smriprep @ git+https://github.com/nipreps/smriprep.git@master",
+  "typer",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+doc = [
+    "doctest-ignore-unicode",
+    "pydot >=1.2.3",
+    "pydotplus",
+    "recommonmark",
+    "sphinx >= 4.2.0",
+    "sphinx-argparse",
+    "sphinx-markdown-tables",
+    "sphinx_rtd_theme",
+    "sphinxcontrib-apidoc",
+    "sphinxcontrib-bibtex",
+    "svgutils",
+]
+test = [
+  "coverage",
+  "pytest",
+  "pytest-cov",
+  "pytest-env",
+]
+
+# Aliases
+all = ["fmripost_template[doc,test]"]
+
+[project.urls]
+Documentation = "https://github.com/nipreps/fmripost-template#readme"
+Issues = "https://github.com/nipreps/fmripost-template/issues"
+Source = "https://github.com/nipreps/fmripost-template"
+
+[project.scripts]
+fmripost-template = "fmripost_template.cli.run:main"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/fmripost_template/_version.py"
+
+[tool.hatch.build.targets.sdist]
+exclude = [".git_archival.txt"]  # No longer needed in sdist
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fmripost_template"]
+
+[tool.hatch.envs.default]
+dependencies = [
+  "pytest",
+  "pytest-cov",
+]
+[tool.hatch.envs.default.scripts]
+cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src/fmripost_template --cov=tests {args}"
+no-cov = "cov --no-cov {args}"
+
+[tool.hatch.envs.type]
+detached = true
+dependencies = [
+  "mypy",
+  "nibabel",
+  "typer",
+  "pytest",
+]
+
+[tool.hatch.envs.type.scripts]
+check = "mypy . {args}"
+
+[tool.hatch.envs.style]
+detached = true
+dependencies = [
+  "black",
+  "isort",
+  "ruff",
+]
+
+[tool.hatch.envs.style.scripts]
+fix = [
+  "black src/",
+  "ruff check --fix src/",
+  "isort src/",
+]
+check = [
+  "black --check --diff src/",
+  "ruff check --diff src/",
+  "isort --check --diff src/",
+]
+
+[[tool.hatch.envs.test.matrix]]
+python = ["311", "312"]
+
+[tool.coverage.run]
+branch = true
+parallel = true
+omit = [
+  "src/fmripost_template/__about__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+# Disable black
+[tool.black]
+exclude = ".*"
+
+[tool.ruff]
+line-length = 99
+
+[tool.ruff.lint]
+extend-select = [
+  "F",
+  "E",
+  "W",
+  "I",
+  "UP",
+  "YTT",
+  "S",
+  "BLE",
+  "B",
+  "A",
+  # "CPY",
+  "C4",
+  "DTZ",
+  "T10",
+  # "EM",
+  "EXE",
+  "FA",
+  "ISC",
+  "ICN",
+  "PT",
+  "Q",
+]
+ignore = [
+  "S311",  # We are not using random for cryptographic purposes
+  "ISC001",
+  "S603",
+  "PT023",
+  "S113",
+  "S202",
+  "S602",
+]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
+
+[tool.ruff.lint.extend-per-file-ignores]
+"*/test_*.py" = ["S101"]
+"docs/conf.py" = ["A001"]
+"docs/sphinxext/github_link.py" = ["BLE001"]
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+src_paths = ["isort", "test"]
+known_local_folder = ["fmripost_template"]
+
+[tool.pytest.ini_options]
+addopts = '-m "not integration"'
+markers = [
+    "integration: mark test as an integration test",
+]
+env = [
+    "RUNNING_PYTEST = 1",
+]
