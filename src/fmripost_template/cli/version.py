@@ -23,7 +23,7 @@
 """Version CLI helpers."""
 
 from contextlib import suppress
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
@@ -41,7 +41,7 @@ def check_latest():
     latest = None
     date = None
     outdated = None
-    now = datetime.now(tz=UTC)
+    now = datetime.now(tz=timezone.utc)
     cachefile = Path.home() / '.cache' / 'fmripost_template' / 'latest'
     try:
         cachefile.parent.mkdir(parents=True, exist_ok=True)
@@ -56,7 +56,7 @@ def check_latest():
         else:
             try:
                 latest = Version(latest)
-                date = datetime.strptime(date, DATE_FMT).astimezone(UTC)
+                date = datetime.strptime(date, DATE_FMT).astimezone(timezone.utc)
             except (InvalidVersion, ValueError):
                 latest = None
             else:

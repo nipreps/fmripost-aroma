@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "fmripost-template"
 description = 'A template tool for postprocessing fMRIPrep derivatives'
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 license = {file = "LICENSE"}
 keywords = []
 authors = [{name = "The NiPreps Developers", email = "nipreps@gmail.com"}]
