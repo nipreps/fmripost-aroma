@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "fmripost-template"
 description = 'A template tool for postprocessing fMRIPrep derivatives'
-readme = "README.md"
+readme = "README.rst"
 requires-python = ">=3.10"
 license = {file = "LICENSE"}
 keywords = []
@@ -13,12 +13,13 @@ authors = [{name = "The NiPreps Developers", email = "nipreps@gmail.com"}]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Programming Language :: Python",
+  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-  "fmriprep @ git+https://github.com/nipreps/fmriprep.git@master",
   "acres",
+  "fmriprep @ git+https://github.com/nipreps/fmriprep.git@master",
   "nipype >= 1.8.5",
   "nireports @ git+https://github.com/nipreps/nireports.git@main",
   "nitransforms >= 24.0.2",
@@ -50,9 +51,13 @@ test = [
   "pytest-cov",
   "pytest-env",
 ]
+maint = [
+    "fuzzywuzzy",
+    "python-Levenshtein",
+]
 
 # Aliases
-all = ["fmripost_template[doc,test]"]
+all = ["fmripost_template[doc,maint,test]"]
 
 [project.urls]
 Documentation = "https://github.com/nipreps/fmripost-template#readme"
@@ -76,12 +81,17 @@ exclude = [".git_archival.txt"]  # No longer needed in sdist
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/fmripost_template"]
+exclude = [
+  "src/fmripost_template/tests/data",  # Large test data directory
+  "tests/data", # Large test data directory
+]
 
 [tool.hatch.envs.default]
 dependencies = [
   "pytest",
   "pytest-cov",
 ]
+
 [tool.hatch.envs.default.scripts]
 cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src/fmripost_template --cov=tests {args}"
 no-cov = "cov --no-cov {args}"

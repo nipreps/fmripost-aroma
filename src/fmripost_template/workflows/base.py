@@ -356,9 +356,9 @@ def init_single_run_wf(bold_file):
             )
         skip_vols = get_nss(functional_cache['bold_confounds'])
 
-    print(skip_vols)
+    print(skip_vols)  # just to circumvent flake8 warning
 
-    # Fill-in datasinks seen so far
+    # Fill in datasinks seen so far
     for node in workflow.list_node_names():
         if node.split('.')[-1].startswith('ds_'):
             workflow.get_node(node).inputs.base_directory = config.execution.output_dir
@@ -372,7 +372,7 @@ def _prefix(subid):
 
 
 def clean_datasinks(workflow: pe.Workflow) -> pe.Workflow:
-    """Overwrite ``out_path_base`` of smriprep's DataSinks."""
+    """Overwrite ``out_path_base`` of DataSinks."""
     for node in workflow.list_node_names():
         if node.split('.')[-1].startswith('ds_'):
             workflow.get_node(node).interface.out_path_base = ''
@@ -380,7 +380,23 @@ def clean_datasinks(workflow: pe.Workflow) -> pe.Workflow:
 
 
 def get_nss(confounds_file):
-    """Get number of non-steady state volumes."""
+    """Get number of non-steady state volumes.
+
+    Parameters
+    ----------
+    confounds_file : :obj:`str`
+        Path to the confounds file.
+
+    Returns
+    -------
+    :obj:`int`
+        Number of non-steady state volumes.
+
+    Notes
+    -----
+    This function assumes that all non-steady state volumes are contiguous,
+    and that the non-steady state outlier columns are named `non_steady_state_outlier*`.
+    """
     import numpy as np
     import pandas as pd
 

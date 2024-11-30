@@ -28,7 +28,7 @@ body:
         For information on how to contribute, please refer to our [contributing guidelines](https://www.nipreps.org/community/CONTRIBUTING/).
       options:
         - "Yes"
-        - Yes, but I would need guidance
+        - "Yes, but I would need guidance"
         - "No"
     validations:
       required: true

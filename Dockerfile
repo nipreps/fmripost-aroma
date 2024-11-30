@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# Copyright (c) The NiPreps Developers
+# Copyright (c) 2024 The NiPreps Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

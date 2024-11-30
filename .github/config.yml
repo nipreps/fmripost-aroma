@@ -1,0 +1,25 @@
+# Configuration for new-pr-welcome - https://github.com/behaviorbot/new-pr-welcome
+
+# Comment to be posted to on PRs from first time contributors in your repository
+newPRWelcomeComment: >
+    Welcome, new contributor!
+
+    We ask you to read through the Contributing Guide:
+    https://github.com/nipreps/fmripost-template/blob/main/CONTRIBUTING.md
+
+    These are guidelines intended to make communication easier by describing a consistent process, but
+    don't worry if you don't get it everything exactly "right" on the first try.
+
+    To boil it down, here are some highlights:
+
+    1) Consider starting a conversation in the issues list before submitting a pull request. The discussion might save you a
+    lot of time coding.
+    2) Please use a descriptive title for your pull request.
+    Please remember to set your pull request as a "draft" if it is not ready for review.
+    3) Any code you submit will be licensed under the same terms (Apache License 2.0) as the rest of fMRIPost-template.
+    4) We invite every contributor to add themselves to the `.zenodo.json` file
+    (https://github.com/nipreps/fmripost-template/blob/main/.zenodo.json), which will result in your being listed as an author
+    at the next release. Please add yourself as the next-to-last entry, just above Russ.
+
+    A pull request is a conversation. We may ask you to make some changes before accepting your PR,
+    and likewise, you should feel free to ask us any questions you have.

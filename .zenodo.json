@@ -6,18 +6,6 @@
       "affiliation": "Lausanne University Hospital and University of Lausanne, Lausanne, Switzerland",
       "name": "Esteban, Oscar",
       "orcid": "0000-0001-8435-6191"
-    },
-    {
-      "name": "Ferrer, Vicente"
-    },
-    {
-      "name": "Uruñuela, Eneko"
-    },
-    {
-      "name": "Pedregosa, Fabian"
-    },
-    {
-      "name": "Caballero Gaudes, Cesar"
     }
   ],
   "creators": [
@@ -36,7 +24,7 @@
     "neuroimaging",
     "workflow",
     "pipeline",
-    "preprocessing",
+    "postprocessing",
     "fMRI",
     "BIDS"
   ],
