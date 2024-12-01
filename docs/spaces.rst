@@ -6,8 +6,10 @@
    Output spaces are not currently supported.
    fMRIPost-template currently only generates denoised data in MNI152NLin6Asym space.
 
+#####################################################################
 Defining standard and nonstandard spaces where data will be resampled
-=====================================================================
+#####################################################################
+
 The command line interface of *fMRIPost-template* allows resampling the preprocessed data
 onto other output spaces.
 That is achieved using the ``--output-spaces`` argument, where standard and
@@ -20,8 +22,10 @@ nonstandard spaces can be inserted.
 
 .. _TemplateFlow:
 
+**************
 *TemplateFlow*
-""""""""""""""
+**************
+
 *TemplateFlow* is a software library and a repository of neuroimaging templates
 that allows end-user applications such as *fMRIPost-template* to flexibly query and pull
 template and atlas information.
@@ -33,8 +37,10 @@ For more general information about *TemplateFlow*, visit
 `TemplateFlow.org <https://www.templateflow.org>`__.
 
 
+***************
 Standard spaces
-"""""""""""""""
+***************
+
 When using *fMRIPost-template* in a workflow that will investigate effects that span across
 analytical groupings, neuroimagers typically resample their data on to a standard,
 stereotactic coordinate system.
@@ -95,8 +101,11 @@ When specifying surface spaces (e.g., ``fsaverage``), the legacy identifiers fro
 FreeSurfer will be supported (e.g., ``fsaverage5``) although the use of the density
 modifier would be preferred (i.e., ``fsaverage:den-10k`` for ``fsaverage5``).
 
+
+**********************
 Custom standard spaces
-""""""""""""""""""""""
+**********************
+
 To make your custom templates visible by *fMRIPost-template*, and usable via
 the ``--output-spaces`` argument, please store your template under
 *TemplateFlow*'s home directory.
@@ -119,8 +128,11 @@ For further information about how custom templates must be organized and
 corresponding naming, please check `the TemplateFlow tutorials
 <https://www.templateflow.org/python-client/tutorials.html>`__.
 
+
+******************
 Nonstandard spaces
-""""""""""""""""""
+******************
+
 Additionally, ``--output-spaces`` accepts identifiers of spatial references
 that do not generate *standardized* coordinate spaces:
 
@@ -140,8 +152,11 @@ that do not generate *standardized* coordinate spaces:
 
 Modifiers are not allowed when providing nonstandard spaces.
 
-Preprocessing blocks depending on standard templates
-""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+*****************************************************
+Postprocessing blocks depending on standard templates
+*****************************************************
+
 Some modules of the pipeline (e.g., the generation of HCP compatible
 *grayordinates* files, or the *fieldmap-less* distortion correction)
 operate in specific template spaces.

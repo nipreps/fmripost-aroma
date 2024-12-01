@@ -1,8 +1,8 @@
 .. include:: links.rst
 
-===========================
+###########################
 Processing pipeline details
-===========================
+###########################
 
 *fMRIPost-template* adapts its pipeline depending on what data and metadata are
 available and are used as the input.

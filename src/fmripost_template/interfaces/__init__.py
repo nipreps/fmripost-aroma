@@ -21,3 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Nipype interfaces for the fMRIPost-template workflow."""
+
+from . import bids, reportlets
+
+__all__ = ['bids', 'reportlets']

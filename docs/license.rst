@@ -1,11 +1,15 @@
+#######################################
 About the *NiPreps* framework licensing
----------------------------------------
+#######################################
+
 Please check https://www.nipreps.org/community/licensing/ for detailed
 information on the criteria we use to license *fMRIPost-template* and other
 projects of the framework.
 
+
+*******************
 License information
--------------------
+*******************
 Copyright (c) the *NiPreps* Developers.
 
 *fMRIPost-template* is licensed under the Apache License, Version 2.0 (the "License");

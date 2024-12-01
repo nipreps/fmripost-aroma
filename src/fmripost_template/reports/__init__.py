@@ -21,3 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Tools for generating reports."""
+
+from . import core
+
+__all__ = ['core']

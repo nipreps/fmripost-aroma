@@ -2,9 +2,9 @@
 
 .. _outputs:
 
-------------------------------
+##############################
 Outputs of *fMRIPost-template*
-------------------------------
+##############################
 
 *fMRIPost-template* outputs conform to the :abbr:`BIDS (brain imaging data structure)`
 Derivatives specification (see `BIDS Derivatives`_, along with the
@@ -23,8 +23,9 @@ upcoming `BEP 011`_ and `BEP 012`_).
     Confound time series.
 
 
+******
 Layout
-------
+******
 
 Assuming fMRIPost-template is invoked with::
 
@@ -47,16 +48,18 @@ The log directory contains `citation boilerplate`_ text.
 records metadata recommended by the BIDS standard.
 
 
+**************
 Visual Reports
---------------
+**************
 
 *fMRIPost-template* outputs summary reports,
 written to ``<output dir>/fmripost_template/sub-<label>.html``.
 These reports provide a quick way to make visual inspection of the results easy.
 
 
+**********************************
 Derivatives of *fMRIPost-template*
-----------------------------------
+**********************************
 
 Derivative data are written to
 ``<output dir>/sub-<label>/``.
@@ -64,7 +67,7 @@ The `BIDS Derivatives`_ specification describes the naming and metadata conventi
 
 
 Functional derivatives
-~~~~~~~~~~~~~~~~~~~~~~
+======================
 
 Functional derivatives are stored in the ``func/`` subfolder.
 All derivatives contain ``task-<task_label>`` (mandatory) and ``run-<run_index>`` (optional), and
@@ -88,8 +91,9 @@ Confounds_ are saved as a :abbr:`TSV (tab-separated value)` file::
       sub-<label>_[specifiers]_desc-confounds_timeseries.tsv
       sub-<label>_[specifiers]_desc-confounds_timeseries.json
 
+
 Confounds
----------
+=========
 
 *fMRIPost-template* outputs a set of confounds that can be used to denoise the data.
 These are stored in a TSV file (``desc-template_timeseries.tsv``) and a JSON file
@@ -102,8 +106,9 @@ Columns starting with ``template_motion_`` are the raw noise ICA component time 
 Columns starting with ``template_orth_motion_`` are the noise ICA component time series,
 after z-scoring and orthogonalization with respect to the signal ICA component time series.
 
+
 Confounds and "carpet"-plot on the visual reports
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=================================================
 
 The visual reports provide several sections per task and run to aid designing
 a denoising strategy for subsequent analysis.

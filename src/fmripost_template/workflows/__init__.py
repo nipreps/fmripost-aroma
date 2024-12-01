@@ -20,8 +20,8 @@
 #
 #     https://www.nipreps.org/community/licensing/
 #
-"""Workflow functions for fRMIPost-template."""
+"""Workflow functions for fMRIPost-template."""
 
-from fmripost_template.workflows import base
+from . import base
 
 __all__ = ['base']

@@ -1,5 +1,0 @@
-[submodule "tests/data/ds000005-fmriprep"]
-	path = tests/data/ds000005-fmriprep
-	url = https://gin.g-node.org/nipreps-data/ds000005-fmriprep
-	datalad-id = 92e566e4-1c80-434e-a4d7-5bf9fb483d76
-	datalad-url = https://gin.g-node.org/nipreps-data/ds000005-fmriprep

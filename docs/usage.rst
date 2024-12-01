@@ -2,8 +2,9 @@
 
 .. _Usage :
 
+###########
 Usage Notes
-===========
+###########
 
 .. warning::
    *fMRIPost-template* requires preprocessing outputs in MNI152NLin6Asym space with
@@ -16,8 +17,10 @@ Usage Notes
    Users can opt-out using the ``--notrack`` command line argument.
 
 
+*****************************
 Execution and the BIDS format
------------------------------
+*****************************
+
 The *fMRIPost-template* workflow takes as principal input the path of the dataset
 that is to be processed.
 The input dataset is required to be in valid :abbr:`BIDS (Brain Imaging Data
@@ -37,36 +40,47 @@ Further information about BIDS and BIDS-Apps can be found at the
 `NiPreps portal <https://www.nipreps.org/apps/framework/>`__.
 
 
+**********************
 Command-Line Arguments
-----------------------
+**********************
+
 .. argparse::
    :ref: fmripost_template.cli.parser._build_parser
    :prog: fmripost_template
    :nodefault:
    :nodefaultconst:
 
+
 .. _prev_derivs:
 
+*******************************
 Reusing precomputed derivatives
--------------------------------
+*******************************
 
 Reusing a previous, partial execution of *fMRIPost-template*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+============================================================
+
 *fMRIPost-template* will pick up where it left off a previous execution,
 so long as the work directory
 points to the same location, and this directory has not been changed/manipulated.
 Some workflow nodes will rerun unconditionally, so there will always be some amount of
 reprocessing.
 
+
+***************
 Troubleshooting
----------------
+***************
+
 Logs and crashfiles are output into the
 ``<output dir>/fmripost_template/sub-<participant_label>/log`` directory.
 Information on how to customize and understand these files can be found on the
 `Debugging Nipype Workflows <https://miykael.github.io/nipype_tutorial/notebooks/basic_debug.html>`_
 page.
 
-**Support and communication**.
+
+Support and communication
+=========================
+
 The documentation of this project is found here: https://fmripost_template.org/en/latest/.
 
 All bugs, concerns and enhancement requests for this software can be submitted here:
@@ -80,10 +94,6 @@ NeuroStars.org is a platform similar to StackOverflow but dedicated to neuroinfo
 
 Previous questions about *fMRIPost-template* are available here:
 https://neurostars.org/tag/fmripost_template/
-
-To participate in the *fMRIPost-template* development-related discussions please use the
-following mailing list: https://mail.python.org/mailman/listinfo/neuroimaging
-Please add *[fmripost_template]* to the subject line when posting on the mailing list.
 
 
 .. include:: license.rst

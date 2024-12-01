@@ -51,6 +51,7 @@ extensions = [
     'sphinx.ext.linkcode',
     'sphinx.ext.napoleon',
     'sphinxarg.ext',  # argparse extension
+    'sphinxcontrib.bibtex',  # to include references in docs
     'nipype.sphinxext.plot_workflow',
 ]
 
@@ -151,6 +152,13 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
+# -----------------------------------------------------------------------------
+# sphinxcontrib-bibtex
+# -----------------------------------------------------------------------------
+bibtex_bibfiles = ['../src/fmripost_template/data/boilerplate.bib']
+bibtex_style = 'unsrt'
+bibtex_reference_style = 'author_year'
+bibtex_footbibliography_header = ''
 
 # -- Options for HTML output ----------------------------------------------
 

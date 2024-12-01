@@ -1,11 +1,12 @@
 .. include:: links.rst
 
-================
+################
 Developers - API
-================
+################
 
+***************************************************
 The *NiPreps* community and contributing guidelines
----------------------------------------------------
+***************************************************
 
 *fMRIPost-template* is a *NiPreps* application, and abides by the
 `NiPreps Community guidelines <https://www.nipreps.org/community/>`__.
@@ -13,8 +14,10 @@ Please, make sure you have read and understood all the documentation
 provided in the `NiPreps portal <https://www.nipreps.org>`__ before
 you get started.
 
+
+***************************************
 Setting up your development environment
----------------------------------------
+***************************************
 
 We believe that *fMRIPost-template* must be free to use, inspect, and critique.
 Correspondingly, you should be free to modify our software to improve it
@@ -27,13 +30,17 @@ As part of such efforts, we maintain some
 `tips and guidelines for developers <https://www.nipreps.org/devs/devenv/>`__
 to help minimize your burden if you want to modify the software.
 
+
+*****************************
 Internal configuration system
------------------------------
+*****************************
 
 .. automodule:: fmripost_template.config
    :members: from_dict, load, get, dumps, to_filename, init_spaces
 
+
+*********
 Workflows
----------
+*********
 
 .. automodule:: fmripost_template.workflows.base
