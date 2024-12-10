@@ -137,7 +137,6 @@
             },
             "anat2mni152nlin6asym": {
                 "datatype": "anat",
-                "run": null,
                 "from": ["anat", "T1w", "T2w"],
                 "to": "MNI152NLin6Asym",
                 "space": null,
