@@ -428,12 +428,12 @@ def init_single_run_wf(bold_file):
 
     if ('bold_mni152nlin6asym' not in functional_cache) and ('bold_raw' in functional_cache):
         # Resample to MNI152NLin6Asym:res-2, for ICA-AROMA classification
-        from fmriprep.workflows.bold.apply import init_bold_volumetric_resample_wf
         from fmriprep.workflows.bold.stc import init_bold_stc_wf
         from niworkflows.interfaces.header import ValidateImage
         from templateflow.api import get as get_template
 
         from fmripost_aroma.interfaces.misc import ApplyTransforms
+        from fmripost_aroma.workflows.resample import init_bold_volumetric_resample_wf
 
         workflow.__desc__ += """\
 Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classification.
