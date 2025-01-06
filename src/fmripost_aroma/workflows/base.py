@@ -401,9 +401,7 @@ def init_single_run_wf(bold_file):
                 'boldref2anat_xfm',
                 'anat2std_xfm',
                 'bold_ref_file',
-                'fmap_ref',
-                'fmap_coeff',
-                'fmap_id',
+                'fmap',
                 'bold_mask_native',
             ],
         ),
@@ -419,9 +417,7 @@ def init_single_run_wf(bold_file):
     inputnode.inputs.boldref2anat = functional_cache['boldref2anat']
     inputnode.inputs.anat2mni152nlin6asym = functional_cache['anat2mni152nlin6asym']
     # Field maps
-    inputnode.inputs.fmap_ref = functional_cache['fmap_ref']
-    inputnode.inputs.fmap_coeff = functional_cache['fmap_coeff']
-    inputnode.inputs.fmap_id = functional_cache['fmap_id']
+    inputnode.inputs.fmap = functional_cache['fmap']
 
     # Run ICA-AROMA
     ica_aroma_wf = init_ica_aroma_wf(bold_file=bold_file, metadata=bold_metadata, mem_gb=mem_gb)
@@ -490,6 +486,21 @@ Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classific
         bold_MNI6_wf.inputs.inputnode.target_mask = mni6_mask
         bold_MNI6_wf.inputs.inputnode.target_ref_file = mni6_mask
 
+        # Warp desc-preproc_fieldmap to boldref space
+        # Warp the mask as well
+        fieldmap_to_boldref = pe.Node(
+            ApplyTransforms(),
+            name='fieldmap_to_boldref',
+        )
+        workflow.connect([
+            (inputnode, fieldmap_to_boldref, [
+                ('fmap', 'input_image'),  # XXX: not right
+                ('fmap2boldref', 'transforms'),
+                ('bold_mask_native', 'reference_image'),
+            ]),
+        ])  # fmt:skip
+
+        # Pass transforms and warped fieldmap to bold_MNI6_wf
         workflow.connect([
             (inputnode, bold_MNI6_wf, [
                 ('bold_hmc', 'inputnode.motion_xfm'),
@@ -498,11 +509,8 @@ Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classific
                 ('anat2mni152nlin6asym', 'inputnode.anat2std_xfm'),
                 # use mask as boldref?
                 ('bold_mask_native', 'inputnode.bold_ref_file'),
-                # field map information
-                ('fmap_ref', 'inputnode.fmap_ref'),
-                ('fmap_coeff', 'inputnode.fmap_coeff'),
-                ('fmap_id', 'inputnode.fmap_id'),
             ]),
+            (fieldmap_to_boldref, bold_MNI6_wf, [('output_image', 'fmap')]),
             # Resample BOLD to MNI152NLin6Asym, may duplicate bold_std_wf above
             (stc_buffer, bold_MNI6_wf, [('bold_file', 'inputnode.bold_file')]),
             (bold_MNI6_wf, mni6_buffer, [('outputnode.bold_file', 'bold')]),
