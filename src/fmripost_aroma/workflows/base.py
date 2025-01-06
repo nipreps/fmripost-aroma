@@ -390,10 +390,43 @@ def init_single_run_wf(bold_file):
             )
         skip_vols = get_nss(functional_cache['bold_confounds'])
 
+    inputnode = pe.Node(
+        niu.IdentityInterface(
+            fields=[
+                'bold_raw',
+                'bold_confounds',
+                'bold_mni152nlin6asym',
+                'motion_xfm',
+                'boldref2fmap_xfm',
+                'boldref2anat_xfm',
+                'anat2std_xfm',
+                'bold_ref_file',
+                'fmap_ref',
+                'fmap_coeff',
+                'fmap_id',
+                'bold_mask_native',
+            ],
+        ),
+        name='inputnode',
+    )
+    inputnode.inputs.bold_raw = functional_cache['bold_raw']
+    inputnode.inputs.bold_confounds = functional_cache['bold_confounds']
+    inputnode.inputs.bold_mni152nlin6asym = functional_cache['bold_mni152nlin6asym']
+    inputnode.inputs.bold_mask_native = functional_cache['bold_mask_native']
+    # Transforms
+    inputnode.inputs.bold_hmc = functional_cache['bold_hmc']
+    inputnode.inputs.boldref2fmap = functional_cache['boldref2fmap']
+    inputnode.inputs.boldref2anat = functional_cache['boldref2anat']
+    inputnode.inputs.anat2mni152nlin6asym = functional_cache['anat2mni152nlin6asym']
+    # Field maps
+    inputnode.inputs.fmap_ref = functional_cache['fmap_ref']
+    inputnode.inputs.fmap_coeff = functional_cache['fmap_coeff']
+    inputnode.inputs.fmap_id = functional_cache['fmap_id']
+
     # Run ICA-AROMA
     ica_aroma_wf = init_ica_aroma_wf(bold_file=bold_file, metadata=bold_metadata, mem_gb=mem_gb)
-    ica_aroma_wf.inputs.inputnode.confounds = functional_cache['bold_confounds']
     ica_aroma_wf.inputs.inputnode.skip_vols = skip_vols
+    workflow.connect([(inputnode, ica_aroma_wf, [('bold_confounds', 'inputnode.confounds')])])
 
     mni6_buffer = pe.Node(niu.IdentityInterface(fields=['bold', 'bold_mask']), name='mni6_buffer')
 
@@ -411,9 +444,10 @@ Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classific
 """
 
         validate_bold = pe.Node(
-            ValidateImage(in_file=functional_cache['bold_raw']),
+            ValidateImage(),
             name='validate_bold',
         )
+        workflow.connect([(inputnode, validate_bold, [('bold_raw', 'in_file')])])
 
         stc_buffer = pe.Node(
             niu.IdentityInterface(fields=['bold_file']),
@@ -446,30 +480,30 @@ Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classific
 
         bold_MNI6_wf = init_bold_volumetric_resample_wf(
             metadata=bold_metadata,
-            fieldmap_id=None,  # XXX: Ignoring the field map for now
+            fieldmap_id=fmapid,
             omp_nthreads=omp_nthreads,
             mem_gb=mem_gb,
             jacobian='fmap-jacobian' not in config.workflow.ignore,
             name='bold_MNI6_wf',
         )
-        bold_MNI6_wf.inputs.inputnode.motion_xfm = functional_cache['bold_hmc']
-        bold_MNI6_wf.inputs.inputnode.boldref2fmap_xfm = functional_cache['boldref2fmap']
-        bold_MNI6_wf.inputs.inputnode.boldref2anat_xfm = functional_cache['boldref2anat']
-        bold_MNI6_wf.inputs.inputnode.anat2std_xfm = functional_cache['anat2mni152nlin6asym']
         bold_MNI6_wf.inputs.inputnode.resolution = '02'
-        # use mask as boldref?
-        bold_MNI6_wf.inputs.inputnode.bold_ref_file = functional_cache['bold_mask_native']
         bold_MNI6_wf.inputs.inputnode.target_mask = mni6_mask
         bold_MNI6_wf.inputs.inputnode.target_ref_file = mni6_mask
 
         workflow.connect([
+            (inputnode, bold_MNI6_wf, [
+                ('bold_hmc', 'inputnode.motion_xfm'),
+                ('boldref2fmap', 'inputnode.boldref2fmap_xfm'),
+                ('boldref2anat', 'inputnode.boldref2anat_xfm'),
+                ('anat2mni152nlin6asym', 'inputnode.anat2std_xfm'),
+                # use mask as boldref?
+                ('bold_mask_native', 'inputnode.bold_ref_file'),
+                # field map information
+                ('fmap_ref', 'inputnode.fmap_ref'),
+                ('fmap_coeff', 'inputnode.fmap_coeff'),
+                ('fmap_id', 'inputnode.fmap_id'),
+            ]),
             # Resample BOLD to MNI152NLin6Asym, may duplicate bold_std_wf above
-            # XXX: Ignoring the field map for now
-            # (inputnode, bold_MNI6_wf, [
-            #     ('fmap_ref', 'inputnode.fmap_ref'),
-            #     ('fmap_coeff', 'inputnode.fmap_coeff'),
-            #     ('fmap_id', 'inputnode.fmap_id'),
-            # ]),
             (stc_buffer, bold_MNI6_wf, [('bold_file', 'inputnode.bold_file')]),
             (bold_MNI6_wf, mni6_buffer, [('outputnode.bold_file', 'bold')]),
         ])  # fmt:skip
@@ -478,7 +512,6 @@ Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classific
         mask_to_mni6 = pe.Node(
             ApplyTransforms(
                 interpolation='GenericLabel',
-                input_image=functional_cache['bold_mask_native'],
                 reference_image=mni6_mask,
                 transforms=[
                     functional_cache['anat2mni152nlin6asym'],
@@ -487,15 +520,22 @@ Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classific
             ),
             name='mask_to_mni6',
         )
-        workflow.connect([(mask_to_mni6, mni6_buffer, [('output_image', 'bold_mask')])])
+        workflow.connect([
+            (inputnode, mask_to_mni6, [('bold_mask_native', 'input_image')]),
+            (mask_to_mni6, mni6_buffer, [('output_image', 'bold_mask')]),
+        ])  # fmt:skip
 
     elif 'bold_mni152nlin6asym' in functional_cache:
         workflow.__desc__ += """\
 Preprocessed BOLD series in MNI152NLin6Asym:res-2 space were collected for ICA-AROMA
 classification.
 """
-        mni6_buffer.inputs.bold = functional_cache['bold_mni152nlin6asym']
-        mni6_buffer.inputs.bold_mask = functional_cache['bold_mask_mni152nlin6asym']
+        workflow.connect([
+            (inputnode, mni6_buffer, [
+                ('bold_mni152nlin6asym', 'bold'),
+                ('bold_mask_native', 'bold_mask'),
+            ]),
+        ])  # fmt:skip
 
     else:
         raise ValueError('No valid BOLD series found for ICA-AROMA classification.')
@@ -510,9 +550,13 @@ classification.
     # Generate reportlets
     func_fit_reports_wf = init_func_fit_reports_wf(output_dir=config.execution.output_dir)
     func_fit_reports_wf.inputs.inputnode.source_file = bold_file
-    func_fit_reports_wf.inputs.inputnode.anat2std_xfm = functional_cache['anat2mni152nlin6asym']
-    func_fit_reports_wf.inputs.inputnode.anat_dseg = functional_cache['anat_dseg']
-    workflow.connect([(mni6_buffer, func_fit_reports_wf, [('bold', 'inputnode.bold_mni6')])])
+    workflow.connect([
+        (inputnode, func_fit_reports_wf, [
+            ('anat2mni152nlin6asym', 'inputnode.anat2std_xfm'),
+            ('anat_dseg', 'inputnode.anat_dseg'),
+        ]),
+        (mni6_buffer, func_fit_reports_wf, [('bold', 'inputnode.bold_mni6')]),
+    ])  # fmt:skip
 
     if config.workflow.denoise_method:
         # Now denoise the output-space BOLD data using ICA-AROMA
@@ -520,9 +564,9 @@ classification.
         denoise_wf.inputs.inputnode.skip_vols = skip_vols
         denoise_wf.inputs.inputnode.space = 'MNI152NLin6Asym'
         denoise_wf.inputs.inputnode.res = '2'
-        denoise_wf.inputs.inputnode.confounds_file = functional_cache['bold_confounds']
 
         workflow.connect([
+            (inputnode, denoise_wf, [('bold_confounds', 'inputnode.confounds_file')]),
             (mni6_buffer, denoise_wf, [
                 ('bold', 'inputnode.bold_file'),
                 ('bold_mask', 'inputnode.bold_mask'),
