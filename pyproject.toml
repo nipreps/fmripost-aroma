@@ -20,12 +20,12 @@ classifiers = [
 dependencies = [
   "fmriprep @ git+https://github.com/nipreps/fmriprep.git@master",
   "nipype >= 1.8.5",
-  "nireports @ git+https://github.com/nipreps/nireports.git@main",
+  "nireports",
   "nitransforms >= 24.0.2",
-  "niworkflows @ git+https://github.com/nipreps/niworkflows.git@master",
+  "niworkflows",
   "pybids >= 0.15.6",
-  "sdcflows @ git+https://github.com/nipreps/sdcflows.git@master",
-  "smriprep @ git+https://github.com/nipreps/smriprep.git@master",
+  "sdcflows",
+  "smriprep",
   "typer",
 ]
 dynamic = ["version"]
