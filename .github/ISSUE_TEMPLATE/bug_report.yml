@@ -19,11 +19,18 @@ body:
     attributes:
       label: What command did you use?
       description: |
-        If you're using `fmriprep-docker`, please include the `RUNNING: ...` line that is printed first.
         This helps us replicate the problem. This will be automatically formatted into code, so no need for backticks.
       render: shell
     validations:
       required: true
+  - type: textarea
+    id: reuse
+    attributes:
+      label: What command did you use to run fMRIPrep?
+      description: |
+        If you ran another preprocessing pipeline, please share the command you used for that instead.
+        This will be automatically formatted into code, so no need for backticks.
+      render: shell
   - type: input
     id: version
     attributes:
@@ -50,21 +57,6 @@ body:
         Errors should not be present, but warnings are acceptable.
       options:
         - "Yes"
-        - "No"
-    validations:
-      required: true
-  - type: dropdown
-    id: reuse
-    attributes:
-      label: Are you reusing any previously computed results?
-      description: |
-        You can select multiple options.
-        We recommend using a fresh working directory when upgrading to a new fMRIPost-AROMA minor series.
-      multiple: true
-      options:
-        - FreeSurfer
-        - Anatomical derivatives
-        - Work directory
         - "No"
     validations:
       required: true
