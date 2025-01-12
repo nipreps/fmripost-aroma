@@ -4,7 +4,6 @@ import nipype.interfaces.utility as niu
 import nipype.pipeline.engine as pe
 from fmriprep.interfaces.resampling import DistortionParameters, ResampleSeries
 from niworkflows.interfaces.nibabel import GenerateSamplingReference
-from niworkflows.interfaces.utility import KeySelect
 
 
 def init_bold_volumetric_resample_wf(
@@ -81,6 +80,8 @@ def init_bold_volumetric_resample_wf(
         further images into the BOLD series' space.
 
     """
+    from fmripost_aroma.interfaces.misc import ApplyTransforms
+
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(
@@ -145,19 +146,29 @@ def init_bold_volumetric_resample_wf(
     if not fieldmap_id:
         return workflow
 
+    # Warp desc-preproc_fieldmap to boldref space
+    # Warp the mask as well
+    fieldmap_to_boldref = pe.Node(
+        ApplyTransforms(),
+        name='fieldmap_to_boldref',
+    )
+    workflow.connect([
+        (inputnode, fieldmap_to_boldref, [
+            ('fmap', 'input_image'),  # XXX: not right
+            ('fmap2boldref', 'transforms'),
+            ('bold_mask_native', 'reference_image'),
+        ]),
+    ])  # fmt:skip
+
     distortion_params = pe.Node(
         DistortionParameters(metadata=metadata),
         name='distortion_params',
         run_without_submitting=True,
     )
     workflow.connect([
-        (inputnode, fmap_select, [
-            ('fmap', 'fmap_ref'),
-            ('fmap_id', 'keys'),
-        ]),
         (inputnode, distortion_params, [('bold_file', 'in_file')]),
         # Inject fieldmap correction into resample node
-        (fmap_select, resample, [('fmap', 'fieldmap')]),
+        (fieldmap_to_boldref, resample, [('fmap', 'fieldmap')]),
         (distortion_params, resample, [
             ('readout_time', 'ro_time'),
             ('pe_direction', 'pe_dir'),

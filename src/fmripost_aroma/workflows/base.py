@@ -486,20 +486,6 @@ Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classific
         bold_MNI6_wf.inputs.inputnode.target_mask = mni6_mask
         bold_MNI6_wf.inputs.inputnode.target_ref_file = mni6_mask
 
-        # Warp desc-preproc_fieldmap to boldref space
-        # Warp the mask as well
-        fieldmap_to_boldref = pe.Node(
-            ApplyTransforms(),
-            name='fieldmap_to_boldref',
-        )
-        workflow.connect([
-            (inputnode, fieldmap_to_boldref, [
-                ('fmap', 'input_image'),  # XXX: not right
-                ('fmap2boldref', 'transforms'),
-                ('bold_mask_native', 'reference_image'),
-            ]),
-        ])  # fmt:skip
-
         # Pass transforms and warped fieldmap to bold_MNI6_wf
         workflow.connect([
             (inputnode, bold_MNI6_wf, [
@@ -510,7 +496,6 @@ Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classific
                 # use mask as boldref?
                 ('bold_mask_native', 'inputnode.bold_ref_file'),
             ]),
-            (fieldmap_to_boldref, bold_MNI6_wf, [('output_image', 'fmap')]),
             # Resample BOLD to MNI152NLin6Asym, may duplicate bold_std_wf above
             (stc_buffer, bold_MNI6_wf, [('bold_file', 'inputnode.bold_file')]),
             (bold_MNI6_wf, mni6_buffer, [('outputnode.bold_file', 'bold')]),
