@@ -145,11 +145,6 @@ def init_bold_volumetric_resample_wf(
     if not fieldmap_id:
         return workflow
 
-    fmap_select = pe.Node(
-        KeySelect(fields=['fmap'], key=fieldmap_id),
-        name='fmap_select',
-        run_without_submitting=True,
-    )
     distortion_params = pe.Node(
         DistortionParameters(metadata=metadata),
         name='distortion_params',
