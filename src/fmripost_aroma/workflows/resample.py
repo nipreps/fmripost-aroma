@@ -146,33 +146,36 @@ def init_bold_volumetric_resample_wf(
     if not fieldmap_id:
         return workflow
 
-    # Warp desc-preproc_fieldmap to boldref space
-    # Warp the mask as well
-    fieldmap_to_boldref = pe.Node(
-        ApplyTransforms(),
-        name='fieldmap_to_boldref',
-    )
-    workflow.connect([
-        (inputnode, fieldmap_to_boldref, [
-            ('fmap', 'input_image'),  # XXX: not right
-            ('fmap2boldref', 'transforms'),
-            ('bold_mask_native', 'reference_image'),
-        ]),
-    ])  # fmt:skip
-
     distortion_params = pe.Node(
         DistortionParameters(metadata=metadata),
         name='distortion_params',
         run_without_submitting=True,
     )
+    fmap2target = pe.Node(niu.Merge(2), name='fmap2target', run_without_submitting=True)
+    inverses = pe.Node(
+        niu.Function(function=_gen_inverses),
+        name='inverses',
+        run_without_submitting=True,
+    )
+    fmap_resample = pe.Node(ResampleSeries(jacobian=False), name='fmap_resample')
+
     workflow.connect([
-        (inputnode, distortion_params, [('bold_file', 'in_file')]),
+        # Resample fieldmap to target space
+        (inputnode, fmap2target, [('boldref2fmap_xfm', 'in1')]),
+        (boldref2target, fmap2target, [('out', 'in2')]),
+        (boldref2target, inverses, [('out', 'inlist')]),
+        (inputnode, fmap_resample, [('fmap', 'in_file')]),
+        (gen_ref, fmap_resample, [('out_file', 'ref_file')]),
+        (fmap2target, fmap_resample, [('out', 'transforms')]),
+        (inverses, fmap_resample, [('out', 'inverse')]),
+
         # Inject fieldmap correction into resample node
-        (fieldmap_to_boldref, resample, [('fmap', 'fieldmap')]),
+        (inputnode, distortion_params, [('bold_file', 'in_file')]),
         (distortion_params, resample, [
             ('readout_time', 'ro_time'),
             ('pe_direction', 'pe_dir'),
         ]),
+        (fmap_resample, resample, [('out_file', 'fieldmap')]),
     ])  # fmt:skip
 
     return workflow
