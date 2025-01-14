@@ -80,8 +80,6 @@ def init_bold_volumetric_resample_wf(
         further images into the BOLD series' space.
 
     """
-    from fmripost_aroma.interfaces.misc import ApplyTransforms
-
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(
