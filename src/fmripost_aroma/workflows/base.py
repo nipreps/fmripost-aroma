@@ -321,7 +321,8 @@ def init_single_run_wf(bold_file):
             strict=False,
             **{'from': 'boldref'},
         )
-        fmapid = config.execution.layout.get_file(fmap_file).entities['to']
+        if fmap_file:
+            fmapid = config.execution.layout.get_file(fmap_file).entities['to']
 
     functional_cache = defaultdict(list, {})
     if config.execution.derivatives:
