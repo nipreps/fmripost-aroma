@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import os
+from collections.abc import Callable
 from functools import partial
 from pathlib import Path
-from typing import Callable, TypeVar
+from typing import Annotated, TypeVar
 
 import h5py
 import nibabel as nb
@@ -21,7 +22,6 @@ from scipy.sparse import hstack as sparse_hstack
 from sdcflows.transform import grid_bspline_weights
 from sdcflows.utils.tools import ensure_positive_cosines
 from templateflow import api as tf
-from typing_extensions import Annotated
 
 R = TypeVar('R')
 

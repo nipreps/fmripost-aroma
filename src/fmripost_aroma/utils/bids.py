@@ -216,7 +216,11 @@ def collect_derivatives(
             derivs_cache['anat2outputspaces_xfm'] = anat2outputspaces_xfm
         else:
             missing_spaces = ', '.join(
-                [s.space for s, found in zip(spaces.references, spaces_found) if not found]
+                [
+                    s.space
+                    for s, found in zip(spaces.references, spaces_found, strict=False)
+                    if not found
+                ]
             )
             raise ValueError(
                 f'Transforms to the following requested spaces not found: {missing_spaces}.'
