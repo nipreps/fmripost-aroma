@@ -4,9 +4,27 @@ import os
 
 import pytest
 from bids.layout import BIDSLayout, BIDSLayoutIndexer
+from niworkflows.utils.testing import generate_bids_skeleton
 
 from fmripost_aroma.tests.utils import get_test_data_path
 from fmripost_aroma.utils import bids as xbids
+
+
+dset_xsectional = {
+    '01': [
+        {
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                }
+            ],
+        },
+    ],
+}
 
 
 def test_collect_derivatives_raw(base_ignore_list):
@@ -149,3 +167,26 @@ def check_expected(subject_data, expected):
                 assert os.path.basename(item) == expected_item
         else:
             assert subject_data[key] is value
+
+
+def collect_derivatives_xsectional(tmpdir):
+    """Test collect_derivatives with a mocked up longitudinal dataset."""
+    # Generate a BIDS dataset
+    bids_dir = tmpdir / 'collect_derivatives_xsectional'
+    generate_bids_skeleton(str(bids_dir), dset_xsectional)
+
+    layout = BIDSLayout(bids_dir, config=['bids', 'derivatives'], validate=False)
+
+    subject_data = xbids.collect_derivatives(
+        raw_dataset=layout,
+        derivatives_dataset=layout,
+        fieldmap_id=None,
+        spec=None,
+        patterns=None,
+    )
+    expected = {
+        'bold_mni152nlin6asym': (
+            'sub-01_task-rest_space-MNI152NLin6Asym_res-02_desc-preproc_bold.nii.gz'
+        ),
+    }
+    check_expected(subject_data, expected)
