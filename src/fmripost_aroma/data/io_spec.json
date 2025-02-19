@@ -23,7 +23,7 @@
                     "mag",
                     null
                 ],
-                "res": "2",
+                "res": 2,
                 "space": "MNI152NLin6Asym",
                 "desc": "preproc",
                 "suffix": "bold",
@@ -39,7 +39,7 @@
                     "mag",
                     null
                 ],
-                "res": "2",
+                "res": 2,
                 "space": "MNI152NLin6Asym",
                 "desc": "brain",
                 "suffix": "mask",
@@ -86,7 +86,7 @@
                     "mag",
                     null
                 ],
-                "res": "2",
+                "res": 2,
                 "space": "MNI152NLin6Asym",
                 "desc": "preproc",
                 "suffix": [
