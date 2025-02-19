@@ -21,13 +21,6 @@ dset_xsectional_01 = {
                     'desc': 'preproc',
                     'suffix': 'bold',
                 },
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'brain',
-                    'suffix': 'mask',
-                },
             ],
         },
         {
@@ -39,13 +32,6 @@ dset_xsectional_01 = {
                     'res': '02',
                     'desc': 'preproc',
                     'suffix': 'bold',
-                },
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'brain',
-                    'suffix': 'mask',
                 },
             ],
         },
