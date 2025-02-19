@@ -181,7 +181,7 @@ def check_expected(subject_data, expected):
             assert subject_data[key] is value
 
 
-def collect_derivatives_xsectional(tmpdir):
+def test_collect_derivatives_xsectional(tmpdir):
     """Test collect_derivatives with a mocked up longitudinal dataset."""
     # Generate a BIDS dataset
     bids_dir = tmpdir / 'collect_derivatives_xsectional'
