@@ -198,7 +198,7 @@ def collect_derivatives_xsectional(tmpdir):
     )
     expected = {
         'bold_mni152nlin6asym': (
-            'sub-102_ses-1_task-rest_space-MNI152NLin6Asym_res-02_desc-preproc_bold.nii.gz',
+            'sub-102_ses-1_task-rest_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz',
             'sub-102_ses-2_task-rest_space-MNI152NLin6Asym_res-02_desc-preproc_bold.nii.gz',
         ),
     }
