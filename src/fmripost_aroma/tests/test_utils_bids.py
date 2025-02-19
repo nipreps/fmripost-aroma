@@ -9,7 +9,6 @@ from niworkflows.utils.testing import generate_bids_skeleton
 from fmripost_aroma.tests.utils import get_test_data_path
 from fmripost_aroma.utils import bids as xbids
 
-
 dset_xsectional = {
     '01': [
         {
