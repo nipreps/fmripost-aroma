@@ -9,7 +9,7 @@ from niworkflows.utils.testing import generate_bids_skeleton
 from fmripost_aroma.tests.utils import get_test_data_path
 from fmripost_aroma.utils import bids as xbids
 
-dset_xsectional = {
+dset_xsectional_01 = {
     '102': [
         {
             'session': '1',
@@ -30,6 +30,35 @@ dset_xsectional = {
                     'task': 'rest',
                     'space': 'MNI152NLin6Asym',
                     'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                }
+            ],
+        },
+    ],
+}
+
+dset_xsectional_02 = {
+    '102': [
+        {
+            'session': '1',
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '2',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                }
+            ],
+        },
+        {
+            'session': '2',
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '2',
                     'desc': 'preproc',
                     'suffix': 'bold',
                 }
@@ -181,11 +210,11 @@ def check_expected(subject_data, expected):
             assert subject_data[key] is value
 
 
-def test_collect_derivatives_xsectional(tmpdir):
+def test_collect_derivatives_xsectional_01(tmpdir):
     """Test collect_derivatives with a mocked up longitudinal dataset."""
     # Generate a BIDS dataset
-    bids_dir = tmpdir / 'collect_derivatives_xsectional'
-    generate_bids_skeleton(str(bids_dir), dset_xsectional)
+    bids_dir = tmpdir / 'collect_derivatives_xsectional_01'
+    generate_bids_skeleton(str(bids_dir), dset_xsectional_01)
 
     layout = BIDSLayout(bids_dir, config=['bids', 'derivatives'], validate=False)
 
@@ -201,6 +230,31 @@ def test_collect_derivatives_xsectional(tmpdir):
         'bold_mni152nlin6asym': (
             'sub-102_ses-1_task-rest_space-MNI152NLin6Asym_res-02_desc-preproc_bold.nii.gz',
             'sub-102_ses-2_task-rest_space-MNI152NLin6Asym_res-02_desc-preproc_bold.nii.gz',
+        ),
+    }
+    check_expected(subject_data, expected)
+
+
+def test_collect_derivatives_xsectional_02(tmpdir):
+    """Test collect_derivatives with a mocked up longitudinal dataset."""
+    # Generate a BIDS dataset
+    bids_dir = tmpdir / 'collect_derivatives_xsectional_02'
+    generate_bids_skeleton(str(bids_dir), dset_xsectional_02)
+
+    layout = BIDSLayout(bids_dir, config=['bids', 'derivatives'], validate=False)
+
+    subject_data = xbids.collect_derivatives(
+        raw_dataset=None,
+        derivatives_dataset=layout,
+        entities={'subject': '102'},
+        fieldmap_id=None,
+        spec=None,
+        patterns=None,
+    )
+    expected = {
+        'bold_mni152nlin6asym': (
+            'sub-102_ses-1_task-rest_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz',
+            'sub-102_ses-2_task-rest_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz',
         ),
     }
     check_expected(subject_data, expected)
