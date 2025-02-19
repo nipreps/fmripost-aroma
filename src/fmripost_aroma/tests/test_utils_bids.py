@@ -10,8 +10,21 @@ from fmripost_aroma.tests.utils import get_test_data_path
 from fmripost_aroma.utils import bids as xbids
 
 dset_xsectional = {
-    '01': [
+    '102': [
         {
+            'session': '1',
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                }
+            ],
+        },
+        {
+            'session': '2',
             'func': [
                 {
                     'task': 'rest',
@@ -185,7 +198,8 @@ def collect_derivatives_xsectional(tmpdir):
     )
     expected = {
         'bold_mni152nlin6asym': (
-            'sub-01_task-rest_space-MNI152NLin6Asym_res-02_desc-preproc_bold.nii.gz'
+            'sub-102_ses-1_task-rest_space-MNI152NLin6Asym_res-02_desc-preproc_bold.nii.gz',
+            'sub-102_ses-2_task-rest_space-MNI152NLin6Asym_res-02_desc-preproc_bold.nii.gz',
         ),
     }
     check_expected(subject_data, expected)
