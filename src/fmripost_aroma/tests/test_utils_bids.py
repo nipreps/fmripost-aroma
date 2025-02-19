@@ -242,10 +242,10 @@ def test_collect_derivatives_xsectional_01(tmpdir):
         allow_multiple=True,
     )
     expected = {
-        'bold_mni152nlin6asym': (
+        'bold_mni152nlin6asym': [
             'sub-102_ses-1_task-rest_space-MNI152NLin6Asym_res-02_desc-preproc_bold.nii.gz',
             'sub-102_ses-2_task-rest_space-MNI152NLin6Asym_res-02_desc-preproc_bold.nii.gz',
-        ),
+        ],
     }
     check_expected(subject_data, expected)
 
@@ -268,9 +268,9 @@ def test_collect_derivatives_xsectional_02(tmpdir):
         allow_multiple=True,
     )
     expected = {
-        'bold_mni152nlin6asym': (
+        'bold_mni152nlin6asym': [
             'sub-102_ses-1_task-rest_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz',
             'sub-102_ses-2_task-rest_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz',
-        ),
+        ],
     }
     check_expected(subject_data, expected)
