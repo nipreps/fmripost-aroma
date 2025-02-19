@@ -20,7 +20,14 @@ dset_xsectional_01 = {
                     'res': '02',
                     'desc': 'preproc',
                     'suffix': 'bold',
-                }
+                },
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'brain',
+                    'suffix': 'mask',
+                },
             ],
         },
         {
@@ -32,7 +39,14 @@ dset_xsectional_01 = {
                     'res': '02',
                     'desc': 'preproc',
                     'suffix': 'bold',
-                }
+                },
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'brain',
+                    'suffix': 'mask',
+                },
             ],
         },
     ],
@@ -225,6 +239,7 @@ def test_collect_derivatives_xsectional_01(tmpdir):
         fieldmap_id=None,
         spec=None,
         patterns=None,
+        allow_multiple=True,
     )
     expected = {
         'bold_mni152nlin6asym': (
@@ -250,6 +265,7 @@ def test_collect_derivatives_xsectional_02(tmpdir):
         fieldmap_id=None,
         spec=None,
         patterns=None,
+        allow_multiple=True,
     )
     expected = {
         'bold_mni152nlin6asym': (
