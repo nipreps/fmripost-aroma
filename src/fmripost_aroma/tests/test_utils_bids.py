@@ -192,14 +192,14 @@ def test_collect_derivatives_xsectional(tmpdir):
     subject_data = xbids.collect_derivatives(
         raw_dataset=None,
         derivatives_dataset=layout,
-        entities={},
+        entities={'subject': '102'},
         fieldmap_id=None,
         spec=None,
         patterns=None,
     )
     expected = {
         'bold_mni152nlin6asym': (
-            'sub-102_ses-1_task-rest_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz',
+            'sub-102_ses-1_task-rest_space-MNI152NLin6Asym_res-02_desc-preproc_bold.nii.gz',
             'sub-102_ses-2_task-rest_space-MNI152NLin6Asym_res-02_desc-preproc_bold.nii.gz',
         ),
     }
