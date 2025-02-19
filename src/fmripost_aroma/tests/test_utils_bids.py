@@ -190,8 +190,9 @@ def test_collect_derivatives_xsectional(tmpdir):
     layout = BIDSLayout(bids_dir, config=['bids', 'derivatives'], validate=False)
 
     subject_data = xbids.collect_derivatives(
-        raw_dataset=layout,
+        raw_dataset=None,
         derivatives_dataset=layout,
+        entities={},
         fieldmap_id=None,
         spec=None,
         patterns=None,
