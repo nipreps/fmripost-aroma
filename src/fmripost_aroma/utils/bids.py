@@ -136,6 +136,11 @@ def collect_derivatives(
             if not item:
                 derivs_cache[k] = None
             elif not allow_multiple and len(item) > 1 and k.startswith('anat'):
+                # Raise an error if multiple derivatives are found from different sessions
+                item_sessions = [layout.get_file(f).entities['session'] for f in item]
+                if len(set(item_sessions)) > 1:
+                    raise ValueError(f'Multiple anatomical derivatives found for {k}: {item}')
+
                 # Anatomical derivatives are allowed to have multiple files (e.g., T1w and T2w)
                 # but we just grab the first one
                 derivs_cache[k] = item[0]
