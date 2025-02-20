@@ -6,7 +6,7 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
-from bids.layout import BIDSLayout
+from bids.layout import BIDSLayout, Query
 from bids.utils import listify
 from niworkflows.utils.spaces import SpatialReferences
 
@@ -127,6 +127,12 @@ def collect_derivatives(
                 query = {**entities, **q}
 
             item = layout.get(return_type='filename', **query)
+            if k.startswith('anat') and not item:
+                # If the anatomical derivative is not found, try to find it
+                # across sessions
+                query = {**{'session': [Query.ANY]}, **q}
+                item = layout.get(return_type='filename', **query)
+
             if not item:
                 derivs_cache[k] = None
             elif not allow_multiple and len(item) > 1 and k.startswith('anat'):
@@ -150,6 +156,12 @@ def collect_derivatives(
                 query['to'] = fieldmap_id
 
             item = layout.get(return_type='filename', **query)
+            if k.startswith('anat') and not item:
+                # If the anatomical derivative is not found, try to find it
+                # across sessions
+                query = {**{'session': [Query.ANY]}, **q}
+                item = layout.get(return_type='filename', **query)
+
             if not item:
                 derivs_cache[k] = None
             elif not allow_multiple and len(item) > 1 and k.startswith('anat'):
