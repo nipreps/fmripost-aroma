@@ -356,9 +356,9 @@ def test_collect_derivatives_xsectional_02(tmpdir):
             entities={'subject': '102', 'session': '3'},
             fieldmap_id=None,
             spec=None,
-        patterns=None,
-        allow_multiple=False,
-    )
+            patterns=None,
+            allow_multiple=False,
+        )
 
 
 def test_collect_derivatives_xsectional_03(tmpdir):
