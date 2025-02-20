@@ -346,16 +346,21 @@ def test_collect_derivatives_xsectional_02(tmpdir):
     check_expected(subject_data, expected)
 
     # Query for session 3 (no anat available) should raise an error
-    with pytest.raises(ValueError, match='Multiple files found for anat_mni152nlin6asym'):
-        subject_data = xbids.collect_derivatives(
-            raw_dataset=None,
-            derivatives_dataset=layout,
-            entities={'subject': '102', 'session': '3'},
-            fieldmap_id=None,
-            spec=None,
-            patterns=None,
-            allow_multiple=False,
-        )
+    subject_data = xbids.collect_derivatives(
+        raw_dataset=None,
+        derivatives_dataset=layout,
+        entities={'subject': '102', 'session': '3'},
+        fieldmap_id=None,
+        spec=None,
+        patterns=None,
+        allow_multiple=False,
+    )
+    expected = {
+        'anat_mni152nlin6asym': (
+            'sub-102_ses-2_space-MNI152NLin6Asym_res-02_desc-preproc_T1w.nii.gz'
+        ),
+    }
+    check_expected(subject_data, expected)
 
 
 def test_collect_derivatives_xsectional_03(tmpdir):
