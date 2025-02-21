@@ -42,6 +42,14 @@ dset_xsectional_02 = {
     '102': [
         {
             'session': '1',
+            'anat': [
+                {
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'T1w',
+                },
+            ],
             'func': [
                 {
                     'task': 'rest',
@@ -54,6 +62,14 @@ dset_xsectional_02 = {
         },
         {
             'session': '2',
+            'anat': [
+                {
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'T1w',
+                },
+            ],
             'func': [
                 {
                     'task': 'rest',
@@ -62,6 +78,55 @@ dset_xsectional_02 = {
                     'desc': 'preproc',
                     'suffix': 'bold',
                 }
+            ],
+        },
+        {
+            'session': '3',
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '2',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                }
+            ],
+        },
+    ],
+}
+
+dset_xsectional_03 = {
+    '102': [
+        {
+            'session': '1',
+            'anat': [
+                {
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'T1w',
+                },
+            ],
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                },
+            ],
+        },
+        {
+            'session': '2',
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                },
             ],
         },
     ],
@@ -244,6 +309,7 @@ def test_collect_derivatives_xsectional_02(tmpdir):
 
     layout = BIDSLayout(bids_dir, config=['bids', 'derivatives'], validate=False)
 
+    # Query for all sessions should return all bold derivatives
     subject_data = xbids.collect_derivatives(
         raw_dataset=None,
         derivatives_dataset=layout,
@@ -257,6 +323,82 @@ def test_collect_derivatives_xsectional_02(tmpdir):
         'bold_mni152nlin6asym': [
             'sub-102_ses-1_task-rest_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz',
             'sub-102_ses-2_task-rest_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz',
+            'sub-102_ses-3_task-rest_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz',
         ],
+    }
+    check_expected(subject_data, expected)
+
+    # Query for session 2 should return anat from session 2
+    subject_data = xbids.collect_derivatives(
+        raw_dataset=None,
+        derivatives_dataset=layout,
+        entities={'subject': '102', 'session': '2'},
+        fieldmap_id=None,
+        spec=None,
+        patterns=None,
+        allow_multiple=False,
+    )
+    expected = {
+        'anat_mni152nlin6asym': (
+            'sub-102_ses-2_space-MNI152NLin6Asym_res-02_desc-preproc_T1w.nii.gz'
+        ),
+    }
+    check_expected(subject_data, expected)
+
+    # Query for session 3 (no anat available) should raise an error
+    with pytest.raises(
+        ValueError,
+        match='Multiple anatomical derivatives found for anat_mni152nlin6asym',
+    ):
+        subject_data = xbids.collect_derivatives(
+            raw_dataset=None,
+            derivatives_dataset=layout,
+            entities={'subject': '102', 'session': '3'},
+            fieldmap_id=None,
+            spec=None,
+            patterns=None,
+            allow_multiple=False,
+        )
+
+
+def test_collect_derivatives_xsectional_03(tmpdir):
+    """Test collect_derivatives with a mocked up longitudinal dataset."""
+    # Generate a BIDS dataset
+    bids_dir = tmpdir / 'collect_derivatives_xsectional_03'
+    generate_bids_skeleton(str(bids_dir), dset_xsectional_03)
+
+    layout = BIDSLayout(bids_dir, config=['bids', 'derivatives'], validate=False)
+
+    # Query for session 1 should return anat from session 1
+    subject_data = xbids.collect_derivatives(
+        raw_dataset=None,
+        derivatives_dataset=layout,
+        entities={'subject': '102', 'session': '1'},
+        fieldmap_id=None,
+        spec=None,
+        patterns=None,
+        allow_multiple=False,
+    )
+    expected = {
+        'anat_mni152nlin6asym': (
+            'sub-102_ses-1_space-MNI152NLin6Asym_res-02_desc-preproc_T1w.nii.gz'
+        ),
+    }
+    check_expected(subject_data, expected)
+
+    # Query for session 2 should return anat from session 1 if no anat is present for session 2
+    subject_data = xbids.collect_derivatives(
+        raw_dataset=None,
+        derivatives_dataset=layout,
+        entities={'subject': '102', 'session': '2'},
+        fieldmap_id=None,
+        spec=None,
+        patterns=None,
+        allow_multiple=False,
+    )
+    expected = {
+        'anat_mni152nlin6asym': (
+            'sub-102_ses-1_space-MNI152NLin6Asym_res-02_desc-preproc_T1w.nii.gz'
+        ),
     }
     check_expected(subject_data, expected)
