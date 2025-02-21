@@ -212,11 +212,11 @@ def collect_derivatives(
 
         spaces_found, anat2outputspaces_xfm = [], []
         for space in spaces.references:
-            # Now try to find transform to the requested space
-            anat2space_query = {
-                **{'session': [entities.get('session'), None]},
-                **spec['transforms']['anat2mni152nlin6asym'],
-            }
+            base_file = derivs_cache['anat2mni152nlin6asym']
+            base_file = layout.get_file(base_file)
+            # Now try to find transform to the requested space, using the
+            # entities from the transform to MNI152NLin6Asym
+            anat2space_query = base_file.entities
             anat2space_query['to'] = space.space
             item = layout.get(return_type='filename', **anat2space_query)
             anat2outputspaces_xfm.append(item[0] if item else None)
