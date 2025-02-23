@@ -98,6 +98,7 @@ def collect_derivatives(
     if not entities:
         entities = {}
 
+    _spec = None
     if spec is None or patterns is None:
         _spec = json.loads(load_data.readable('io_spec.json').read_text())
 
@@ -105,7 +106,13 @@ def collect_derivatives(
             spec = _spec['queries']
 
         if patterns is None:
-            patterns = _spec['patterns']
+            patterns = _spec['default_path_patterns']
+
+        _spec.pop('queries')
+
+    config = ['bids', 'derivatives']
+    if _spec:
+        config = ['bids', 'derivatives', _spec]
 
     # Search for derivatives data
     derivs_cache = defaultdict(list, {})
@@ -114,7 +121,7 @@ def collect_derivatives(
         if isinstance(layout, Path):
             layout = BIDSLayout(
                 layout,
-                config=['bids', 'derivatives'],
+                config=config,
                 validate=False,
             )
 
