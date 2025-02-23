@@ -6,7 +6,7 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
-from bids.layout import BIDSLayout
+from bids.layout import BIDSLayout, Query
 from bids.utils import listify
 from niworkflows.utils.spaces import SpatialReferences
 
@@ -134,9 +134,20 @@ def collect_derivatives(
                 query = {**entities, **q}
 
             item = layout.get(return_type='filename', **query)
+            if k.startswith('anat') and not item:
+                # If the anatomical derivative is not found, try to find it
+                # across sessions
+                query = {**{'session': [Query.ANY]}, **q}
+                item = layout.get(return_type='filename', **query)
+
             if not item:
                 derivs_cache[k] = None
             elif not allow_multiple and len(item) > 1 and k.startswith('anat'):
+                # Raise an error if multiple derivatives are found from different sessions
+                item_sessions = [layout.get_file(f).entities['session'] for f in item]
+                if len(set(item_sessions)) > 1:
+                    raise ValueError(f'Multiple anatomical derivatives found for {k}: {item}')
+
                 # Anatomical derivatives are allowed to have multiple files (e.g., T1w and T2w)
                 # but we just grab the first one
                 derivs_cache[k] = item[0]
@@ -157,6 +168,12 @@ def collect_derivatives(
                 query['to'] = fieldmap_id
 
             item = layout.get(return_type='filename', **query)
+            if k.startswith('anat') and not item:
+                # If the anatomical derivative is not found, try to find it
+                # across sessions
+                query = {**{'session': [Query.ANY]}, **q}
+                item = layout.get(return_type='filename', **query)
+
             if not item:
                 derivs_cache[k] = None
             elif not allow_multiple and len(item) > 1 and k.startswith('anat'):
@@ -202,11 +219,11 @@ def collect_derivatives(
 
         spaces_found, anat2outputspaces_xfm = [], []
         for space in spaces.references:
-            # Now try to find transform to the requested space
-            anat2space_query = {
-                **{'session': [entities.get('session'), None]},
-                **spec['transforms']['anat2mni152nlin6asym'],
-            }
+            base_file = derivs_cache['anat2mni152nlin6asym']
+            base_file = layout.get_file(base_file)
+            # Now try to find transform to the requested space, using the
+            # entities from the transform to MNI152NLin6Asym
+            anat2space_query = base_file.entities
             anat2space_query['to'] = space.space
             item = layout.get(return_type='filename', **anat2space_query)
             anat2outputspaces_xfm.append(item[0] if item else None)
