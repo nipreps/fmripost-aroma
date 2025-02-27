@@ -36,10 +36,90 @@ dset_xsectional_01 = {
             ],
         },
     ],
+    '103': [
+        {
+            'session': '1',
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                },
+            ],
+        },
+        {
+            'session': '2',
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                },
+            ],
+        },
+    ],
 }
 
 dset_xsectional_02 = {
     '102': [
+        {
+            'session': '1',
+            'anat': [
+                {
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'T1w',
+                },
+            ],
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '2',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                }
+            ],
+        },
+        {
+            'session': '2',
+            'anat': [
+                {
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'T1w',
+                },
+            ],
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '2',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                }
+            ],
+        },
+        {
+            'session': '3',
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '2',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                }
+            ],
+        },
+    ],
+    '103': [
         {
             'session': '1',
             'anat': [
@@ -119,6 +199,85 @@ dset_xsectional_03 = {
         },
         {
             'session': '2',
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                },
+            ],
+        },
+    ],
+    '103': [
+        {
+            'session': '1',
+            'anat': [
+                {
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'T1w',
+                },
+            ],
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                },
+            ],
+        },
+        {
+            'session': '2',
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                },
+            ],
+        },
+    ],
+}
+
+dset_xsectional_04 = {
+    '102': [
+        {
+            'anat': [
+                {
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'T1w',
+                },
+            ],
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                },
+            ],
+        },
+    ],
+    '103': [
+        {
+            'anat': [
+                {
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'T1w',
+                },
+            ],
             'func': [
                 {
                     'task': 'rest',
@@ -400,5 +559,31 @@ def test_collect_derivatives_xsectional_03(tmpdir):
         'anat_mni152nlin6asym': (
             'sub-102_ses-1_space-MNI152NLin6Asym_res-02_desc-preproc_T1w.nii.gz'
         ),
+    }
+    check_expected(subject_data, expected)
+
+
+def test_collect_derivatives_xsectional_04(tmpdir):
+    """Test collect_derivatives with a mocked up cross-sectional dataset."""
+    # Generate a BIDS dataset
+    bids_dir = tmpdir / 'collect_derivatives_xsectional_04'
+    generate_bids_skeleton(str(bids_dir), dset_xsectional_04)
+
+    layout = BIDSLayout(bids_dir, config=['bids', 'derivatives'], validate=False)
+
+    # Query for subject 102 should return anat from subject 102,
+    # even though there are multiple subjects with anat derivatives,
+    # because the subject is specified in the entities dictionary.
+    subject_data = xbids.collect_derivatives(
+        raw_dataset=None,
+        derivatives_dataset=layout,
+        entities={'subject': '102'},
+        fieldmap_id=None,
+        spec=None,
+        patterns=None,
+        allow_multiple=False,
+    )
+    expected = {
+        'anat_mni152nlin6asym': 'sub-102_space-MNI152NLin6Asym_res-02_desc-preproc_T1w.nii.gz',
     }
     check_expected(subject_data, expected)

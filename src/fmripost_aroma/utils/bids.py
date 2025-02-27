@@ -121,7 +121,10 @@ def collect_derivatives(
         for k, q in spec['derivatives'].items():
             if k.startswith('anat'):
                 # Allow anatomical derivatives at session level or subject level
-                query = {**{'session': [entities.get('session'), None]}, **q}
+                query = {
+                    **{'subject': entities['subject'], 'session': [entities.get('session'), None]},
+                    **q,
+                }
             else:
                 # Combine entities with query. Query values override file entities.
                 query = {**entities, **q}
@@ -130,7 +133,7 @@ def collect_derivatives(
             if k.startswith('anat') and not item:
                 # If the anatomical derivative is not found, try to find it
                 # across sessions
-                query = {**{'session': [Query.ANY]}, **q}
+                query = {**{'subject': entities['subject'], 'session': [Query.ANY]}, **q}
                 item = layout.get(return_type='filename', **query)
 
             if not item:
@@ -152,7 +155,10 @@ def collect_derivatives(
         for k, q in spec['transforms'].items():
             if k.startswith('anat'):
                 # Allow anatomical derivatives at session level or subject level
-                query = {**{'session': [entities.get('session'), None]}, **q}
+                query = {
+                    **{'subject': entities['subject'], 'session': [entities.get('session'), None]},
+                    **q,
+                }
             else:
                 # Combine entities with query. Query values override file entities.
                 query = {**entities, **q}
@@ -164,7 +170,7 @@ def collect_derivatives(
             if k.startswith('anat') and not item:
                 # If the anatomical derivative is not found, try to find it
                 # across sessions
-                query = {**{'session': [Query.ANY]}, **q}
+                query = {**{'subject': entities['subject'], 'session': [Query.ANY]}, **q}
                 item = layout.get(return_type='filename', **query)
 
             if not item:
