@@ -246,6 +246,51 @@ dset_xsectional_03 = {
     ],
 }
 
+dset_xsectional_04 = {
+    '102': [
+        {
+            'anat': [
+                {
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'T1w',
+                },
+            ],
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                },
+            ],
+        },
+    ],
+    '103': [
+        {
+            'anat': [
+                {
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'T1w',
+                },
+            ],
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                },
+            ],
+        },
+    ],
+}
+
 
 def test_collect_derivatives_raw(base_ignore_list):
     """Test collect_derivatives with a raw dataset."""
@@ -513,6 +558,49 @@ def test_collect_derivatives_xsectional_03(tmpdir):
     expected = {
         'anat_mni152nlin6asym': (
             'sub-102_ses-1_space-MNI152NLin6Asym_res-02_desc-preproc_T1w.nii.gz'
+        ),
+    }
+    check_expected(subject_data, expected)
+
+
+def test_collect_derivatives_xsectional_04(tmpdir):
+    """Test collect_derivatives with a mocked up cross-sectional dataset."""
+    # Generate a BIDS dataset
+    bids_dir = tmpdir / 'collect_derivatives_xsectional_04'
+    generate_bids_skeleton(str(bids_dir), dset_xsectional_04)
+
+    layout = BIDSLayout(bids_dir, config=['bids', 'derivatives'], validate=False)
+
+    # Query for session 1 should return anat from session 1
+    subject_data = xbids.collect_derivatives(
+        raw_dataset=None,
+        derivatives_dataset=layout,
+        entities={'subject': '102'},
+        fieldmap_id=None,
+        spec=None,
+        patterns=None,
+        allow_multiple=False,
+    )
+    expected = {
+        'anat_mni152nlin6asym': (
+            'sub-102_space-MNI152NLin6Asym_res-02_desc-preproc_T1w.nii.gz'
+        ),
+    }
+    check_expected(subject_data, expected)
+
+    # Query for session 2 should return anat from session 1 if no anat is present for session 2
+    subject_data = xbids.collect_derivatives(
+        raw_dataset=None,
+        derivatives_dataset=layout,
+        entities={'subject': '102'},
+        fieldmap_id=None,
+        spec=None,
+        patterns=None,
+        allow_multiple=False,
+    )
+    expected = {
+        'anat_mni152nlin6asym': (
+            'sub-102_space-MNI152NLin6Asym_res-02_desc-preproc_T1w.nii.gz'
         ),
     }
     check_expected(subject_data, expected)
