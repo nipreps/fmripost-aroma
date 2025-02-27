@@ -9,288 +9,6 @@ from niworkflows.utils.testing import generate_bids_skeleton
 from fmripost_aroma.tests.utils import get_test_data_path
 from fmripost_aroma.utils import bids as xbids
 
-dset_xsectional_01 = {
-    '102': [
-        {
-            'session': '1',
-            'func': [
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'bold',
-                },
-            ],
-        },
-        {
-            'session': '2',
-            'func': [
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'bold',
-                },
-            ],
-        },
-    ],
-    '103': [
-        {
-            'session': '1',
-            'func': [
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'bold',
-                },
-            ],
-        },
-        {
-            'session': '2',
-            'func': [
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'bold',
-                },
-            ],
-        },
-    ],
-}
-
-dset_xsectional_02 = {
-    '102': [
-        {
-            'session': '1',
-            'anat': [
-                {
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'T1w',
-                },
-            ],
-            'func': [
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '2',
-                    'desc': 'preproc',
-                    'suffix': 'bold',
-                }
-            ],
-        },
-        {
-            'session': '2',
-            'anat': [
-                {
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'T1w',
-                },
-            ],
-            'func': [
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '2',
-                    'desc': 'preproc',
-                    'suffix': 'bold',
-                }
-            ],
-        },
-        {
-            'session': '3',
-            'func': [
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '2',
-                    'desc': 'preproc',
-                    'suffix': 'bold',
-                }
-            ],
-        },
-    ],
-    '103': [
-        {
-            'session': '1',
-            'anat': [
-                {
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'T1w',
-                },
-            ],
-            'func': [
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '2',
-                    'desc': 'preproc',
-                    'suffix': 'bold',
-                }
-            ],
-        },
-        {
-            'session': '2',
-            'anat': [
-                {
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'T1w',
-                },
-            ],
-            'func': [
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '2',
-                    'desc': 'preproc',
-                    'suffix': 'bold',
-                }
-            ],
-        },
-        {
-            'session': '3',
-            'func': [
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '2',
-                    'desc': 'preproc',
-                    'suffix': 'bold',
-                }
-            ],
-        },
-    ],
-}
-
-dset_xsectional_03 = {
-    '102': [
-        {
-            'session': '1',
-            'anat': [
-                {
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'T1w',
-                },
-            ],
-            'func': [
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'bold',
-                },
-            ],
-        },
-        {
-            'session': '2',
-            'func': [
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'bold',
-                },
-            ],
-        },
-    ],
-    '103': [
-        {
-            'session': '1',
-            'anat': [
-                {
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'T1w',
-                },
-            ],
-            'func': [
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'bold',
-                },
-            ],
-        },
-        {
-            'session': '2',
-            'func': [
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'bold',
-                },
-            ],
-        },
-    ],
-}
-
-dset_xsectional_04 = {
-    '102': [
-        {
-            'anat': [
-                {
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'T1w',
-                },
-            ],
-            'func': [
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'bold',
-                },
-            ],
-        },
-    ],
-    '103': [
-        {
-            'anat': [
-                {
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'T1w',
-                },
-            ],
-            'func': [
-                {
-                    'task': 'rest',
-                    'space': 'MNI152NLin6Asym',
-                    'res': '02',
-                    'desc': 'preproc',
-                    'suffix': 'bold',
-                },
-            ],
-        },
-    ],
-}
-
 
 def test_collect_derivatives_raw(base_ignore_list):
     """Test collect_derivatives with a raw dataset."""
@@ -434,11 +152,12 @@ def check_expected(subject_data, expected):
             assert subject_data[key] is value
 
 
-def test_collect_derivatives_xsectional_01(tmpdir):
+def test_collect_derivatives_longitudinal_01(tmpdir):
     """Test collect_derivatives with a mocked up longitudinal dataset."""
     # Generate a BIDS dataset
-    bids_dir = tmpdir / 'collect_derivatives_xsectional_01'
-    generate_bids_skeleton(str(bids_dir), dset_xsectional_01)
+    bids_dir = tmpdir / 'collect_derivatives_longitudinal_01'
+    dset_yaml = os.path.join(get_test_data_path(), 'skeleton_longitudinal_01.yml')
+    generate_bids_skeleton(str(bids_dir), dset_yaml)
 
     layout = BIDSLayout(bids_dir, config=['bids', 'derivatives'], validate=False)
 
@@ -460,11 +179,12 @@ def test_collect_derivatives_xsectional_01(tmpdir):
     check_expected(subject_data, expected)
 
 
-def test_collect_derivatives_xsectional_02(tmpdir):
+def test_collect_derivatives_longitudinal_02(tmpdir):
     """Test collect_derivatives with a mocked up longitudinal dataset."""
     # Generate a BIDS dataset
-    bids_dir = tmpdir / 'collect_derivatives_xsectional_02'
-    generate_bids_skeleton(str(bids_dir), dset_xsectional_02)
+    bids_dir = tmpdir / 'collect_derivatives_longitudinal_02'
+    dset_yaml = os.path.join(get_test_data_path(), 'skeleton_longitudinal_02.yml')
+    generate_bids_skeleton(str(bids_dir), dset_yaml)
 
     layout = BIDSLayout(bids_dir, config=['bids', 'derivatives'], validate=False)
 
@@ -520,11 +240,12 @@ def test_collect_derivatives_xsectional_02(tmpdir):
         )
 
 
-def test_collect_derivatives_xsectional_03(tmpdir):
+def test_collect_derivatives_longitudinal_03(tmpdir):
     """Test collect_derivatives with a mocked up longitudinal dataset."""
     # Generate a BIDS dataset
-    bids_dir = tmpdir / 'collect_derivatives_xsectional_03'
-    generate_bids_skeleton(str(bids_dir), dset_xsectional_03)
+    bids_dir = tmpdir / 'collect_derivatives_longitudinal_03'
+    dset_yaml = os.path.join(get_test_data_path(), 'skeleton_longitudinal_03.yml')
+    generate_bids_skeleton(str(bids_dir), dset_yaml)
 
     layout = BIDSLayout(bids_dir, config=['bids', 'derivatives'], validate=False)
 
@@ -567,7 +288,8 @@ def test_collect_derivatives_xsectional_04(tmpdir):
     """Test collect_derivatives with a mocked up cross-sectional dataset."""
     # Generate a BIDS dataset
     bids_dir = tmpdir / 'collect_derivatives_xsectional_04'
-    generate_bids_skeleton(str(bids_dir), dset_xsectional_04)
+    dset_yaml = os.path.join(get_test_data_path(), 'skeleton_crosssectional_01.yml')
+    generate_bids_skeleton(str(bids_dir), dset_yaml)
 
     layout = BIDSLayout(bids_dir, config=['bids', 'derivatives'], validate=False)
 
