@@ -36,6 +36,32 @@ dset_xsectional_01 = {
             ],
         },
     ],
+    '103': [
+        {
+            'session': '1',
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                },
+            ],
+        },
+        {
+            'session': '2',
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                },
+            ],
+        },
+    ],
 }
 
 dset_xsectional_02 = {
@@ -93,10 +119,98 @@ dset_xsectional_02 = {
             ],
         },
     ],
+    '103': [
+        {
+            'session': '1',
+            'anat': [
+                {
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'T1w',
+                },
+            ],
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '2',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                }
+            ],
+        },
+        {
+            'session': '2',
+            'anat': [
+                {
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'T1w',
+                },
+            ],
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '2',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                }
+            ],
+        },
+        {
+            'session': '3',
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '2',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                }
+            ],
+        },
+    ],
 }
 
 dset_xsectional_03 = {
     '102': [
+        {
+            'session': '1',
+            'anat': [
+                {
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'T1w',
+                },
+            ],
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                },
+            ],
+        },
+        {
+            'session': '2',
+            'func': [
+                {
+                    'task': 'rest',
+                    'space': 'MNI152NLin6Asym',
+                    'res': '02',
+                    'desc': 'preproc',
+                    'suffix': 'bold',
+                },
+            ],
+        },
+    ],
+    '103': [
         {
             'session': '1',
             'anat': [
