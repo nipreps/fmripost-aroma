@@ -1,4 +1,4 @@
-102:
+"102":
   - session: "1"
     anat:
       - space: MNI152NLin6Asym
@@ -19,7 +19,7 @@
         desc: preproc
         suffix: bold
 
-103:
+"103":
   - session: "1"
     anat:
       - space: MNI152NLin6Asym

@@ -1,4 +1,4 @@
-102:
+"102":
   - anat:
       - space: MNI152NLin6Asym
         res: "02"
@@ -11,7 +11,7 @@
         desc: preproc
         suffix: bold
 
-103:
+"103":
   - anat:
       - space: MNI152NLin6Asym
         res: "02"
