@@ -582,9 +582,7 @@ def test_collect_derivatives_xsectional_04(tmpdir):
         allow_multiple=False,
     )
     expected = {
-        'anat_mni152nlin6asym': (
-            'sub-102_space-MNI152NLin6Asym_res-02_desc-preproc_T1w.nii.gz'
-        ),
+        'anat_mni152nlin6asym': 'sub-102_space-MNI152NLin6Asym_res-02_desc-preproc_T1w.nii.gz',
     }
     check_expected(subject_data, expected)
 
@@ -599,8 +597,6 @@ def test_collect_derivatives_xsectional_04(tmpdir):
         allow_multiple=False,
     )
     expected = {
-        'anat_mni152nlin6asym': (
-            'sub-102_space-MNI152NLin6Asym_res-02_desc-preproc_T1w.nii.gz'
-        ),
+        'anat_mni152nlin6asym': 'sub-102_space-MNI152NLin6Asym_res-02_desc-preproc_T1w.nii.gz',
     }
     check_expected(subject_data, expected)
