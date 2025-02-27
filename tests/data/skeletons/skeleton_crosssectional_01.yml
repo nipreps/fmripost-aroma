@@ -1,0 +1,25 @@
+"102":
+  - anat:
+      - space: MNI152NLin6Asym
+        res: "02"
+        desc: preproc
+        suffix: T1w
+    func:
+      - task: rest
+        space: MNI152NLin6Asym
+        res: "02"
+        desc: preproc
+        suffix: bold
+
+"103":
+  - anat:
+      - space: MNI152NLin6Asym
+        res: "02"
+        desc: preproc
+        suffix: T1w
+    func:
+      - task: rest
+        space: MNI152NLin6Asym
+        res: "02"
+        desc: preproc
+        suffix: bold
