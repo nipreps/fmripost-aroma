@@ -156,7 +156,7 @@ def test_collect_derivatives_longitudinal_01(tmpdir):
     """Test collect_derivatives with a mocked up longitudinal dataset."""
     # Generate a BIDS dataset
     bids_dir = tmpdir / 'collect_derivatives_longitudinal_01'
-    dset_yaml = os.path.join(get_test_data_path(), 'skeleton_longitudinal_01.yml')
+    dset_yaml = get_test_data_path() / 'skeletons' / 'skeleton_longitudinal_01.yml'
     generate_bids_skeleton(str(bids_dir), dset_yaml)
 
     layout = BIDSLayout(bids_dir, config=['bids', 'derivatives'], validate=False)
@@ -183,7 +183,7 @@ def test_collect_derivatives_longitudinal_02(tmpdir):
     """Test collect_derivatives with a mocked up longitudinal dataset."""
     # Generate a BIDS dataset
     bids_dir = tmpdir / 'collect_derivatives_longitudinal_02'
-    dset_yaml = os.path.join(get_test_data_path(), 'skeleton_longitudinal_02.yml')
+    dset_yaml = get_test_data_path() / 'skeletons' / 'skeleton_longitudinal_02.yml'
     generate_bids_skeleton(str(bids_dir), dset_yaml)
 
     layout = BIDSLayout(bids_dir, config=['bids', 'derivatives'], validate=False)
@@ -244,7 +244,7 @@ def test_collect_derivatives_longitudinal_03(tmpdir):
     """Test collect_derivatives with a mocked up longitudinal dataset."""
     # Generate a BIDS dataset
     bids_dir = tmpdir / 'collect_derivatives_longitudinal_03'
-    dset_yaml = os.path.join(get_test_data_path(), 'skeleton_longitudinal_03.yml')
+    dset_yaml = get_test_data_path() / 'skeletons' / 'skeleton_longitudinal_03.yml'
     generate_bids_skeleton(str(bids_dir), dset_yaml)
 
     layout = BIDSLayout(bids_dir, config=['bids', 'derivatives'], validate=False)
@@ -288,7 +288,7 @@ def test_collect_derivatives_xsectional_04(tmpdir):
     """Test collect_derivatives with a mocked up cross-sectional dataset."""
     # Generate a BIDS dataset
     bids_dir = tmpdir / 'collect_derivatives_xsectional_04'
-    dset_yaml = os.path.join(get_test_data_path(), 'skeleton_crosssectional_01.yml')
+    dset_yaml = get_test_data_path() / 'skeletons' / 'skeleton_crosssectional_01.yml'
     generate_bids_skeleton(str(bids_dir), dset_yaml)
 
     layout = BIDSLayout(bids_dir, config=['bids', 'derivatives'], validate=False)
