@@ -571,22 +571,9 @@ def test_collect_derivatives_xsectional_04(tmpdir):
 
     layout = BIDSLayout(bids_dir, config=['bids', 'derivatives'], validate=False)
 
-    # Query for session 1 should return anat from session 1
-    subject_data = xbids.collect_derivatives(
-        raw_dataset=None,
-        derivatives_dataset=layout,
-        entities={'subject': '102'},
-        fieldmap_id=None,
-        spec=None,
-        patterns=None,
-        allow_multiple=False,
-    )
-    expected = {
-        'anat_mni152nlin6asym': 'sub-102_space-MNI152NLin6Asym_res-02_desc-preproc_T1w.nii.gz',
-    }
-    check_expected(subject_data, expected)
-
-    # Query for session 2 should return anat from session 1 if no anat is present for session 2
+    # Query for subject 102 should return anat from subject 102,
+    # even though there are multiple subjects with anat derivatives,
+    # because the subject is specified in the entities dictionary.
     subject_data = xbids.collect_derivatives(
         raw_dataset=None,
         derivatives_dataset=layout,
