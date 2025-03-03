@@ -31,7 +31,7 @@ jobs:
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v5.6.1
+        uses: docker/metadata-action@v5.7.0
         with:
           images: nipreps/fmripost-template
           # generate Docker tags based on the following events/attributes
