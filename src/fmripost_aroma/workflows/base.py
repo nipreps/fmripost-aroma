@@ -302,7 +302,8 @@ def init_single_run_wf(bold_file):
     bold_metadata = config.execution.layout.get_metadata(bold_file)
     mem_gb = estimate_bold_mem_usage(bold_file)[1]
 
-    entities = extract_entities(bold_file)
+    entities = config.execution.bids_filters or {}
+    entities = {**entities, **extract_entities(bold_file)}
 
     functional_cache = defaultdict(list, {})
     if config.execution.derivatives:
