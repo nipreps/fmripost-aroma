@@ -137,7 +137,7 @@ def _run_and_generate(test_name, parameters, test_main=True):
 
         build_boilerplate(str(config_file), wf)
         session_list = (
-            config.execution.bids_filters.get('bold', {}).get('session')
+            config.execution.bids_filters.get('session')
             if config.execution.bids_filters
             else None
         )

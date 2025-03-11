@@ -509,9 +509,8 @@ class execution(_Config):
                     )
 
             # unserialize pybids Query enum values
-            for acq, filters in cls.bids_filters.items():
-                for k, v in filters.items():
-                    cls.bids_filters[acq][k] = _process_value(v)
+            for entity, values in cls.bids_filters.items():
+                cls.bids_filters[entity] = _process_value(values)
 
         dataset_links = {
             'input': cls.bids_dir,
