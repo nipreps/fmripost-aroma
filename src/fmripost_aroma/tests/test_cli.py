@@ -1,5 +1,6 @@
 """Command-line interface tests."""
 
+import json
 import os
 import sys
 from unittest.mock import patch
@@ -27,6 +28,9 @@ def test_ds005115_deriv_only(data_dir, output_dir, working_dir):
     fmriprep_dir = download_test_data('ds005115_deriv_mni6', data_dir)
     out_dir = os.path.join(output_dir, test_name)
 
+    with open(os.path.join(out_dir, 'filter.json'), 'w') as f:
+        json.dump({'task': ['mixedgamblestask']}, f)
+
     parameters = [
         fmriprep_dir,
         out_dir,
@@ -37,6 +41,8 @@ def test_ds005115_deriv_only(data_dir, output_dir, working_dir):
         'aggr',
         'nonaggr',
         'orthaggr',
+        '--bids-filter-file',
+        os.path.join(out_dir, 'filter.json'),
     ]
     _run_and_generate(
         test_name=test_name,
@@ -137,9 +143,7 @@ def _run_and_generate(test_name, parameters, test_main=True):
 
         build_boilerplate(str(config_file), wf)
         session_list = (
-            config.execution.bids_filters.get('bold', {}).get('session')
-            if config.execution.bids_filters
-            else None
+            config.execution.bids_filters.get('session') if config.execution.bids_filters else None
         )
         generate_reports(
             subject_list=config.execution.participant_label,
