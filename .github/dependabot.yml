@@ -8,6 +8,9 @@ updates:
       actions-infrastructure:
         patterns:
           - 'actions/*'
+      docker:
+        patterns:
+          - 'docker/*'
   - package-ecosystem: 'pip'
     directory: '/services/datalad'
     schedule:
