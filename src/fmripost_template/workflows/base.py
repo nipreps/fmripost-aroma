@@ -182,10 +182,10 @@ It is released under the
     if not subject_data['bold']:
         task_id = config.execution.task_id
         raise RuntimeError(
-            f"No BOLD images found for participant {subject_id} and "
-            f"task {task_id if task_id else '<all>'}. "
-            "All workflows require BOLD images. "
-            f"Please check your BIDS filters: {config.execution.bids_filters}."
+            f'No BOLD images found for participant {subject_id} and '
+            f'task {task_id if task_id else "<all>"}. '
+            'All workflows require BOLD images. '
+            f'Please check your BIDS filters: {config.execution.bids_filters}.'
         )
 
     config.loggers.workflow.info(
