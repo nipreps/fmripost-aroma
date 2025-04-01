@@ -11,11 +11,3 @@ updates:
       docker:
         patterns:
           - 'docker/*'
-  - package-ecosystem: 'pip'
-    directory: '/services/datalad'
-    schedule:
-      interval: 'monthly'
-    groups:
-      pipenv:
-        patterns:
-          - '*'
