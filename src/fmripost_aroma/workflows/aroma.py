@@ -296,6 +296,7 @@ in the corresponding confounds file.
             source_file=bold_file,
             compress=True,
             datatype='func',
+            threshold='0p5',
             desc='melodic',
             suffix='components',
         ),
