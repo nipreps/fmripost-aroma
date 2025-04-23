@@ -2,24 +2,28 @@
 
 # Comment to be posted to on PRs from first time contributors in your repository
 newPRWelcomeComment: >
-    Welcome, new contributor!
+  :wave: Welcome, and thank you for your first contribution!
 
-    We ask you to read through the Contributing Guide:
-    https://github.com/nipreps/fmripost-template/blob/main/CONTRIBUTING.md
+  We ask you to take a moment to read through our Contributing Guide:
 
-    These are guidelines intended to make communication easier by describing a consistent process, but
-    don't worry if you don't get it everything exactly "right" on the first try.
+  :point_right: https://github.com/nipreps/fmripost-template/blob/main/CONTRIBUTING.md
 
-    To boil it down, here are some highlights:
+  These guidelines help us maintain a consistent and collaborative workflow.
+  But don't worry — you don't have to get everything perfect on the first try!
 
-    1) Consider starting a conversation in the issues list before submitting a pull request. The discussion might save you a
-    lot of time coding.
-    2) Please use a descriptive title for your pull request.
-    Please remember to set your pull request as a "draft" if it is not ready for review.
-    3) Any code you submit will be licensed under the same terms (Apache License 2.0) as the rest of fMRIPost-template.
-    4) We invite every contributor to add themselves to the `.zenodo.json` file
-    (https://github.com/nipreps/fmripost-template/blob/main/.zenodo.json), which will result in your being listed as an author
-    at the next release. Please add yourself as the next-to-last entry, just above Russ.
+  :mag: Here are a few quick tips:
 
-    A pull request is a conversation. We may ask you to make some changes before accepting your PR,
-    and likewise, you should feel free to ask us any questions you have.
+  1. **Start a conversation**: Consider opening an issue to discuss your idea
+     before submitting a pull request. It might save you time.
+  1. **Descriptive titles**: Please use a clear, descriptive title for your
+     pull request. If it is still a work in progress, mark it as a "Draft".
+  1. **Licensing**: All contributions will be licensed under the Apache 2.0
+     license — the same as the rest of the project.
+  1. **Authorship**: You're invited to add yourself to the `.zenodo.json` file.
+     file. This will credit you as a co-author in the next release. Please add
+     your name as the second-to-last entry, just above the last author.
+
+  A pull request is a conversation. We may suggest changes before merging,
+  and likewise, you should feel free to ask us any questions you have.
+
+  :rocket: We're happy to have you here!
