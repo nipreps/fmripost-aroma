@@ -35,7 +35,7 @@ to help minimize your burden if you want to modify the software.
 Internal configuration system
 *****************************
 
-.. automodule:: fmripost_template.config
+.. automodule:: fmripost_aroma.config
    :members: from_dict, load, get, dumps, to_filename, init_spaces
 
 
@@ -43,4 +43,4 @@ Internal configuration system
 Workflows
 *********
 
-.. automodule:: fmripost_template.workflows.base
+.. automodule:: fmripost_aroma.workflows.base

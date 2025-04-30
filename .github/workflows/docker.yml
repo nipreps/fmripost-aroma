@@ -33,7 +33,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5.7.0
         with:
-          images: nipreps/fmripost-template
+          images: nipreps/fmripost-aroma
           # generate Docker tags based on the following events/attributes
           tags: |
             type=ref,event=branch

@@ -28,7 +28,7 @@ from pathlib import Path
 
 import requests
 
-from fmripost_template import __version__
+from fmripost_aroma import __version__
 
 RELEASE_EXPIRY_DAYS = 14
 DATE_FMT = '%Y%m%d'
@@ -42,7 +42,7 @@ def check_latest():
     date = None
     outdated = None
     now = datetime.now(tz=timezone.utc)
-    cachefile = Path.home() / '.cache' / 'fmripost_template' / 'latest'
+    cachefile = Path.home() / '.cache' / 'fmripost_aroma' / 'latest'
     try:
         cachefile.parent.mkdir(parents=True, exist_ok=True)
     except OSError:
@@ -67,7 +67,7 @@ def check_latest():
         response = None
         with suppress(Exception):
             response = requests.get(
-                url='https://pypi.org/pypi/fmripost_template/json', timeout=1.0
+                url='https://pypi.org/pypi/fmripost_aroma/json', timeout=1.0
             )
 
         if response and response.status_code == 200:
@@ -87,13 +87,13 @@ def check_latest():
 
 def is_flagged():
     """Check whether current version is flagged."""
-    # https://raw.githubusercontent.com/nipreps/fmripost_template/main/.versions.json
+    # https://raw.githubusercontent.com/nipreps/fmripost_aroma/main/.versions.json
     flagged = ()
     response = None
     with suppress(Exception):
         response = requests.get(
             url="""\
-https://raw.githubusercontent.com/nipreps/fmripost_template/main/.versions.json""",
+https://raw.githubusercontent.com/nipreps/fmripost_aroma/main/.versions.json""",
             timeout=1.0,
         )
 

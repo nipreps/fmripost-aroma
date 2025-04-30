@@ -8,8 +8,8 @@ set of tools from well-known neuroimaging packages, including
 `AFNI <https://afni.nimh.nih.gov/>`_,
 and `Nilearn <https://nilearn.github.io/>`_.
 
-[Documentation `fmripost_template.org <https://fmripost_template.readthedocs.io>`_]
-[Support `neurostars.org <https://neurostars.org/tags/fmripost_template>`_]
+[Documentation `fmripost_aroma.org <https://fmripost_aroma.readthedocs.io>`_]
+[Support `neurostars.org <https://neurostars.org/tags/fmripost_aroma>`_]
 
 License information
 -------------------

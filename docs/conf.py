@@ -1,4 +1,4 @@
-# fmripost_template documentation build configuration file, created by
+# fmripost_aroma documentation build configuration file, created by
 # sphinx-quickstart on Mon May  9 09:04:25 2016.
 #
 # This file is execfile()d with the current directory set to its
@@ -10,7 +10,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-# Notes on fMRIPost-template-specific style:
+# Notes on fMRIPost-aroma-specific style:
 # 1. For rst headings, we use the following convention, based on
 #    https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#sections:
 #        # with overline, for parts
@@ -94,8 +94,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'fMRIPost-template'
-author = 'The fMRIPost-template developers'
+project = 'fMRIPost-aroma'
+author = 'The fMRIPost-aroma developers'
 copyright = f'2024, {author}'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -155,7 +155,7 @@ todo_include_todos = False
 # -----------------------------------------------------------------------------
 # sphinxcontrib-bibtex
 # -----------------------------------------------------------------------------
-bibtex_bibfiles = ['../src/fmripost_template/data/boilerplate.bib']
+bibtex_bibfiles = ['../src/fmripost_aroma/data/boilerplate.bib']
 bibtex_style = 'unsrt'
 bibtex_reference_style = 'author_year'
 bibtex_footbibliography_header = ''
@@ -176,7 +176,7 @@ html_theme = 'sphinx_rtd_theme'
 
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
-# html_title = u'fmripost_template vversion'
+# html_title = u'fmripost_aroma vversion'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 # html_short_title = None
@@ -258,7 +258,7 @@ html_static_path = ['_static']
 # html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'fmripost_template_doc'
+htmlhelp_basename = 'fmripost_aroma_doc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -277,7 +277,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'fmripost_template.tex', 'fMRIPost-template Documentation', author, 'manual'),
+    (master_doc, 'fmripost_aroma.tex', 'fMRIPost-template Documentation', author, 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -305,7 +305,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, 'fmripost-template', 'fMRIPost-template Documentation', [author], 1)]
+man_pages = [(master_doc, 'fmripost-aroma', 'fMRIPost-template Documentation', [author], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -342,7 +342,7 @@ texinfo_documents = [
 
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve(
-    'fmripost_template',
+    'fmripost_aroma',
     'https://github.com/nipreps/fMRIPost-template/blob/{revision}/{package}/{path}#L{lineno}',
 )
 

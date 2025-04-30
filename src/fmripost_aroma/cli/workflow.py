@@ -26,7 +26,7 @@ The workflow builder factory method.
 All the checks and the construction of the workflow are done
 inside this function that has pickleable inputs and output
 dictionary (``retval``) to allow isolation using a
-``multiprocessing.Process`` that allows fmripost_template to enforce
+``multiprocessing.Process`` that allows fmripost_aroma to enforce
 a hard-limited memory-scope.
 
 """
@@ -41,9 +41,9 @@ def build_workflow(config_file, retval):
     from niworkflows.utils.bids import collect_participants
     from pkg_resources import resource_filename as pkgrf
 
-    from fmripost_template import config
-    from fmripost_template.reports.core import generate_reports
-    from fmripost_template.workflows.base import init_fmripost_template_wf
+    from fmripost_aroma import config
+    from fmripost_aroma.reports.core import generate_reports
+    from fmripost_aroma.workflows.base import init_fmripost_aroma_wf
 
     config.load(config_file)
     build_log = config.loggers.workflow
@@ -55,7 +55,7 @@ def build_workflow(config_file, retval):
     retval['workflow'] = None
 
     banner = [f'Running fMRIPost-template version {version}']
-    notice_path = Path(pkgrf('fmripost_template', 'data/NOTICE'))
+    notice_path = Path(pkgrf('fmripost_aroma', 'data/NOTICE'))
     if notice_path.exists():
         banner[0] += '\n'
         banner += [f'License NOTICE {"#" * 50}']
@@ -112,7 +112,7 @@ def build_workflow(config_file, retval):
 
     build_log.log(25, f'\n{" " * 11}* '.join(init_msg))
 
-    retval['workflow'] = init_fmripost_template_wf()
+    retval['workflow'] = init_fmripost_aroma_wf()
 
     # Check workflow for missing commands
     missing = check_deps(retval['workflow'])
@@ -135,7 +135,7 @@ def build_workflow(config_file, retval):
 
 def build_boilerplate(config_file, workflow):
     """Write boilerplate in an isolated process."""
-    from fmripost_template import config
+    from fmripost_aroma import config
 
     config.load(config_file)
     logs_path = config.execution.output_dir / 'logs'
@@ -160,7 +160,7 @@ def build_boilerplate(config_file, workflow):
 
         from pkg_resources import resource_filename as pkgrf
 
-        bib_text = Path(pkgrf('fmripost_template', 'data/boilerplate.bib')).read_text()
+        bib_text = Path(pkgrf('fmripost_aroma', 'data/boilerplate.bib')).read_text()
         citation_files['bib'].write_text(
             bib_text.replace(
                 'fMRIPost-template <version>',

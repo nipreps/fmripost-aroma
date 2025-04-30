@@ -16,8 +16,8 @@ A (very) high-level view of the simplest pipeline is presented below:
     :graph2use: orig
     :simple_form: yes
 
-    from fmripost_template.workflows.tests import mock_config
-    from fmripost_template.workflows.base import init_single_subject_wf
+    from fmripost_aroma.workflows.tests import mock_config
+    from fmripost_aroma.workflows.base import init_single_subject_wf
 
     with mock_config():
         wf = init_single_subject_wf('01')

@@ -30,13 +30,13 @@ from tempfile import mkdtemp
 
 from toml import loads
 
-from fmripost_template.data import load as load_data
+from fmripost_aroma.data import load as load_data
 
 
 @contextmanager
 def mock_config():
     """Create a mock config for documentation and testing purposes."""
-    from fmripost_template import config
+    from fmripost_aroma import config
 
     _old_fs = os.getenv('FREESURFER_HOME')
     if not _old_fs:

@@ -60,7 +60,7 @@ def _get_parser():
 def run_command(command, env=None):
     """Run a given shell command with certain environment variables set.
 
-    Keep this out of the real fmripost_template code so that devs don't need
+    Keep this out of the real fmripost_aroma code so that devs don't need
     to install fMRIPost-template to run tests.
     """
     merged_env = os.environ
@@ -90,16 +90,16 @@ def run_command(command, env=None):
 def run_tests(test_regex, test_mark):
     """Run the tests."""
     local_patch = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    mounted_code = '/usr/local/miniconda/lib/python3.10/site-packages/fmripost_template'
+    mounted_code = '/usr/local/miniconda/lib/python3.10/site-packages/fmripost_aroma'
     run_str = 'docker run --rm -ti '
     run_str += f'-v {local_patch}:{mounted_code} '
     run_str += '--entrypoint pytest '
-    run_str += 'pennlinc/fmripost_template:unstable '
+    run_str += 'pennlinc/fmripost_aroma:unstable '
     run_str += (
-        f'{mounted_code}/fmripost_template '
-        f'--data_dir={mounted_code}/fmripost_template/tests/test_data '
-        f'--output_dir={mounted_code}/fmripost_template/tests/pytests/out '
-        f'--working_dir={mounted_code}/fmripost_template/tests/pytests/work '
+        f'{mounted_code}/fmripost_aroma '
+        f'--data_dir={mounted_code}/fmripost_aroma/tests/test_data '
+        f'--output_dir={mounted_code}/fmripost_aroma/tests/pytests/out '
+        f'--working_dir={mounted_code}/fmripost_aroma/tests/pytests/work '
     )
     if test_regex:
         run_str += f'-k {test_regex} '

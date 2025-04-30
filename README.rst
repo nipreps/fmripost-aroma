@@ -53,7 +53,7 @@ Usage
 
 If you use this template to create a new fMRIPost workflow, you will need to:
 
-1.  Replace all instances of ``fmripost_template`` with the name of your new workflow.
+1.  Replace all instances of ``fmripost_aroma`` with the name of your new workflow.
 2.  Replace all instances of ``fMRIPost-template`` with the name of your new workflow.
 3.  Modify the workflows and interfaces to apply your desired processing steps.
 4.  Update the documentation to reflect the new workflow.

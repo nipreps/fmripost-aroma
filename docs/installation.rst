@@ -7,7 +7,7 @@ Installation
 *fMRIPost-template* should be installed using container technologies.
 
 .. code-block:: bash
-  docker pull nipreps/fmripost-template:main
+  docker pull nipreps/fmripost-aroma:main
 
 
 ************************************************

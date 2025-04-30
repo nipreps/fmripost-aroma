@@ -24,7 +24,7 @@
 
 import sys
 
-from fmripost_template import config
+from fmripost_aroma import config
 
 
 def _build_parser(**kwargs):
@@ -39,7 +39,7 @@ def _build_parser(**kwargs):
 
     from packaging.version import Version
 
-    from fmripost_template.cli.version import check_latest, is_flagged
+    from fmripost_aroma.cli.version import check_latest, is_flagged
 
     # from niworkflows.utils.spaces import OutputReferencesAction
 
@@ -529,7 +529,7 @@ def parse_args(args=None, namespace=None):
 
     # Ensure input and output folders are not the same
     if output_dir == bids_dir:
-        recommended_path = bids_dir / 'derivatives' / f'fmripost_template-{version.split("+")[0]}'
+        recommended_path = bids_dir / 'derivatives' / f'fmripost_aroma-{version.split("+")[0]}'
         parser.error(
             'The selected output folder is the same as the input BIDS folder. '
             f'Please modify the output path (suggestion: {recommended_path}.'
@@ -543,7 +543,7 @@ def parse_args(args=None, namespace=None):
 
     # Validate raw inputs if running in raw+derivatives mode
     if derivatives and not opts.skip_bids_validation:
-        from fmripost_template.utils.bids import validate_input_dir
+        from fmripost_aroma.utils.bids import validate_input_dir
 
         build_log.info(
             'Making sure the input data is BIDS compliant (warnings can be ignored in most cases).'

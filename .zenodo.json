@@ -31,7 +31,7 @@
   "license": "Apache-2.0",
   "related_identifiers": [
     {
-      "identifier": "https://fmripost_template.org",
+      "identifier": "https://nipreps.org",
       "relation": "documents",
       "scheme": "url"
     },

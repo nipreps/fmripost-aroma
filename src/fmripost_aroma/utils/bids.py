@@ -32,7 +32,7 @@ from bids.layout import BIDSLayout
 from bids.utils import listify
 from niworkflows.utils.spaces import SpatialReferences
 
-from fmripost_template.data import load as load_data
+from fmripost_aroma.data import load as load_data
 
 
 def extract_entities(file_list: str | list[str]) -> dict:
@@ -306,9 +306,9 @@ def write_derivative_description(input_dir, output_dir, dataset_links=None):
 
     from packaging.version import Version
 
-    from fmripost_template import __version__
+    from fmripost_aroma import __version__
 
-    DOWNLOAD_URL = f'https://github.com/nipreps/fmripost_template/archive/{__version__}.tar.gz'
+    DOWNLOAD_URL = f'https://github.com/nipreps/fmripost_aroma/archive/{__version__}.tar.gz'
 
     input_dir = Path(input_dir)
     output_dir = Path(output_dir)
@@ -354,7 +354,7 @@ def write_derivative_description(input_dir, output_dir, dataset_links=None):
     if 'FMRIPOST_TEMPLATE_DOCKER_TAG' in os.environ:
         desc['GeneratedBy'][0]['Container'] = {
             'Type': 'docker',
-            'Tag': f'nipreps/fmripost_template:{os.environ["FMRIPOST_TEMPLATE_DOCKER_TAG"]}',
+            'Tag': f'nipreps/fmripost_aroma:{os.environ["FMRIPOST_TEMPLATE_DOCKER_TAG"]}',
         }
 
     if 'FMRIPOST_TEMPLATE_SINGULARITY_URL' in os.environ:

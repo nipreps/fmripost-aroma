@@ -100,7 +100,7 @@ RUN micromamba create -y -f /tmp/env.yml && \
 
 # UV_USE_IO_URING for apparent race-condition (https://github.com/nodejs/node/issues/48444)
 # Check if this is still necessary when updating the base image.
-ENV PATH="/opt/conda/envs/fmripost_template/bin:$PATH" \
+ENV PATH="/opt/conda/envs/fmripost_aroma/bin:$PATH" \
     UV_USE_IO_URING=0
 RUN npm install -g svgo@^3.2.0 bids-validator@1.14.10 && \
     rm -r ~/.npm
@@ -108,7 +108,7 @@ RUN npm install -g svgo@^3.2.0 bids-validator@1.14.10 && \
 #
 # Main stage
 #
-FROM ${BASE_IMAGE} AS fmripost_template
+FROM ${BASE_IMAGE} AS fmripost_aroma
 
 # Configure apt
 ENV DEBIAN_FRONTEND="noninteractive" \
@@ -178,20 +178,20 @@ ENV PATH="/opt/workbench/bin_linux64:$PATH" \
     LD_LIBRARY_PATH="/opt/workbench/lib_linux64:$LD_LIBRARY_PATH"
 
 # Create a shared $HOME directory
-RUN useradd -m -s /bin/bash -G users fmripost_template
-WORKDIR /home/fmripost_template
-ENV HOME="/home/fmripost_template" \
+RUN useradd -m -s /bin/bash -G users fmripost_aroma
+WORKDIR /home/fmripost_aroma
+ENV HOME="/home/fmripost_aroma" \
     LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
 
 COPY --from=micromamba /bin/micromamba /bin/micromamba
-COPY --from=micromamba /opt/conda/envs/fmripost_template /opt/conda/envs/fmripost_template
+COPY --from=micromamba /opt/conda/envs/fmripost_aroma /opt/conda/envs/fmripost_aroma
 
 ENV MAMBA_ROOT_PREFIX="/opt/conda"
 RUN micromamba shell init -s bash && \
-    echo "micromamba activate fmripost_template" >> $HOME/.bashrc
-ENV PATH="/opt/conda/envs/fmripost_template/bin:$PATH" \
-    CPATH="/opt/conda/envs/fmripost_template/include:$CPATH" \
-    LD_LIBRARY_PATH="/opt/conda/envs/fmripost_template/lib:$LD_LIBRARY_PATH"
+    echo "micromamba activate fmripost_aroma" >> $HOME/.bashrc
+ENV PATH="/opt/conda/envs/fmripost_aroma/bin:$PATH" \
+    CPATH="/opt/conda/envs/fmripost_aroma/include:$CPATH" \
+    LD_LIBRARY_PATH="/opt/conda/envs/fmripost_aroma/lib:$LD_LIBRARY_PATH"
 
 # Precaching atlases
 COPY scripts/fetch_templates.py fetch_templates.py
@@ -204,7 +204,7 @@ RUN python fetch_templates.py && \
 ENV LANG="C.UTF-8" \
     LC_ALL="C.UTF-8" \
     PYTHONNOUSERSITE=1 \
-    FSLDIR="/opt/conda/envs/fmripost_template" \
+    FSLDIR="/opt/conda/envs/fmripost_aroma" \
     FSLOUTPUTTYPE="NIFTI_GZ" \
     FSLMULTIFILEQUIT="TRUE" \
     FSLLOCKDIR="" \
@@ -230,7 +230,7 @@ ENV IS_DOCKER_8395080871=1
 
 RUN ldconfig
 WORKDIR /tmp
-ENTRYPOINT ["/opt/conda/envs/fmripost_template/bin/fmripost-template"]
+ENTRYPOINT ["/opt/conda/envs/fmripost_aroma/bin/fmripost-aroma"]
 
 ARG BUILD_DATE
 ARG VCS_REF
@@ -238,8 +238,8 @@ ARG VERSION
 LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.name="fMRIPost-template" \
       org.label-schema.description="fMRIPost-template - A template fMRI post-processing workflow" \
-      org.label-schema.url="https://fmripost_template.org" \
+      org.label-schema.url="https://fmripost_aroma.org" \
       org.label-schema.vcs-ref=$VCS_REF \
-      org.label-schema.vcs-url="https://github.com/nipreps/fmripost_template" \
+      org.label-schema.vcs-url="https://github.com/nipreps/fmripost_aroma" \
       org.label-schema.version=$VERSION \
       org.label-schema.schema-version="1.0"

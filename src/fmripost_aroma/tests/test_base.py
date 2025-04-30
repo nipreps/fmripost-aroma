@@ -20,4 +20,4 @@
 #
 #     https://www.nipreps.org/community/licensing/
 #
-"""Tests for fmripost_template.workflows."""
+"""Tests for fmripost_aroma.workflows."""

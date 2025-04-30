@@ -32,16 +32,16 @@ from unittest.mock import patch
 
 import pytest
 
-from fmripost_template.cli import run
-from fmripost_template.cli.parser import parse_args
-from fmripost_template.cli.workflow import build_boilerplate, build_workflow
-from fmripost_template.reports.core import generate_reports
-from fmripost_template.tests.utils import (
+from fmripost_aroma.cli import run
+from fmripost_aroma.cli.parser import parse_args
+from fmripost_aroma.cli.workflow import build_boilerplate, build_workflow
+from fmripost_aroma.reports.core import generate_reports
+from fmripost_aroma.tests.utils import (
     check_generated_files,
     download_test_data,
     get_test_data_path,
 )
-from fmripost_template.utils.bids import write_derivative_description
+from fmripost_aroma.utils.bids import write_derivative_description
 
 
 @pytest.mark.integration
@@ -66,7 +66,7 @@ def test_ds000001(data_dir, output_dir, working_dir):
 
 
 def _run_and_generate(test_name, parameters, test_main=True):
-    from fmripost_template import config
+    from fmripost_aroma import config
 
     parameters.append('--clean-workdir')
     parameters.append('--stop-on-first-crash')
@@ -75,7 +75,7 @@ def _run_and_generate(test_name, parameters, test_main=True):
 
     if test_main:
         # This runs, but for some reason doesn't count toward coverage.
-        argv = ['fmripost_template'] + parameters
+        argv = ['fmripost_aroma'] + parameters
         with patch.object(sys, 'argv', argv):
             with pytest.raises(SystemExit) as e:
                 run.main()

@@ -22,7 +22,7 @@
 #
 """fMRI post-processing template workflow."""
 
-from fmripost_template import config
+from fmripost_aroma import config
 
 EXITCODE: int = -1
 
@@ -36,9 +36,9 @@ def main():
     from os import EX_SOFTWARE
     from pathlib import Path
 
-    from fmripost_template.cli.parser import parse_args
-    from fmripost_template.cli.workflow import build_workflow
-    from fmripost_template.utils.bids import write_bidsignore, write_derivative_description
+    from fmripost_aroma.cli.parser import parse_args
+    from fmripost_aroma.cli.workflow import build_workflow
+    from fmripost_aroma.utils.bids import write_bidsignore, write_derivative_description
 
     parse_args()
 
@@ -57,7 +57,7 @@ def main():
         tracker.start()
 
     if 'pdb' in config.execution.debug:
-        from fmripost_template.utils.debug import setup_exceptionhook
+        from fmripost_aroma.utils.debug import setup_exceptionhook
 
         setup_exceptionhook()
         config.nipype.plugin = 'Linear'
@@ -68,7 +68,7 @@ def main():
 
         import sentry_sdk
 
-        from fmripost_template.utils.telemetry import sentry_setup, setup_migas
+        from fmripost_aroma.utils.telemetry import sentry_setup, setup_migas
 
         sentry_setup()
         setup_migas(init_ping=True)
@@ -100,7 +100,7 @@ def main():
 
     global EXITCODE
     EXITCODE = retval.get('return_code', 0)
-    fmripost_template_wf = retval.get('workflow', None)
+    fmripost_aroma_wf = retval.get('workflow', None)
 
     # CRITICAL Load the config from the file. This is necessary because the ``build_workflow``
     # function executed constrained in a process may change the config (and thus the global
@@ -110,18 +110,18 @@ def main():
     if config.execution.reports_only:
         sys.exit(int(EXITCODE > 0))
 
-    if fmripost_template_wf and config.execution.write_graph:
-        fmripost_template_wf.write_graph(graph2use='colored', format='svg', simple_form=True)
+    if fmripost_aroma_wf and config.execution.write_graph:
+        fmripost_aroma_wf.write_graph(graph2use='colored', format='svg', simple_form=True)
 
-    EXITCODE = EXITCODE or (fmripost_template_wf is None) * EX_SOFTWARE
+    EXITCODE = EXITCODE or (fmripost_aroma_wf is None) * EX_SOFTWARE
     if EXITCODE != 0:
         sys.exit(EXITCODE)
 
     # Generate boilerplate
     with Manager() as mgr:
-        from fmripost_template.cli.workflow import build_boilerplate
+        from fmripost_aroma.cli.workflow import build_boilerplate
 
-        p = Process(target=build_boilerplate, args=(str(config_file), fmripost_template_wf))
+        p = Process(target=build_boilerplate, args=(str(config_file), fmripost_aroma_wf))
         p.start()
         p.join()
 
@@ -148,10 +148,10 @@ def main():
     config.loggers.workflow.log(25, 'fMRIPost-template started!')
     errno = 1  # Default is error exit unless otherwise set
     try:
-        fmripost_template_wf.run(**config.nipype.get_plugin())
+        fmripost_aroma_wf.run(**config.nipype.get_plugin())
     except Exception as e:
         if not config.execution.notrack:
-            from fmripost_template.utils.telemetry import process_crashfile
+            from fmripost_aroma.utils.telemetry import process_crashfile
 
             crashfolders = [
                 config.execution.output_dir / f'sub-{s}' / 'log' / config.execution.run_uuid
@@ -180,7 +180,7 @@ def main():
             if config.environment.exec_env in (
                 'singularity',
                 'docker',
-                'fmripost_template-docker',
+                'fmripost_aroma-docker',
             ):
                 boiler_file = Path('<OUTPUT_PATH>') / boiler_file.relative_to(
                     config.execution.output_dir
@@ -208,7 +208,7 @@ def main():
             config.loggers.workflow.log(25, f'Saving logs at: {config.execution.log_dir}')
             config.loggers.workflow.log(25, f'Carbon emissions: {emissions} kg')
 
-        from fmripost_template.reports.core import generate_reports
+        from fmripost_aroma.reports.core import generate_reports
 
         # Generate reports phase
         failed_reports = generate_reports(
@@ -239,7 +239,7 @@ def migas_exit() -> None:
     """
     import sys
 
-    from fmripost_template.utils.telemetry import send_breadcrumb
+    from fmripost_aroma.utils.telemetry import send_breadcrumb
 
     global EXITCODE
     migas_kwargs = {'status': 'C'}
@@ -266,6 +266,6 @@ def migas_exit() -> None:
 
 if __name__ == '__main__':
     raise RuntimeError(
-        'fmripost_template/cli/run.py should not be run directly;\n'
-        'Please `pip install` fmripost_template and use the `fmripost_template` command'
+        'fmripost_aroma/cli/run.py should not be run directly;\n'
+        'Please `pip install` fmripost_aroma and use the `fmripost_aroma` command'
     )

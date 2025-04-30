@@ -29,7 +29,7 @@ Layout
 
 Assuming fMRIPost-template is invoked with::
 
-    fmripost_template <input_dir>/ <output_dir>/ participant [OPTIONS]
+    fmripost_aroma <input_dir>/ <output_dir>/ participant [OPTIONS]
 
 The outputs will be a `BIDS Derivatives`_ dataset of the form::
 
@@ -53,7 +53,7 @@ Visual Reports
 **************
 
 *fMRIPost-template* outputs summary reports,
-written to ``<output dir>/fmripost_template/sub-<label>.html``.
+written to ``<output dir>/fmripost_aroma/sub-<label>.html``.
 These reports provide a quick way to make visual inspection of the results easy.
 
 
@@ -116,4 +116,4 @@ Some of the estimated confounds are plotted with a "carpet" visualization of the
 :abbr:`BOLD (blood-oxygen level-dependent)` time series [Power2016]_.
 An example of these plots follows:
 
-See implementation on :mod:`~fmripost_template.workflows.bold.confounds.init_bold_confs_wf`.
+See implementation on :mod:`~fmripost_aroma.workflows.bold.confounds.init_bold_confs_wf`.

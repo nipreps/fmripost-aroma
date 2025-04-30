@@ -24,7 +24,7 @@
 fMRIPost-template workflows
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autofunction:: init_fmripost_template_wf
+.. autofunction:: init_fmripost_aroma_wf
 .. autofunction:: init_single_subject_wf
 .. autofunction:: init_single_run_wf
 
@@ -39,11 +39,11 @@ import yaml
 from nipype.pipeline import engine as pe
 from packaging.version import Version
 
-from fmripost_template import config
-from fmripost_template.utils.utils import _get_wf_name, update_dict
+from fmripost_aroma import config
+from fmripost_aroma.utils.utils import _get_wf_name, update_dict
 
 
-def init_fmripost_template_wf():
+def init_fmripost_aroma_wf():
     """Build *fMRIPost-template*'s pipeline.
 
     This workflow organizes the execution of fMRIPost-template,
@@ -54,19 +54,19 @@ def init_fmripost_template_wf():
             :graph2use: orig
             :simple_form: yes
 
-            from fmripost_template.workflows.tests import mock_config
-            from fmripost_template.workflows.base import init_fmripost_template_wf
+            from fmripost_aroma.workflows.tests import mock_config
+            from fmripost_aroma.workflows.base import init_fmripost_aroma_wf
 
             with mock_config():
-                wf = init_fmripost_template_wf()
+                wf = init_fmripost_aroma_wf()
 
     """
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
     ver = Version(config.environment.version)
 
-    fmripost_template_wf = Workflow(name=f'fmripost_template_{ver.major}_{ver.minor}_wf')
-    fmripost_template_wf.base_dir = config.execution.work_dir
+    fmripost_aroma_wf = Workflow(name=f'fmripost_aroma_{ver.major}_{ver.minor}_wf')
+    fmripost_aroma_wf.base_dir = config.execution.work_dir
 
     for subject_id in config.execution.participant_label:
         single_subject_wf = init_single_subject_wf(subject_id)
@@ -77,16 +77,16 @@ def init_fmripost_template_wf():
         for node in single_subject_wf._get_all_nodes():
             node.config = deepcopy(single_subject_wf.config)
 
-        fmripost_template_wf.add_nodes([single_subject_wf])
+        fmripost_aroma_wf.add_nodes([single_subject_wf])
 
         # Dump a copy of the config file into the log directory
         log_dir = (
             config.execution.output_dir / f'sub-{subject_id}' / 'log' / config.execution.run_uuid
         )
         log_dir.mkdir(exist_ok=True, parents=True)
-        config.to_filename(log_dir / 'fmripost_template.toml')
+        config.to_filename(log_dir / 'fmripost_aroma.toml')
 
-    return fmripost_template_wf
+    return fmripost_aroma_wf
 
 
 def init_single_subject_wf(subject_id: str):
@@ -100,8 +100,8 @@ def init_single_subject_wf(subject_id: str):
             :graph2use: orig
             :simple_form: yes
 
-            from fmripost_template.workflows.tests import mock_config
-            from fmripost_template.workflows.base import init_single_subject_wf
+            from fmripost_aroma.workflows.tests import mock_config
+            from fmripost_aroma.workflows.base import init_single_subject_wf
 
             with mock_config():
                 wf = init_single_subject_wf('01')
@@ -115,9 +115,9 @@ def init_single_subject_wf(subject_id: str):
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
     from niworkflows.interfaces.bids import BIDSInfo
 
-    from fmripost_template.interfaces.bids import DerivativesDataSink
-    from fmripost_template.interfaces.reportlets import AboutSummary, SubjectSummary
-    from fmripost_template.utils.bids import collect_derivatives
+    from fmripost_aroma.interfaces.bids import DerivativesDataSink
+    from fmripost_aroma.interfaces.reportlets import AboutSummary, SubjectSummary
+    from fmripost_aroma.utils.bids import collect_derivatives
 
     spaces = config.workflow.spaces
 
@@ -133,7 +133,7 @@ which is based on *Nipype* {config.environment.nipype_version}
 
 For more details of the pipeline, see [the section corresponding
 to workflows in *fMRIPost-template*'s documentation]\
-(https://fmripost_template.readthedocs.io/en/latest/workflows.html).
+(https://fmripost_aroma.readthedocs.io/en/latest/workflows.html).
 
 
 ### Copyright Waiver
@@ -263,7 +263,7 @@ def init_single_run_wf(bold_file):
     """Set up a single-run workflow for fMRIPost-template."""
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
-    from fmripost_template.utils.bids import collect_derivatives, extract_entities
+    from fmripost_aroma.utils.bids import collect_derivatives, extract_entities
 
     spaces = config.workflow.spaces
 
