@@ -247,6 +247,7 @@ class ICADenoise(SimpleInterface):
             # Save to file
             denoised_img = unmask(data_denoised, self.inputs.mask_file)
             denoised_img.header.set_zooms(bold_img.header.get_zooms())
+            denoised_img.header.set_xyzt_units(*bold_img.header.get_xyzt_units())
 
         self._results['denoised_file'] = os.path.abspath('denoised.nii.gz')
         denoised_img.to_filename(self._results['denoised_file'])
