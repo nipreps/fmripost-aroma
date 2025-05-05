@@ -155,6 +155,7 @@ class ICADenoise(SimpleInterface):
     output_spec = _ICADenoiseOutputSpec
 
     def _run_interface(self, runtime):
+        import nibabel as nb
         import numpy as np
         import pandas as pd
         from nilearn.maskers import NiftiMasker
@@ -225,7 +226,8 @@ class ICADenoise(SimpleInterface):
         else:
             # Non-aggressive denoising
             # Apply the mask to the data image to get a 2d array
-            data = apply_mask(bold_file, self.inputs.mask_file)
+            bold_img = nb.load(bold_file)
+            data = apply_mask(bold_img, self.inputs.mask_file)
 
             # Fit GLM to accepted components and rejected components (after adding a constant term)
             regressors = np.hstack(
@@ -244,6 +246,7 @@ class ICADenoise(SimpleInterface):
 
             # Save to file
             denoised_img = unmask(data_denoised, self.inputs.mask_file)
+            denoised_img.header.set_zooms(bold_img.header.get_zooms())
 
         self._results['denoised_file'] = os.path.abspath('denoised.nii.gz')
         denoised_img.to_filename(self._results['denoised_file'])
