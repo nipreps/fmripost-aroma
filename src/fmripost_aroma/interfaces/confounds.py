@@ -92,6 +92,12 @@ def _get_ica_confounds(mixing, aroma_features, skip_vols, newpath=None):
     # Return dummy list of ones if no noise components were found
     if motion_ics.size == 0:
         config.loggers.interface.warning('No noise components were classified')
+        # Write out confounds with single column (intercept) so there's something generated.
+        confounds_df = pd.DataFrame(
+            columns=['intercept'],
+            data=np.ones((padded_mixing_arr.shape[0], 1), dtype=int),
+        )
+        confounds_df.to_csv(aroma_confounds, sep='\t', index=False)
         return None, mixing_out
 
     # return dummy lists of zeros if no signal components were found
@@ -176,6 +182,11 @@ class ICADenoise(SimpleInterface):
         accepted_idx = metrics_df.loc[metrics_df['classification'] == 'accepted'].index.values
         rejected_components = mixing[:, rejected_idx]
         accepted_components = mixing[:, accepted_idx]
+        if not rejected_components:
+            print('No rejected components detected. Returning input data as "denoised".')
+            self._results['denoised_file'] = bold_file
+            return runtime
+
         # Z-score all of the components
         rejected_components = stats.zscore(rejected_components, axis=0)
         accepted_components = stats.zscore(accepted_components, axis=0)
