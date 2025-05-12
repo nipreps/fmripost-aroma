@@ -98,7 +98,7 @@ def _get_ica_confounds(mixing, aroma_features, skip_vols, newpath=None):
             data=np.ones((padded_mixing_arr.shape[0], 1), dtype=int),
         )
         confounds_df.to_csv(aroma_confounds, sep='\t', index=False)
-        return None, mixing_out
+        return aroma_confounds, mixing_out
 
     # return dummy lists of zeros if no signal components were found
     if signal_ics.size == 0:
@@ -182,7 +182,7 @@ class ICADenoise(SimpleInterface):
         accepted_idx = metrics_df.loc[metrics_df['classification'] == 'accepted'].index.values
         rejected_components = mixing[:, rejected_idx]
         accepted_components = mixing[:, accepted_idx]
-        if not rejected_components:
+        if rejected_idx.size == 0:
             print('No rejected components detected. Returning input data as "denoised".')
             self._results['denoised_file'] = bold_file
             return runtime
