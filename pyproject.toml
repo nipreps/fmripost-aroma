@@ -72,7 +72,10 @@ source = "vcs"
 version-file = "src/fmripost_aroma/_version.py"
 
 [tool.hatch.build.targets.sdist]
-exclude = [".git_archival.txt"]  # No longer needed in sdist
+exclude = [
+    ".git_archival.txt",  # No longer needed in sdist
+    "tests/data/ds000005-fmriprep",  # Out of scope for distribution
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/fmripost_aroma"]
