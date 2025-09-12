@@ -9,7 +9,6 @@ import nibabel as nb
 import numpy as np
 import pandas as pd
 from nilearn import masking
-from nilearn._utils import load_niimg
 
 # Define criteria needed for classification (thresholds and
 # hyperplane-parameters)
@@ -201,7 +200,7 @@ def denoising(in_file, out_dir, mixing, den_type, den_idx):
         motion_components = mixing[:, den_idx]
 
         # Create a fake mask to make it easier to reshape the full data to 2D
-        img = load_niimg(in_file)
+        img = nb.load(in_file)
         full_mask = nb.Nifti1Image(np.ones(img.shape[:3], int), img.affine)
         data = masking.apply_mask(img, full_mask)  # T x S
 
