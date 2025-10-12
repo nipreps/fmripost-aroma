@@ -151,6 +151,7 @@ in the corresponding confounds file.
     rm_non_steady_state = pe.Node(
         niu.Function(function=_remove_volumes, output_names=['bold_cut']),
         name='rm_nonsteady',
+        mem_gb=mem_gb['resampled'],
     )
     workflow.connect([
         (inputnode, rm_non_steady_state, [
