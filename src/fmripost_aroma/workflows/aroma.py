@@ -212,7 +212,7 @@ in the corresponding confounds file.
             mm_thresh=0.5,
             out_stats=True,
             dim=config.workflow.melodic_dim,
-            args=f'--seed={config.seeds.melodic}' if config.seeds.melodic is not None else '',
+            args=f'--seed={config.seeds.melodic_seed}' if config.seeds.melodic_seed is not None else '',
         ),
         name='melodic',
         mem_gb=mem_gb['resampled'],

@@ -611,7 +611,7 @@ class seeds(_Config):
     """Seed used for antsRegistration, antsAI, antsMotionCorr"""
     numpy = None
     """Seed used by NumPy"""
-    melodic = None
+    melodic_seed = None
     """Seed for FSL MELODIC ICA. If None, MELODIC uses its own default (non-reproducible)."""
 
     @classmethod
@@ -624,7 +624,7 @@ class seeds(_Config):
         # functions to set program specific seeds
         cls.ants = _set_ants_seed()
         cls.numpy = _set_numpy_seed()
-        # melodic seed is only set if explicitly provided via --seed CLI argument
+        # melodic_seed is only set if explicitly provided via --seed CLI argument
 
 
 def _set_ants_seed():

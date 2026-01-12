@@ -185,7 +185,7 @@ def _build_parser(**kwargs):
     )
     g_aroma.add_argument(
         '--seed',
-        dest='melodic',
+        dest='melodic_seed',
         action='store',
         type=int,
         default=None,

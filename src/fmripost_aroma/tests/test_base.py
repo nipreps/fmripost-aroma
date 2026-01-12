@@ -15,7 +15,7 @@ def test_init_ica_aroma_wf(tmp_path_factory):
         config.workflow.denoise_method = ['nonaggr', 'orthaggr']
         config.workflow.melodic_dim = -200
         config.workflow.err_on_warn = False
-        config.seeds.melodic = 12345
+        config.seeds.melodic_seed = 12345
 
         wf = init_ica_aroma_wf(
             bold_file='sub-01_task-rest_bold.nii.gz',
