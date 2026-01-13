@@ -184,7 +184,7 @@ def _build_parser(**kwargs):
         help='Denoising method to apply, if any.',
     )
     g_aroma.add_argument(
-        '--seed',
+        '--melodic-seed',
         dest='melodic_seed',
         action='store',
         type=int,
@@ -192,7 +192,7 @@ def _build_parser(**kwargs):
         help=(
             'Seed for the random number generator used by FSL MELODIC. '
             'Setting this ensures reproducible ICA decomposition. '
-            'If not set, MELODIC uses its own default (non-reproducible) seeding.'
+            'If not set, a time-based seed will be generated for reproducibility.'
         ),
     )
 

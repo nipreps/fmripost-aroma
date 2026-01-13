@@ -612,7 +612,7 @@ class seeds(_Config):
     numpy = None
     """Seed used by NumPy"""
     melodic_seed = None
-    """Seed for FSL MELODIC ICA. If None, MELODIC uses its own default (non-reproducible)."""
+    """Seed for FSL MELODIC ICA."""
 
     @classmethod
     def init(cls):
@@ -624,7 +624,7 @@ class seeds(_Config):
         # functions to set program specific seeds
         cls.ants = _set_ants_seed()
         cls.numpy = _set_numpy_seed()
-        # melodic_seed is only set if explicitly provided via --seed CLI argument
+        cls.melodic_seed = _set_melodic_seed()
 
 
 def _set_ants_seed():
@@ -641,6 +641,18 @@ def _set_numpy_seed():
     val = random.randint(1, 65536)
     np.random.seed(val)
     return val
+
+
+def _set_melodic_seed():
+    """Set seed for FSL MELODIC ICA decomposition.
+    If the user provided a seed via --melodic-seed, use that value.
+    Otherwise, generate a time-based seed to mimic FSL's default seeding behavior
+    """
+    if seeds.melodic_seed is not None:
+        return seeds.melodic_seed
+    import time
+
+    return int(time.time())
 
 
 def from_dict(settings, init=True, ignore=None):
