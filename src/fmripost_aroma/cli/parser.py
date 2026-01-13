@@ -183,6 +183,18 @@ def _build_parser(**kwargs):
         dest='denoise_method',
         help='Denoising method to apply, if any.',
     )
+    g_aroma.add_argument(
+        '--melodic-seed',
+        dest='melodic_seed',
+        action='store',
+        type=int,
+        default=None,
+        help=(
+            'Seed for the random number generator used by FSL MELODIC. '
+            'Setting this ensures reproducible ICA decomposition. '
+            'If not set, a time-based seed will be generated for reproducibility.'
+        ),
+    )
 
     g_bids = parser.add_argument_group('Options for filtering BIDS queries')
     g_bids.add_argument(
