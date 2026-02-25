@@ -214,12 +214,16 @@ def main():
             output_dir=config.execution.output_dir,
             run_uuid=config.execution.run_uuid,
         )
-        write_derivative_description(config.execution.bids_dir, config.execution.output_dir)
+        write_derivative_description(
+            input_dir=config.execution.bids_dir,
+            output_dir=config.execution.output_dir,
+            dataset_links=config.execution.dataset_links,
+        )
         write_bidsignore(config.execution.output_dir)
 
         if sentry_sdk is not None and failed_reports:
             sentry_sdk.capture_message(
-                'Report generation failed for %d subjects' % failed_reports,
+                f'Report generation failed for {failed_reports} subjects',
                 level='error',
             )
         sys.exit(int((errno + len(failed_reports)) > 0))

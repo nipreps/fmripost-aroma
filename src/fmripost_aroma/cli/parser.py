@@ -182,6 +182,18 @@ def _build_parser(**kwargs):
         dest='denoise_method',
         help='Denoising method to apply, if any.',
     )
+    g_aroma.add_argument(
+        '--melodic-seed',
+        dest='melodic_seed',
+        action='store',
+        type=int,
+        default=None,
+        help=(
+            'Seed for the random number generator used by FSL MELODIC. '
+            'Setting this ensures reproducible ICA decomposition. '
+            'If not set, a time-based seed will be generated for reproducibility.'
+        ),
+    )
 
     g_bids = parser.add_argument_group('Options for filtering BIDS queries')
     g_bids.add_argument(
@@ -215,11 +227,11 @@ def _build_parser(**kwargs):
         type=BIDSFilter,
         metavar='FILE',
         help=(
-            "A JSON file describing custom BIDS input filters using PyBIDS. "
-            "For further details, please check out "
-            "https://fmriprep.readthedocs.io/en/"
-            f"{currentv.base_version if is_release else 'latest'}/faq.html#"
-            "how-do-I-select-only-certain-files-to-be-input-to-fMRIPrep"
+            'A JSON file describing custom BIDS input filters using PyBIDS. '
+            'For further details, please check out '
+            'https://fmriprep.readthedocs.io/en/'
+            f'{currentv.base_version if is_release else "latest"}/faq.html#'
+            'how-do-I-select-only-certain-files-to-be-input-to-fMRIPrep'
         ),
     )
     g_bids.add_argument(
@@ -500,9 +512,9 @@ def parse_args(args=None, namespace=None):
     config.from_dict(vars(opts), init=['nipype'])
 
     if not config.execution.notrack:
-        import pkgutil
+        import importlib.util
 
-        if pkgutil.find_loader('sentry_sdk') is None:
+        if importlib.util.find_spec('sentry_sdk') is None:
             config.execution.notrack = True
             config.loggers.cli.warning('Telemetry disabled because sentry_sdk is not installed.')
         else:
@@ -539,6 +551,7 @@ def parse_args(args=None, namespace=None):
 
     bids_dir = config.execution.bids_dir
     output_dir = config.execution.output_dir
+    derivatives = config.execution.derivatives
     work_dir = config.execution.work_dir
     version = config.environment.version
 
@@ -559,9 +572,9 @@ def parse_args(args=None, namespace=None):
     # Ensure input and output folders are not the same
     if output_dir == bids_dir:
         parser.error(
-            "The selected output folder is the same as the input BIDS folder. "
-            "Please modify the output path "
-            f"(suggestion: {bids_dir / 'derivatives' / 'fmripost_aroma-' + version.split('+')[0]}."
+            'The selected output folder is the same as the input BIDS folder. '
+            'Please modify the output path '
+            f'(suggestion: {bids_dir / "derivatives" / "fmripost_aroma-" + version.split("+")[0]}.'
         )
 
     if bids_dir in work_dir.parents:
@@ -570,13 +583,12 @@ def parse_args(args=None, namespace=None):
             'Please modify the output path.'
         )
 
-    # Validate inputs
-    if not opts.skip_bids_validation:
+    # Validate raw inputs if running in raw+derivatives mode
+    if derivatives and not opts.skip_bids_validation:
         from fmripost_aroma.utils.bids import validate_input_dir
 
         build_log.info(
-            'Making sure the input data is BIDS compliant '
-            '(warnings can be ignored in most cases).'
+            'Making sure the input data is BIDS compliant (warnings can be ignored in most cases).'
         )
         validate_input_dir(config.environment.exec_env, opts.bids_dir, opts.participant_label)
 
@@ -596,8 +608,8 @@ def parse_args(args=None, namespace=None):
     missing_subjects = participant_label - set(all_subjects)
     if missing_subjects:
         parser.error(
-            "One or more participant labels were not found in the BIDS directory: "
-            f"{', '.join(missing_subjects)}."
+            'One or more participant labels were not found in the BIDS directory: '
+            f'{", ".join(missing_subjects)}.'
         )
 
     config.execution.participant_label = sorted(participant_label)

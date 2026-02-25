@@ -91,8 +91,14 @@ def _get_ica_confounds(mixing, aroma_features, skip_vols, newpath=None):
 
     # Return dummy list of ones if no noise components were found
     if motion_ics.size == 0:
-        config.loggers.interfaces.warning('No noise components were classified')
-        return None, mixing_out
+        config.loggers.interface.warning('No noise components were classified')
+        # Write out confounds with single column (intercept) so there's something generated.
+        confounds_df = pd.DataFrame(
+            columns=['intercept'],
+            data=np.ones((padded_mixing_arr.shape[0], 1), dtype=int),
+        )
+        confounds_df.to_csv(aroma_confounds, sep='\t', index=False)
+        return aroma_confounds, mixing_out
 
     # return dummy lists of zeros if no signal components were found
     if signal_ics.size == 0:
@@ -155,6 +161,7 @@ class ICADenoise(SimpleInterface):
     output_spec = _ICADenoiseOutputSpec
 
     def _run_interface(self, runtime):
+        import nibabel as nb
         import numpy as np
         import pandas as pd
         from nilearn.maskers import NiftiMasker
@@ -175,6 +182,11 @@ class ICADenoise(SimpleInterface):
         accepted_idx = metrics_df.loc[metrics_df['classification'] == 'accepted'].index.values
         rejected_components = mixing[:, rejected_idx]
         accepted_components = mixing[:, accepted_idx]
+        if rejected_idx.size == 0:
+            print('No rejected components detected. Returning input data as "denoised".')
+            self._results['denoised_file'] = bold_file
+            return runtime
+
         # Z-score all of the components
         rejected_components = stats.zscore(rejected_components, axis=0)
         accepted_components = stats.zscore(accepted_components, axis=0)
@@ -225,7 +237,8 @@ class ICADenoise(SimpleInterface):
         else:
             # Non-aggressive denoising
             # Apply the mask to the data image to get a 2d array
-            data = apply_mask(bold_file, self.inputs.mask_file)
+            bold_img = nb.load(bold_file)
+            data = apply_mask(bold_img, self.inputs.mask_file)
 
             # Fit GLM to accepted components and rejected components (after adding a constant term)
             regressors = np.hstack(
@@ -244,6 +257,8 @@ class ICADenoise(SimpleInterface):
 
             # Save to file
             denoised_img = unmask(data_denoised, self.inputs.mask_file)
+            denoised_img.header.set_zooms(bold_img.header.get_zooms())
+            denoised_img.header.set_xyzt_units(*bold_img.header.get_xyzt_units())
 
         self._results['denoised_file'] = os.path.abspath('denoised.nii.gz')
         denoised_img.to_filename(self._results['denoised_file'])

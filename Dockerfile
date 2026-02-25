@@ -102,7 +102,7 @@ RUN micromamba create -y -f /tmp/env.yml && \
 # Check if this is still necessary when updating the base image.
 ENV PATH="/opt/conda/envs/fmripost_aroma/bin:$PATH" \
     UV_USE_IO_URING=0
-RUN npm install -g svgo@^3.2.0 bids-validator@^1.14.0 && \
+RUN npm install -g svgo@^3.2.0 bids-validator@1.14.10 && \
     rm -r ~/.npm
 
 #

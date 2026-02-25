@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "fmripost-aroma"
 description = 'Run ICA-AROMA on fMRIPrep derivatives'
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = {file = "LICENSE"}
 keywords = []
 authors = [{name = "The NiPreps Developers", email = "nipreps@gmail.com"}]
@@ -20,12 +20,12 @@ classifiers = [
 dependencies = [
   "fmriprep @ git+https://github.com/nipreps/fmriprep.git@master",
   "nipype >= 1.8.5",
-  "nireports @ git+https://github.com/nipreps/nireports.git@main",
-  "nitransforms == 23.0.1",
-  "niworkflows @ git+https://github.com/nipreps/niworkflows.git@master",
+  "nireports",
+  "nitransforms >= 25.0.1",
+  "niworkflows",
   "pybids >= 0.15.6",
-  "sdcflows @ git+https://github.com/nipreps/sdcflows.git@master",
-  "smriprep @ git+https://github.com/nipreps/smriprep.git@master",
+  "sdcflows",
+  "smriprep",
   "typer",
 ]
 dynamic = ["version"]
@@ -72,7 +72,10 @@ source = "vcs"
 version-file = "src/fmripost_aroma/_version.py"
 
 [tool.hatch.build.targets.sdist]
-exclude = [".git_archival.txt"]  # No longer needed in sdist
+exclude = [
+    ".git_archival.txt",  # No longer needed in sdist
+    "tests/data/ds000005-fmriprep",  # Out of scope for distribution
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/fmripost_aroma"]

@@ -1,0 +1,29 @@
+# Configuration for new-pr-welcome - https://github.com/behaviorbot/new-pr-welcome
+
+# Comment to be posted to on PRs from first time contributors in your repository
+newPRWelcomeComment: >
+  :wave: Welcome, and thank you for your first contribution!
+
+  We ask you to take a moment to read through our Contributing Guide:
+
+  :point_right: https://github.com/nipreps/fmripost-aroma/blob/main/CONTRIBUTING.md
+
+  These guidelines help us maintain a consistent and collaborative workflow.
+  But don't worry — you don't have to get everything perfect on the first try!
+
+  :mag: Here are a few quick tips:
+
+  1. **Start a conversation**: Consider opening an issue to discuss your idea
+     before submitting a pull request. It might save you time.
+  1. **Descriptive titles**: Please use a clear, descriptive title for your
+     pull request. If it is still a work in progress, mark it as a "Draft".
+  1. **Licensing**: All contributions will be licensed under the Apache 2.0
+     license — the same as the rest of the project.
+  1. **Authorship**: You're invited to add yourself to the `.zenodo.json` file.
+     file. This will credit you as a co-author in the next release. Please add
+     your name as the second-to-last entry, just above the last author.
+
+  A pull request is a conversation. We may suggest changes before merging,
+  and likewise, you should feel free to ask us any questions you have.
+
+  :rocket: We're happy to have you here!

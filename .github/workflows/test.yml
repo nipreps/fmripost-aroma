@@ -45,12 +45,12 @@ jobs:
       DEPENDS: ${{ matrix.dependencies }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
           fetch-depth: 0
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
@@ -64,7 +64,7 @@ jobs:
         run: tox c
       - name: Run tox
         run: tox -v --exit-and-dump-after 1200
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         if: ${{ always() }}
         with:
           files: cov.xml

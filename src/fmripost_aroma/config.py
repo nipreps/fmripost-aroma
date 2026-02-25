@@ -149,7 +149,7 @@ if not _disable_et:
     # Just get so analytics track one hit
     from contextlib import suppress
 
-    from requests import ConnectionError, ReadTimeout
+    from requests import ConnectionError, ReadTimeout  # noqa: A004
     from requests import get as _get_url
 
     with suppress((ConnectionError, ReadTimeout)):
@@ -430,7 +430,7 @@ class execution(_Config):
     the command line) as spatial references for outputs."""
     reports_only = False
     """Only build the reports, based on the reportlets found in a cached working directory."""
-    run_uuid = f"{strftime('%Y%m%d-%H%M%S')}_{uuid4()}"
+    run_uuid = f'{strftime("%Y%m%d-%H%M%S")}_{uuid4()}'
     """Unique identifier of this particular run."""
     participant_label = None
     """List of participant identifiers that are to be preprocessed."""
@@ -509,12 +509,11 @@ class execution(_Config):
                     )
 
             # unserialize pybids Query enum values
-            for acq, filters in cls.bids_filters.items():
-                for k, v in filters.items():
-                    cls.bids_filters[acq][k] = _process_value(v)
+            for entity, values in cls.bids_filters.items():
+                cls.bids_filters[entity] = _process_value(values)
 
         dataset_links = {
-            'raw': cls.bids_dir,
+            'input': cls.bids_dir,
             'templateflow': Path(TF_LAYOUT.root),
         }
         for deriv_name, deriv_path in cls.derivatives.items():
@@ -612,6 +611,8 @@ class seeds(_Config):
     """Seed used for antsRegistration, antsAI, antsMotionCorr"""
     numpy = None
     """Seed used by NumPy"""
+    melodic_seed = None
+    """Seed for FSL MELODIC ICA."""
 
     @classmethod
     def init(cls):
@@ -623,6 +624,7 @@ class seeds(_Config):
         # functions to set program specific seeds
         cls.ants = _set_ants_seed()
         cls.numpy = _set_numpy_seed()
+        cls.melodic_seed = _set_melodic_seed()
 
 
 def _set_ants_seed():
@@ -639,6 +641,18 @@ def _set_numpy_seed():
     val = random.randint(1, 65536)
     np.random.seed(val)
     return val
+
+
+def _set_melodic_seed():
+    """Set seed for FSL MELODIC ICA decomposition.
+    If the user provided a seed via --melodic-seed, use that value.
+    Otherwise, generate a time-based seed to mimic FSL's default seeding behavior
+    """
+    if seeds.melodic_seed is not None:
+        return seeds.melodic_seed
+    import time
+
+    return int(time.time())
 
 
 def from_dict(settings, init=True, ignore=None):

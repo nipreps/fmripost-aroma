@@ -20,8 +20,8 @@
 #
 #     https://www.nipreps.org/community/licensing/
 #
-"""Utility functions for fMRIPost-template."""
+"""Tools for generating reports."""
 
-from . import bids, utils
+from . import core
 
-__all__ = ['bids', 'utils']
+__all__ = ['core']

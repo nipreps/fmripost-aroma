@@ -174,6 +174,8 @@ It is released under the [CC0]\
 ### References
 
 """
+    entities = config.execution.bids_filters or {}
+    entities['subject'] = subject_id
 
     if config.execution.derivatives:
         # Raw dataset + derivatives dataset
@@ -181,7 +183,7 @@ It is released under the [CC0]\
         subject_data = collect_derivatives(
             raw_dataset=config.execution.layout,
             derivatives_dataset=None,
-            entities=config.execution.bids_filters,
+            entities=entities,
             fieldmap_id=None,
             allow_multiple=True,
             spaces=None,
@@ -193,7 +195,7 @@ It is released under the [CC0]\
         subject_data = collect_derivatives(
             raw_dataset=None,
             derivatives_dataset=config.execution.layout,
-            entities=config.execution.bids_filters,
+            entities=entities,
             fieldmap_id=None,
             allow_multiple=True,
             spaces=None,
@@ -205,11 +207,15 @@ It is released under the [CC0]\
     if not subject_data['bold']:
         task_id = config.execution.task_id
         raise RuntimeError(
-            f"No BOLD images found for participant {subject_id} and "
-            f"task {task_id if task_id else '<all>'}. "
-            "All workflows require BOLD images. "
-            f"Please check your BIDS filters: {config.execution.bids_filters}."
+            f'No BOLD images found for participant {subject_id} and '
+            f'task {task_id if task_id else "<all>"}. '
+            'All workflows require BOLD images. '
+            f'Please check your BIDS filters: {config.execution.bids_filters}.'
         )
+
+    config.loggers.workflow.info(
+        f'Collected subject data:\n{yaml.dump(subject_data, default_flow_style=False, indent=4)}',
+    )
 
     bids_info = pe.Node(
         BIDSInfo(
@@ -297,7 +303,8 @@ def init_single_run_wf(bold_file):
     bold_metadata = config.execution.layout.get_metadata(bold_file)
     mem_gb = estimate_bold_mem_usage(bold_file)[1]
 
-    entities = extract_entities(bold_file)
+    entities = config.execution.bids_filters or {}
+    entities = {**entities, **extract_entities(bold_file)}
 
     functional_cache = defaultdict(list, {})
     if config.execution.derivatives:
@@ -323,7 +330,7 @@ def init_single_run_wf(bold_file):
                 ),
             )
 
-        if not functional_cache['confounds']:
+        if not functional_cache['bold_confounds']:
             if config.workflow.dummy_scans is None:
                 raise ValueError(
                     'No confounds detected. '
@@ -358,17 +365,17 @@ def init_single_run_wf(bold_file):
     if config.workflow.dummy_scans is not None:
         skip_vols = config.workflow.dummy_scans
     else:
-        if not functional_cache['confounds']:
+        if not functional_cache['bold_confounds']:
             raise ValueError(
                 'No confounds detected. '
                 'Automatical dummy scan detection cannot be performed. '
                 'Please set the `--dummy-scans` flag explicitly.'
             )
-        skip_vols = get_nss(functional_cache['confounds'])
+        skip_vols = get_nss(functional_cache['bold_confounds'])
 
     # Run ICA-AROMA
     ica_aroma_wf = init_ica_aroma_wf(bold_file=bold_file, metadata=bold_metadata, mem_gb=mem_gb)
-    ica_aroma_wf.inputs.inputnode.confounds = functional_cache['confounds']
+    ica_aroma_wf.inputs.inputnode.confounds = functional_cache['bold_confounds']
     ica_aroma_wf.inputs.inputnode.skip_vols = skip_vols
 
     mni6_buffer = pe.Node(niu.IdentityInterface(fields=['bold', 'bold_mask']), name='mni6_buffer')
@@ -428,7 +435,7 @@ Raw BOLD series were resampled to MNI152NLin6Asym:res-2, for ICA-AROMA classific
             jacobian='fmap-jacobian' not in config.workflow.ignore,
             name='bold_MNI6_wf',
         )
-        bold_MNI6_wf.inputs.inputnode.motion_xfm = functional_cache['hmc']
+        bold_MNI6_wf.inputs.inputnode.motion_xfm = functional_cache['bold_hmc']
         bold_MNI6_wf.inputs.inputnode.boldref2fmap_xfm = functional_cache['boldref2fmap']
         bold_MNI6_wf.inputs.inputnode.boldref2anat_xfm = functional_cache['boldref2anat']
         bold_MNI6_wf.inputs.inputnode.anat2std_xfm = functional_cache['anat2mni152nlin6asym']
@@ -508,7 +515,7 @@ classification.
         denoise_wf.inputs.inputnode.skip_vols = skip_vols
         denoise_wf.inputs.inputnode.space = 'MNI152NLin6Asym'
         denoise_wf.inputs.inputnode.res = '2'
-        denoise_wf.inputs.inputnode.confounds_file = functional_cache['confounds']
+        denoise_wf.inputs.inputnode.confounds_file = functional_cache['bold_confounds']
 
         workflow.connect([
             (mni6_buffer, denoise_wf, [

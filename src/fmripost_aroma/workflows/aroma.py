@@ -151,6 +151,7 @@ in the corresponding confounds file.
     rm_non_steady_state = pe.Node(
         niu.Function(function=_remove_volumes, output_names=['bold_cut']),
         name='rm_nonsteady',
+        mem_gb=mem_gb['resampled'],
     )
     workflow.connect([
         (inputnode, rm_non_steady_state, [
@@ -162,6 +163,7 @@ in the corresponding confounds file.
     calc_median_val = pe.Node(
         MedianValue(),
         name='calc_median_val',
+        mem_gb=mem_gb['resampled'],
     )
     workflow.connect([
         (inputnode, calc_median_val, [('bold_mask_std', 'mask_file')]),
@@ -171,6 +173,7 @@ in the corresponding confounds file.
     calc_bold_mean = pe.Node(
         MeanImage(),
         name='calc_bold_mean',
+        mem_gb=mem_gb['resampled'],
     )
     workflow.connect([
         (inputnode, calc_bold_mean, [('bold_mask_std', 'mask_file')]),
@@ -209,6 +212,7 @@ in the corresponding confounds file.
             mm_thresh=0.5,
             out_stats=True,
             dim=config.workflow.melodic_dim,
+            args=f'--seed={config.seeds.melodic_seed}',
         ),
         name='melodic',
         mem_gb=mem_gb['resampled'],
@@ -296,6 +300,7 @@ in the corresponding confounds file.
             source_file=bold_file,
             compress=True,
             datatype='func',
+            threshold='0p5',
             desc='melodic',
             suffix='components',
         ),
