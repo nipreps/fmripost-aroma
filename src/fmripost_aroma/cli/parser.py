@@ -336,7 +336,6 @@ def _build_parser(**kwargs):
             'parts of the resampling workflow (a space delimited list)'
         ),
     )
-    # Disable output spaces until warping works
     g_conf.add_argument(
         '--output-spaces',
         nargs='*',

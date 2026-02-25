@@ -549,6 +549,12 @@ class workflow(_Config):
     """Ignore particular steps for *fMRIPost-AROMA*."""
     cifti_output = None
     """Generate HCP Grayordinates, accepts either ``'91k'`` (default) or ``'170k'``."""
+    requested_spaces = None
+    """User-requested output spaces (without internally-required additions)."""
+    spaces = None
+    """Resolved spaces including internally-required processing spaces."""
+    aroma_space = None
+    """Internal space used for ICA-AROMA fitting."""
     dummy_scans = None
     """Set a number of initial scans to be considered nonsteady states."""
     slice_time_ref = 0.5
@@ -755,6 +761,9 @@ def init_spaces(checkpoint=True):
     if checkpoint and not spaces.is_cached():
         spaces.checkpoint()
 
+    # Keep user-requested output spaces separate from internal processing spaces.
+    workflow.requested_spaces = SpatialReferences(list(spaces.references))
+
     # Add the default standard space if not already present (required by several sub-workflows)
     if 'MNI152NLin6Asym' not in spaces.get_spaces(nonstandard=False, dim=(3,)):
         spaces.add(Reference('MNI152NLin6Asym', {}))
@@ -770,3 +779,4 @@ def init_spaces(checkpoint=True):
 
     # Make the SpatialReferences object available
     workflow.spaces = spaces
+    workflow.aroma_space = Reference('MNI152NLin6Asym', {'res': '2'})

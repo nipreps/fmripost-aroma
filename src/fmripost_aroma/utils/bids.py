@@ -185,61 +185,128 @@ def collect_derivatives(
                 derivs_cache[k] = item[0] if len(item) == 1 else item
 
     # Search for requested output spaces
-    if spaces is not None:
-        # Put the output-space files/transforms in lists so they can be parallelized with
-        # template_iterator_wf.
-        spaces_found, bold_outputspaces, bold_mask_outputspaces = [], [], []
-        for space in spaces.references:
-            # First try to find processed BOLD+mask files in the requested space
-            bold_query = {**entities, **spec['derivatives']['bold_mni152nlin6asym']}
-            bold_query['space'] = space.space
-            bold_query = {**bold_query, **space.spec}
-            bold_item = layout.get(return_type='filename', **bold_query)
-            bold_outputspaces.append(bold_item[0] if bold_item else None)
+    if spaces is not None and derivatives_dataset is not None:
+        def _space_kind(space_ref):
+            """Classify requested spaces into volumetric/surface/CIFTI families."""
+            space_name = space_ref.space
+            if space_name == 'fsLR' and 'den' in space_ref.spec:
+                return 'cifti'
+            if space_name.startswith('fs'):
+                return 'surface'
+            return 'volumetric'
 
-            mask_query = {**entities, **spec['derivatives']['bold_mask_mni152nlin6asym']}
-            mask_query['space'] = space.space
-            mask_query = {**mask_query, **space.spec}
-            mask_item = layout.get(return_type='filename', **mask_query)
-            bold_mask_outputspaces.append(mask_item[0] if mask_item else None)
+        requested_refs = list(spaces.references)
+        output_warnings = []
+        missing_refs = []
 
-            spaces_found.append(bool(bold_item) and bool(mask_item))
+        volumetric_refs = []
+        bold_outputspaces = []
+        bold_mask_outputspaces = []
+        anat2outputspaces_xfm = []
+        cifti_outputspaces = {}
+        surface_outputspaces = {}
 
-        if all(spaces_found):
-            derivs_cache['bold_outputspaces'] = bold_outputspaces
-            derivs_cache['bold_mask_outputspaces'] = bold_mask_outputspaces
-        else:
-            # The requested spaces were not found, try to find transforms
-            print(
-                'Not all requested output spaces were found. '
-                'We will try to find transforms to these spaces and apply them to the BOLD data.',
-                flush=True,
-            )
+        base_xfm = derivs_cache.get('anat2mni152nlin6asym')
+        base_xfm_entities = None
+        if base_xfm:
+            base_xfm_entities = dict(layout.get_file(base_xfm).entities)
 
-        spaces_found, anat2outputspaces_xfm = [], []
-        for space in spaces.references:
-            base_file = derivs_cache['anat2mni152nlin6asym']
-            base_file = layout.get_file(base_file)
-            # Now try to find transform to the requested space, using the
-            # entities from the transform to MNI152NLin6Asym
-            anat2space_query = base_file.entities
-            anat2space_query['to'] = space.space
-            item = layout.get(return_type='filename', **anat2space_query)
-            anat2outputspaces_xfm.append(item[0] if item else None)
-            spaces_found.append(bool(item))
+        for space in requested_refs:
+            ref_str = str(space)
+            space_kind = _space_kind(space)
 
-        if all(spaces_found):
-            derivs_cache['anat2outputspaces_xfm'] = anat2outputspaces_xfm
-        else:
-            missing_spaces = ', '.join(
-                [
-                    s.space
-                    for s, found in zip(spaces.references, spaces_found, strict=False)
-                    if not found
-                ]
-            )
+            if space_kind == 'volumetric':
+                volumetric_refs.append(ref_str)
+
+                # First try to find precomputed BOLD+mask in the requested space.
+                bold_query = {**entities, **spec['derivatives']['bold_mni152nlin6asym']}
+                bold_query['space'] = space.space
+                bold_query = {**bold_query, **space.spec}
+                bold_item = layout.get(return_type='filename', **bold_query)
+                bold_file = bold_item[0] if bold_item else None
+
+                mask_query = {**entities, **spec['derivatives']['bold_mask_mni152nlin6asym']}
+                mask_query['space'] = space.space
+                mask_query = {**mask_query, **space.spec}
+                mask_item = layout.get(return_type='filename', **mask_query)
+                mask_file = mask_item[0] if mask_item else None
+
+                if bold_file and mask_file:
+                    xfm_file = None
+                    if base_xfm_entities:
+                        anat2space_query = dict(base_xfm_entities)
+                        anat2space_query['to'] = space.space
+                        xfm_item = layout.get(return_type='filename', **anat2space_query)
+                        xfm_file = xfm_item[0] if xfm_item else None
+                    bold_outputspaces.append(bold_file)
+                    bold_mask_outputspaces.append(mask_file)
+                    anat2outputspaces_xfm.append(xfm_file)
+                    continue
+
+                # Otherwise, try to find anat->space transform for on-the-fly resampling.
+                xfm_file = None
+                if base_xfm_entities:
+                    anat2space_query = dict(base_xfm_entities)
+                    anat2space_query['to'] = space.space
+                    xfm_item = layout.get(return_type='filename', **anat2space_query)
+                    xfm_file = xfm_item[0] if xfm_item else None
+
+                if xfm_file:
+                    bold_outputspaces.append(None)
+                    bold_mask_outputspaces.append(None)
+                    anat2outputspaces_xfm.append(xfm_file)
+                else:
+                    missing_refs.append(ref_str)
+                    output_warnings.append(
+                        f'Requested output space {ref_str} is unavailable; skipping this space.'
+                    )
+                    volumetric_refs.pop()
+                continue
+
+            if space_kind == 'cifti':
+                cifti_query = {**entities, **spec['derivatives']['bold_cifti']}
+                cifti_query['space'] = space.space
+                cifti_query = {**cifti_query, **space.spec}
+                cifti_item = layout.get(return_type='filename', **cifti_query)
+                if cifti_item:
+                    cifti_outputspaces[ref_str] = cifti_item[0]
+                else:
+                    missing_refs.append(ref_str)
+                    output_warnings.append(
+                        f'Requested CIFTI output space {ref_str} is unavailable; '
+                        'skipping this space.'
+                    )
+                continue
+
+            # Surface outputs currently support derivative ingestion only.
+            surface_query = {**entities, **spec['derivatives']['bold_surface']}
+            surface_query['space'] = space.space
+            surface_query = {**surface_query, **space.spec}
+            surface_items = layout.get(return_type='filename', **surface_query)
+            if surface_items:
+                surface_outputspaces[ref_str] = sorted(surface_items)
+            else:
+                missing_refs.append(ref_str)
+                output_warnings.append(
+                    f'Requested surface output space {ref_str} is unavailable; '
+                    'skipping this space.'
+                )
+
+        derivs_cache['output_space_references'] = volumetric_refs
+        derivs_cache['bold_outputspaces'] = bold_outputspaces
+        derivs_cache['bold_mask_outputspaces'] = bold_mask_outputspaces
+        derivs_cache['anat2outputspaces_xfm'] = anat2outputspaces_xfm
+        derivs_cache['bold_outputspaces_cifti'] = cifti_outputspaces
+        derivs_cache['bold_outputspaces_surface'] = surface_outputspaces
+        derivs_cache['output_space_warnings'] = output_warnings
+        derivs_cache['missing_output_space_references'] = missing_refs
+
+        n_processable = len(volumetric_refs) + len(cifti_outputspaces) + len(surface_outputspaces)
+        if requested_refs and n_processable == 0:
+            missing_spaces = ', '.join(missing_refs) if missing_refs else '(unknown)'
             raise ValueError(
-                f'Transforms to the following requested spaces not found: {missing_spaces}.'
+                'No requested output spaces can be processed. '
+                f'Missing/unavailable spaces: {missing_spaces}.'
             )
 
     # Search for raw BOLD data
