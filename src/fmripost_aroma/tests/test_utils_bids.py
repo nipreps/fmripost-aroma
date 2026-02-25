@@ -4,6 +4,7 @@ import os
 
 import pytest
 from bids.layout import BIDSLayout, BIDSLayoutIndexer
+from niworkflows.utils.spaces import Reference, SpatialReferences
 from niworkflows.utils.testing import generate_bids_skeleton
 
 from fmripost_aroma.tests.utils import get_test_data_path
@@ -309,3 +310,61 @@ def test_collect_derivatives_xsectional_04(tmpdir):
         'anat_mni152nlin6asym': 'sub-102_space-MNI152NLin6Asym_res-02_desc-preproc_T1w.nii.gz',
     }
     check_expected(subject_data, expected)
+
+
+def test_collect_derivatives_output_spaces_partial_success(full_ignore_list):
+    """Requested output spaces should allow partial success."""
+    data_dir = get_test_data_path()
+
+    derivatives_dataset = data_dir / 'ds000005-fmriprep'
+    derivatives_layout = BIDSLayout(
+        derivatives_dataset,
+        config=['bids', 'derivatives'],
+        validate=False,
+        indexer=BIDSLayoutIndexer(validate=False, index_metadata=False, ignore=full_ignore_list),
+    )
+
+    spaces = SpatialReferences(
+        [
+            *Reference.from_string('MNI152NLin6Asym:res-2'),
+            *Reference.from_string('MNIPediatricAsym:cohort-1:res-2'),
+        ]
+    )
+    subject_data = xbids.collect_derivatives(
+        raw_dataset=None,
+        derivatives_dataset=derivatives_layout,
+        entities={'subject': '01', 'task': 'mixedgamblestask', 'run': 1},
+        fieldmap_id=None,
+        spec=None,
+        patterns=None,
+        spaces=spaces,
+    )
+
+    assert subject_data['output_space_references'] == ['MNI152NLin6Asym:res-2']
+    assert len(subject_data['output_space_warnings']) == 1
+    assert subject_data['missing_output_space_references'] == ['MNIPediatricAsym:cohort-1:res-2']
+
+
+def test_collect_derivatives_output_spaces_all_missing_raises(full_ignore_list):
+    """Fail when none of the requested output spaces are available."""
+    data_dir = get_test_data_path()
+
+    derivatives_dataset = data_dir / 'ds000005-fmriprep'
+    derivatives_layout = BIDSLayout(
+        derivatives_dataset,
+        config=['bids', 'derivatives'],
+        validate=False,
+        indexer=BIDSLayoutIndexer(validate=False, index_metadata=False, ignore=full_ignore_list),
+    )
+
+    spaces = SpatialReferences([*Reference.from_string('MNIPediatricAsym:cohort-1:res-2')])
+    with pytest.raises(ValueError, match='No requested output spaces can be processed'):
+        xbids.collect_derivatives(
+            raw_dataset=None,
+            derivatives_dataset=derivatives_layout,
+            entities={'subject': '01', 'task': 'mixedgamblestask', 'run': 1},
+            fieldmap_id=None,
+            spec=None,
+            patterns=None,
+            spaces=spaces,
+        )

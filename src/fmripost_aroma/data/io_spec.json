@@ -48,6 +48,34 @@
                     ".nii"
                 ]
             },
+            "bold_cifti": {
+                "datatype": "func",
+                "echo": null,
+                "part": [
+                    "mag",
+                    null
+                ],
+                "suffix": "bold",
+                "extension": [
+                    ".dtseries.nii"
+                ]
+            },
+            "bold_surface": {
+                "datatype": "func",
+                "echo": null,
+                "part": [
+                    "mag",
+                    null
+                ],
+                "suffix": "bold",
+                "extension": [
+                    ".func.gii"
+                ],
+                "hemi": [
+                    "L",
+                    "R"
+                ]
+            },
             "bold_mask_native": {
                 "datatype": "func",
                 "echo": null,

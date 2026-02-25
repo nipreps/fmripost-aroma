@@ -36,6 +36,7 @@ from copy import deepcopy
 
 import yaml
 from nipype.pipeline import engine as pe
+from niworkflows.interfaces.utility import KeySelect
 from packaging.version import Version
 
 from fmripost_aroma import config
@@ -288,12 +289,18 @@ def init_single_run_wf(bold_file):
     from fmriprep.utils.misc import estimate_bold_mem_usage
     from nipype.interfaces import utility as niu
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
+    from niworkflows.utils.spaces import Reference, SpatialReferences
 
     from fmripost_aroma.utils.bids import collect_derivatives, extract_entities
     from fmripost_aroma.workflows.aroma import init_denoise_wf, init_ica_aroma_wf
     from fmripost_aroma.workflows.outputs import init_func_fit_reports_wf
 
     spaces = config.workflow.spaces
+    requested_spaces = config.workflow.requested_spaces or SpatialReferences()
+    if requested_spaces.references:
+        output_spaces = requested_spaces
+    else:
+        output_spaces = SpatialReferences([config.workflow.aroma_space])
     omp_nthreads = config.nipype.omp_nthreads
 
     workflow = Workflow(name=_get_wf_name(bold_file, 'single_run'))
@@ -325,7 +332,7 @@ def init_single_run_wf(bold_file):
                     entities=entities,
                     fieldmap_id=None,
                     allow_multiple=False,
-                    spaces=spaces,
+                    spaces=output_spaces,
                 ),
             )
 
@@ -350,9 +357,12 @@ def init_single_run_wf(bold_file):
                 entities=entities,
                 fieldmap_id=None,
                 allow_multiple=False,
-                spaces=spaces,
+                spaces=output_spaces,
             ),
         )
+
+    for warning in functional_cache.get('output_space_warnings', []):
+        config.loggers.workflow.warning(warning)
 
     config.loggers.workflow.info(
         (
@@ -496,24 +506,121 @@ classification.
     func_fit_reports_wf.inputs.inputnode.anat_dseg = functional_cache['anat_dseg']
     workflow.connect([(mni6_buffer, func_fit_reports_wf, [('bold', 'inputnode.bold_mni6')])])
 
-    if config.workflow.denoise_method:
+    if config.workflow.denoise_method and functional_cache.get('output_space_references'):
         # Now denoise the output-space BOLD data using ICA-AROMA
+        from smriprep.workflows.outputs import init_template_iterator_wf
+
+        output_space_keys = list(functional_cache['output_space_references'])
+        bold_outputspaces = list(functional_cache['bold_outputspaces'])
+        bold_mask_outputspaces = list(functional_cache['bold_mask_outputspaces'])
+        anat2outputspaces_xfm = list(functional_cache['anat2outputspaces_xfm'])
+
+        all_precomputed = all(
+            bool(bold) and bool(mask)
+            for bold, mask in zip(bold_outputspaces, bold_mask_outputspaces, strict=False)
+        )
+        any_precomputed = any(bool(bold) for bold in bold_outputspaces)
+        any_missing_precomputed = any(not bold for bold in bold_outputspaces)
+        all_transforms_available = all(bool(xfm) for xfm in anat2outputspaces_xfm)
+
+        if any_precomputed and any_missing_precomputed and not all_transforms_available:
+            # Mixed case where some spaces are precomputed but some cannot be resampled.
+            # Keep precomputed spaces and skip the rest.
+            keep_idx = [
+                i
+                for i, (bold, mask) in enumerate(
+                    zip(bold_outputspaces, bold_mask_outputspaces, strict=False)
+                )
+                if bold and mask
+            ]
+            skipped = [k for i, k in enumerate(output_space_keys) if i not in keep_idx]
+            if skipped:
+                config.loggers.workflow.warning(
+                    'Skipping output spaces without complete derivatives/xfms: %s',
+                    ', '.join(skipped),
+                )
+
+            output_space_keys = [output_space_keys[i] for i in keep_idx]
+            bold_outputspaces = [bold_outputspaces[i] for i in keep_idx]
+            bold_mask_outputspaces = [bold_mask_outputspaces[i] for i in keep_idx]
+            anat2outputspaces_xfm = [anat2outputspaces_xfm[i] for i in keep_idx]
+            all_precomputed = True
+
+        output_space_refs = [
+            ref
+            for ref_string in output_space_keys
+            for ref in Reference.from_string(ref_string)
+        ]
+        output_spaces = SpatialReferences(output_space_refs)
+        templates = output_spaces.get_spaces()
+        template_iterator_wf = init_template_iterator_wf(
+            spaces=output_spaces,
+            sloppy=config.execution.sloppy,
+        )
+        template_iterator_wf.inputs.inputnode.anat2std_xfm = anat2outputspaces_xfm
+        template_iterator_wf.inputs.inputnode.template = templates
+
         denoise_wf = init_denoise_wf(bold_file=bold_file, metadata=bold_metadata)
         denoise_wf.inputs.inputnode.skip_vols = skip_vols
-        denoise_wf.inputs.inputnode.space = 'MNI152NLin6Asym'
-        denoise_wf.inputs.inputnode.res = '2'
         denoise_wf.inputs.inputnode.confounds_file = functional_cache['bold_confounds']
 
         workflow.connect([
-            (mni6_buffer, denoise_wf, [
-                ('bold', 'inputnode.bold_file'),
-                ('bold_mask', 'inputnode.bold_mask'),
-            ]),
             (ica_aroma_wf, denoise_wf, [
                 ('outputnode.mixing', 'inputnode.mixing'),
                 ('outputnode.aroma_features', 'inputnode.classifications'),
             ]),
+            (template_iterator_wf, denoise_wf, [
+                ('outputnode.space', 'inputnode.space'),
+                ('outputnode.cohort', 'inputnode.cohort'),
+                ('outputnode.res', 'inputnode.res'),
+            ]),
         ])  # fmt:skip
+
+        if all_precomputed:
+            # No transforms necessary
+            std_buffer = pe.Node(
+                KeySelect(
+                    fields=['bold', 'bold_mask'],
+                    keys=output_space_keys,
+                ),
+                name='std_buffer',
+            )
+            std_buffer.inputs.bold = bold_outputspaces
+            std_buffer.inputs.bold_mask = bold_mask_outputspaces
+            workflow.connect([
+                (template_iterator_wf, std_buffer, [('outputnode.space', 'key')]),
+                (std_buffer, denoise_wf, [
+                    ('bold', 'inputnode.bold_file'),
+                    ('bold_mask', 'inputnode.bold_mask'),
+                ]),
+            ])  # fmt:skip
+        else:
+            # Warp native BOLD to requested output spaces
+            resample_std_wf = init_resample_volumetric_wf(
+                bold_file=bold_file,
+                metadata=bold_metadata,
+                functional_cache=functional_cache,
+                omp_nthreads=omp_nthreads,
+                mem_gb=mem_gb,
+                name=_get_wf_name(bold_file, 'resample_std'),
+            )
+            workflow.connect([
+                (template_iterator_wf, resample_std_wf, [
+                    ('outputnode.res', 'inputnode.res'),
+                    ('outputnode.anat2std_xfm', 'inputnode.anat2std_xfm'),
+                ]),
+                (resample_std_wf, denoise_wf, [
+                    ('outputnode.bold_file', 'inputnode.bold_file'),
+                    ('outputnode.bold_mask', 'inputnode.bold_mask'),
+                ]),
+            ])  # fmt:skip
+    elif config.workflow.denoise_method and (
+        functional_cache.get('bold_outputspaces_cifti') or functional_cache.get('bold_outputspaces_surface')
+    ):
+        config.loggers.workflow.warning(
+            'Only non-volumetric output spaces were requested/found. '
+            'Denoising in surface/CIFTI spaces is not yet enabled in this workflow; skipping outputs.'
+        )
 
     # Fill-in datasinks seen so far
     for node in workflow.list_node_names():
@@ -522,6 +629,110 @@ classification.
             workflow.get_node(node).inputs.source_file = bold_file
 
     return workflow
+
+
+def init_resample_volumetric_wf(
+    bold_file,
+    metadata,
+    functional_cache,
+    omp_nthreads,
+    mem_gb,
+    name,
+):
+    """Resample native-space BOLD and mask to one requested volumetric output space."""
+    from fmriprep.workflows.bold.apply import init_bold_volumetric_resample_wf
+    from nipype.interfaces import utility as niu
+
+    from fmripost_aroma.interfaces.misc import ApplyTransforms
+
+    workflow = pe.Workflow(name=name)
+
+    inputnode = pe.Node(
+        niu.IdentityInterface(fields=['anat2std_xfm', 'res']),
+        name='inputnode',
+    )
+    outputnode = pe.Node(
+        niu.IdentityInterface(fields=['bold_file', 'bold_mask']),
+        name='outputnode',
+    )
+
+    bold_std_wf = init_bold_volumetric_resample_wf(
+        metadata=metadata,
+        fieldmap_id=None,
+        omp_nthreads=omp_nthreads,
+        mem_gb=mem_gb,
+        jacobian='fmap-jacobian' not in config.workflow.ignore,
+        name='bold_std_wf',
+    )
+    bold_std_wf.inputs.inputnode.bold_file = functional_cache['bold_raw']
+    bold_std_wf.inputs.inputnode.bold_ref_file = functional_cache['bold_mask_native']
+    bold_std_wf.inputs.inputnode.motion_xfm = functional_cache['bold_hmc']
+    bold_std_wf.inputs.inputnode.boldref2fmap_xfm = functional_cache['boldref2fmap']
+    bold_std_wf.inputs.inputnode.boldref2anat_xfm = functional_cache['boldref2anat']
+
+    # Current derivatives collection does not include fieldmap coefficients/references.
+    # Keep behavior consistent with existing MNI6 branch for now.
+    bold_std_wf.inputs.inputnode.fmap_ref = None
+    bold_std_wf.inputs.inputnode.fmap_coeff = None
+    bold_std_wf.inputs.inputnode.fmap_id = None
+
+    select_target = pe.Node(
+        niu.Function(
+            function=_select_std_mask,
+            input_names=['resolution'],
+            output_names=['target_mask'],
+        ),
+        name='select_target',
+    )
+
+    merge_mask_xfms = pe.Node(niu.Merge(2), name='merge_mask_xfms')
+    merge_mask_xfms.inputs.in2 = functional_cache['boldref2anat']
+
+    mask_to_std = pe.Node(
+        ApplyTransforms(
+            interpolation='GenericLabel',
+            input_image=functional_cache['bold_mask_native'],
+        ),
+        name='mask_to_std',
+    )
+
+    workflow.connect([
+        (inputnode, bold_std_wf, [
+            ('res', 'inputnode.resolution'),
+            ('anat2std_xfm', 'inputnode.anat2std_xfm'),
+        ]),
+        (inputnode, select_target, [('res', 'resolution')]),
+        (select_target, bold_std_wf, [
+            ('target_mask', 'inputnode.target_ref_file'),
+            ('target_mask', 'inputnode.target_mask'),
+        ]),
+        (inputnode, merge_mask_xfms, [('anat2std_xfm', 'in1')]),
+        (select_target, mask_to_std, [('target_mask', 'reference_image')]),
+        (merge_mask_xfms, mask_to_std, [('out', 'transforms')]),
+        (bold_std_wf, outputnode, [('outputnode.bold_file', 'bold_file')]),
+        (mask_to_std, outputnode, [('output_image', 'bold_mask')]),
+    ])  # fmt:skip
+
+    return workflow
+
+
+def _select_std_mask(resolution):
+    from templateflow.api import get as get_template
+
+    if resolution in (None, 'native'):
+        resolution = 2
+    else:
+        resolution = int(str(resolution).lstrip('0') or '0')
+
+    return str(
+        get_template(
+            'MNI152NLin6Asym',
+            resolution=resolution,
+            desc='brain',
+            suffix='mask',
+            extension=['.nii', '.nii.gz'],
+        )
+    )
 
 
 def _prefix(subid):
